@@ -1,0 +1,257 @@
+#!/bin/sh
+# CLI giữ khóa độc quyền trên catalog và công bố snapshot bằng rename.
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+usage() {
+    printf 'Usage: vdb [--db FILE] [--existing | --new] [--validate] [--guard-writes] [--timing] [-e SQL | -f FILE]\n       vdb [--db FILE] < script.sql\n       vdb --db FILE --backup DESTINATION\n       vdb --db NEW_FILE --restore BACKUP\n       vdb studio [--db FILE] [--port PORT] [--desktop | --browser | --no-open]\n'
+}
+data_dir="$root/data"
+native_app="$root/build/VDB Studio.app/Contents/MacOS/vdb-studio-macos"
+bundled=0
+version=$(cat "$root/VERSION")
+if [ -f "$root/VDB_RELEASE" ]; then
+    bundled=1
+    data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/vdb"
+fi
+case "$root" in
+    */Contents/Resources)
+        bundled=1
+        native_app="$root/../MacOS/vdb-studio-macos"
+        data_dir="${VDB_STUDIO_DATA_DIR:-$HOME/Library/Application Support/VDB Studio}"
+        ;;
+esac
+db="$data_dir/vdb.json"
+if [ "${1:-}" = studio ]; then
+    shift
+    port=8765
+    platform=$(uname -s)
+    architecture=$(uname -m)
+    mode=auto
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --db) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; db=$2; shift 2 ;;
+            --port) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; port=$2; shift 2 ;;
+            --desktop) mode=desktop; shift ;;
+            --browser) mode=browser; shift ;;
+            --no-open) mode=server; shift ;;
+            *) usage >&2; exit 2 ;;
+        esac
+    done
+    case "$port" in ''|*[!0-9]*|0*) usage >&2; exit 2 ;; esac
+    [ "$port" -ge 1024 ] && [ "$port" -le 65535 ] || { usage >&2; exit 2; }
+    if [ "$mode" = auto ]; then
+        if [ "$platform" = Darwin ] && [ "$architecture" = arm64 ]; then mode=desktop; else mode=browser; fi
+    fi
+    if [ "$mode" = desktop ]; then
+        if [ "$platform" != Darwin ] || [ "$architecture" != arm64 ]; then
+            echo 'VDB Studio desktop hiện yêu cầu macOS Apple Silicon. Dùng --browser.' >&2
+            exit 2
+        fi
+        if [ "$bundled" -eq 0 ]; then make -C "$root" studio-macos >&2; fi
+    fi
+    if [ "$bundled" -eq 0 ]; then
+        make -C "$root" all build/vdb-studio >&2
+    elif [ ! -x "$root/build/vdb-engine" ] || [ ! -x "$root/build/vdb-studio" ] || { [ "$mode" = desktop ] && [ ! -x "$native_app" ]; }; then
+        echo "VDB Studio: gói ứng dụng thiếu thành phần." >&2; exit 1
+    fi
+    token=$(openssl rand -hex 32)
+    opener=''
+    if [ "$mode" = browser ]; then
+        case "$platform" in
+            Darwin) opener=/usr/bin/open ;;
+            Linux) opener=$(command -v xdg-open || true) ;;
+        esac
+    fi
+    umask 077
+    mkdir -p "$data_dir"
+    # Cấu hình Studio nằm ngoài các catalog do người dùng chọn.
+    export VDB_STUDIO_STATE="$data_dir/studio-state.json"
+    case "$db" in /*) ;; *) db="$PWD/$db" ;; esac
+    export VDB_STUDIO_CLI="$root/vdb" VDB_STUDIO_DB="$db"
+    export VDB_STUDIO_HTML="$root/studio/index.html" VDB_STUDIO_TOKEN="$token" VDB_STUDIO_PORT="$port"
+    export VDB_STUDIO_OPENER="$opener"
+    unset VDB_STUDIO_READY
+    if [ "$mode" = desktop ]; then
+        ready_dir=$(mktemp -d "${TMPDIR:-/tmp}/vdb-studio.XXXXXXXX")
+        server_pid=''
+        window_pid=''
+        studio_cleanup() {
+            if [ -n "$window_pid" ]; then
+                kill "$window_pid" 2>/dev/null || true
+                wait "$window_pid" 2>/dev/null || true
+            fi
+            if [ -n "$server_pid" ]; then
+                kill "$server_pid" 2>/dev/null || true
+                wait "$server_pid" 2>/dev/null || true
+            fi
+            rm -f "$ready_dir/ready"
+            rmdir "$ready_dir"
+        }
+        trap studio_cleanup EXIT
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
+        export VDB_STUDIO_READY="$ready_dir/ready"
+        sh "$root/studio/serve" &
+        server_pid=$!
+        attempt=0
+        until [ -s "$VDB_STUDIO_READY" ]; do
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+                wait "$server_pid" || true
+                server_pid=''
+                echo 'VDB Studio: server không khởi động được. Xem lỗi phía trên.' >&2
+                exit 1
+            fi
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge 100 ]; then
+                echo 'VDB Studio: server chưa sẵn sàng sau 10 giây.' >&2
+                exit 1
+            fi
+            sleep 0.1
+        done
+        origin="http://127.0.0.1:$port/"
+        "$native_app" "${origin}#${token}" 'VDB Studio' 1280 850 "$origin" &
+        window_pid=$!
+        result=0
+        wait "$window_pid" || result=$?
+        window_pid=''
+        exit "$result"
+    fi
+    exec sh "$root/studio/serve"
+fi
+mode=stdin
+catalog_mode=auto
+validate=0
+guard_writes=0
+timing=0
+sql=''
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --db) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; db=$2; shift 2 ;;
+        --existing) catalog_mode=existing; shift ;;
+        --validate) validate=1; shift ;;
+        --timing) timing=1; shift ;;
+        --guard-writes) guard_writes=1; shift ;;
+        --new) catalog_mode=new; shift ;;
+        --backup|--restore)
+            [ "$#" -ge 2 ] && [ "$mode" = stdin ] || { usage >&2; exit 2; }
+            mode=${1#--}; sql=$2; shift 2 ;;
+        -e|--execute) [ "$#" -ge 2 ] && [ "$mode" = stdin ] || { usage >&2; exit 2; }; mode=sql; sql=$2; shift 2 ;;
+        -f|--file) [ "$#" -ge 2 ] && [ "$mode" = stdin ] || { usage >&2; exit 2; }; mode=file; sql=$2; shift 2 ;;
+        --help|-h) usage; exit 0 ;;
+        --version) printf 'VDB %s\n' "$version"; exit 0 ;;
+        *) usage >&2; exit 2 ;;
+    esac
+done
+case "$mode" in
+    backup|restore)
+        [ "$validate" -eq 0 ] && [ "$guard_writes" -eq 0 ] && [ "$timing" -eq 0 ] || { usage >&2; exit 2; }
+        if [ "$mode" = backup ]; then
+            [ "$catalog_mode" != new ] || { usage >&2; exit 2; }
+            catalog_mode=existing
+        else
+            [ "$catalog_mode" != existing ] || { usage >&2; exit 2; }
+            catalog_mode=new
+        fi
+        umask 077 ;;
+esac
+if [ ! -x "$root/build/vdb-engine" ]; then
+    [ "$bundled" -eq 0 ] || { echo "VDB: gói ứng dụng thiếu engine." >&2; exit 1; }
+    make -C "$root" all >&2
+fi
+if [ "$catalog_mode" = auto ]; then mkdir -p "$(dirname -- "$db")"; fi
+dir=$(CDPATH= cd -- "$(dirname -- "$db")" && pwd -P)
+db="$dir/$(basename -- "$db")"
+if [ -L "$db" ]; then
+    if [ "$catalog_mode" = new ]; then echo 'VDB: catalog đã tồn tại' >&2; exit 1; fi
+    echo 'VDB: hãy sử dụng đường dẫn thật của catalog thay cho liên kết tượng trưng' >&2
+    exit 1
+fi
+lock="$db.lock"
+if ! mkdir "$lock" 2>/dev/null; then
+    echo "VDB: catalog đang bị khóa: $lock" >&2
+    exit 1
+fi
+work=''
+backup_work=''
+backup_lock=''
+cleanup() {
+    [ -z "$work" ] || rm -rf -- "$work"
+    [ -z "$backup_work" ] || rm -rf -- "$backup_work"
+    [ -z "$backup_lock" ] || rmdir -- "$backup_lock"
+    rmdir -- "$lock"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if [ "$catalog_mode" = existing ] && [ ! -f "$db" ]; then
+    echo 'VDB: catalog không tồn tại hoặc không phải tệp thường' >&2
+    exit 1
+fi
+if [ "$catalog_mode" = new ] && { [ -e "$db" ] || [ -L "$db" ]; }; then
+    echo 'VDB: catalog đã tồn tại' >&2
+    exit 1
+fi
+if [ -f "$db" ] && [ -n "$(find "$db" -links +1 -print)" ]; then
+    echo 'VDB: catalog có liên kết cứng; hãy dùng một bản sao độc lập' >&2
+    exit 1
+fi
+work=$(mktemp -d "$dir/.vdb.XXXXXXXX")
+case "$mode" in
+    sql) printf '%s\n' "$sql" > "$work/input.sql" ;;
+    file) cat -- "$sql" > "$work/input.sql" ;;
+    stdin) cat > "$work/input.sql" ;;
+    backup|restore) : > "$work/input.sql" ;;
+esac
+existing=''
+if [ -e "$db" ]; then
+    [ -f "$db" ] || { echo 'VDB: catalog phải là tệp thường' >&2; exit 1; }
+    existing="$db"
+fi
+# Backup validates an exact snapshot under the source lock. Restore validates
+# and rebuilds derived indexes in a private staging directory before publication.
+check_catalog=0
+case "$mode" in
+    backup)
+        check_catalog=1
+        backup_dir=$(CDPATH= cd -- "$(dirname -- "$sql")" && pwd -P)
+        backup="$backup_dir/$(basename -- "$sql")"
+        if [ -e "$backup" ] || [ -L "$backup" ]; then echo 'VDB: đích sao lưu đã tồn tại' >&2; exit 1; fi
+        if ! mkdir "$backup.lock" 2>/dev/null; then echo 'VDB: đích sao lưu đang bị khóa' >&2; exit 1; fi
+        backup_lock="$backup.lock"
+        backup_work=$(mktemp -d "$backup_dir/.vdb-backup.XXXXXXXX")
+        cp -- "$db" "$backup_work/snapshot.json"
+        existing="$backup_work/snapshot.json" ;;
+    restore)
+        check_catalog=1
+        if [ ! -f "$sql" ] || [ -L "$sql" ] || [ -n "$(find "$sql" -links +1 -print)" ]; then
+            echo 'VDB: bản sao lưu phải là tệp thường độc lập' >&2; exit 1
+        fi
+        cp -- "$sql" "$work/backup.json"
+        existing="$work/backup.json" ;;
+esac
+if ! VDB_CHECK_CATALOG="$check_catalog" VDB_TIMING="$timing" VDB_VALIDATE="$validate" VDB_GUARD_WRITES="$guard_writes" VDB_SQL="$work/input.sql" VDB_DATA="$existing" VDB_STAGE="$work/catalog.json" VDB_STATUS="$work/status" "$root/build/vdb-engine" > "$work/output"; then
+    cat "$work/output" >&2
+    exit 1
+fi
+if [ ! -f "$work/status" ] || [ "$(cat "$work/status")" != OK ]; then
+    cat "$work/output" >&2
+    exit 1
+fi
+case "$mode" in
+    backup|restore)
+        [ -f "$work/catalog.json" ] || { echo 'VDB: thiếu snapshot đã xác thực' >&2; exit 1; }
+        if [ "$mode" = backup ]; then
+            destination="$backup"; snapshot="$backup_work/snapshot.json"
+        else
+            destination="$db"; snapshot="$work/catalog.json"
+        fi
+        if [ -e "$destination" ] || [ -L "$destination" ]; then echo 'VDB: đích đã tồn tại' >&2; exit 1; fi
+        # Create a new directory entry atomically without replacing an existing file.
+        # POSIX link treats the destination as the exact pathname.
+        link "$snapshot" "$destination"
+        rm -- "$snapshot"
+        ;;
+    *)
+        if [ -f "$work/catalog.json" ]; then mv -f -- "$work/catalog.json" "$db"; fi ;;
+esac
+cat "$work/output"

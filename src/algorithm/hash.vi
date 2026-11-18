@@ -1,0 +1,61 @@
+nhập constants.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.lõi.chuyển kiểu.loại của;
+
+// Bảng băm theo bucket, lưu chỉ số hàng theo thứ tự chèn.
+// Phép nhân luôn nằm trong miền INT 32 bit.
+hàm băm byte(h, byte) {
+    trả về (h * 131 + byte) % 10000019;
+};
+
+hàm băm giá trị(h, v) {
+    nếu (v == rỗng) { trả về băm byte(h, 256); };
+    kiểu = loại của(v);
+    nếu (kiểu == TYPE_STRING()) {
+        h = băm byte(h, 257);
+        s = v;
+    } hoặc {
+        h = băm byte(h, 258);
+        // Chuẩn hóa INT và REAL về cùng double trước khi chuyển thành chuỗi.
+        // Cả -0.0 và 0 đều dùng cùng biểu diễn.
+        nếu (v == 0) { s = TEXT_ZERO(); }
+        hoặc nếu (kiểu == TYPE_BOOLEAN()) { nếu (v) { s = TEXT_EMPTY() + (1 + 0.0); } hoặc { s = TEXT_ZERO(); }; }
+        hoặc { s = TEXT_EMPTY() + (v + 0.0); };
+    };
+    bytes = chuỗi thành byte máy ảo(s);
+    lặp(i = 0; i < độ dài(bytes); i++) { h = băm byte(h, bytes[i]); };
+    trả về băm byte(h, 259);
+};
+
+hàm công khai bảng băm(n) {
+    kíchThước = 17;
+    khi (kíchThước < n && kíchThước < 65521) {
+        kíchThước = kíchThước * 2 + 1;
+    };
+    nếu (kíchThước > 65521) { kíchThước = 65521; };
+    ds = [];
+    lặp(i = 0; i < kíchThước; i++) { thêm(ds, []); };
+    trả về ds;
+};
+
+hàm vị trí băm(bảng, khóa) {
+    h = 0;
+    lặp(i = 0; i < độ dài(khóa); i++) { h = băm giá trị(h, khóa[i]); };
+    trả về h % độ dài(bảng);
+};
+
+hàm công khai ứng viên băm(bảng, khóa) {
+    trả về bảng[vị trí băm(bảng, khóa)];
+};
+
+hàm công khai thêm băm(bảng, khóa, i) {
+    thêm(bảng[vị trí băm(bảng, khóa)], i);
+};
+
+// Hash chỉ chọn bucket. So sánh từng thành phần để xử lý collision,
+// bao gồm NULL bằng NULL theo ngữ nghĩa GROUP BY/DISTINCT.
+hàm công khai bằng hàng(a, b) {
+    nếu (độ dài(a) != độ dài(b)) { trả về sai; };
+    lặp(i = 0; i < độ dài(a); i++) { nếu (a[i] != b[i]) { trả về sai; }; };
+    trả về đúng;
+};

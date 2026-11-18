@@ -1,0 +1,255 @@
+nhập constants.*;
+nhập records.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.lõi.chuyển kiểu.loại của;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+hàm công khai tìm tên(ds, tên) {
+    lặp(i = 0; i < độ dài(ds); i++) {
+        nếu (ds[i][KEY_NAME()] == tên) { trả về i; };
+    };
+    trả về -1;
+};
+
+hàm công khai cần tên(ds, tên) {
+    i = tìm tên(ds, tên);
+    nếu (i < 0) { ném ERR_NOT_FOUND() + tên; };
+    trả về i;
+};
+
+hàm công khai tên cột(ds) {
+    kếtQuả = [];
+    lặp(i = 0; i < độ dài(ds); i++) { thêm(kếtQuả, ds[i][KEY_NAME()]); };
+    trả về kếtQuả;
+};
+
+hàm công khai bỏ phần tử(ds, vịTrí) {
+    kếtQuả = [];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        nếu (i != vịTrí) { thêm(kếtQuả, ds[i]); };
+    };
+    trả về kếtQuả;
+};
+
+hàm công khai kiểm kiểu(cột, v) {
+    nếu (v == rỗng) {
+        nếu (cột[KEY_REQUIRED()]) { ném ERR_NOT_NULL() + cột[KEY_NAME()]; };
+        trả về rỗng;
+    };
+    kiểu = cột[KEY_TYPE()];
+    thực = loại của(v);
+    hợpLệ = sai;
+    nếu (kiểu == SQL_INT() || kiểu == SQL_INTEGER()) { hợpLệ = thực == TYPE_INTEGER(); }
+    hoặc nếu (kiểu == SQL_REAL()) { hợpLệ = thực == TYPE_INTEGER() || thực == TYPE_REAL(); }
+    hoặc nếu (kiểu == SQL_BOOLEAN()) { hợpLệ = (thực == TYPE_INTEGER() && (v == 0 || v == 1)) || thực == TYPE_BOOLEAN(); }
+    hoặc { hợpLệ = thực == TYPE_STRING(); };
+    nếu (!hợpLệ) { ném ERR_COLUMN_TYPE() + cột[KEY_NAME()] + TEXT_SPACE_OPEN_PAREN() + kiểu + TEXT_CLOSE_PAREN(); };
+    nếu (kiểu == SQL_VARCHAR()) {
+        nếu (độ dài(v) > cột[KEY_LIMIT()]) { ném ERR_VARCHAR_TOO_LONG() + cột[KEY_NAME()]; };
+    };
+};
+
+hàm công khai kiểm bảng(bảng) {
+    cột = bảng[KEY_COLUMNS()];
+    hàng = bảng[KEY_ROWS()];
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        lặp(j = 0; j < độ dài(cột); j++) {
+            v = hàng[i][j];
+            kiểm kiểu(cột[j], v);
+            nếu (cột[j][KEY_UNIQUE()] && v != rỗng) {
+                lặp(k = 0; k < i; k++) {
+                    nếu (hàng[k][j] == v) { ném ERR_DUPLICATE_KEY() + cột[j][KEY_NAME()]; };
+                };
+            };
+        };
+    };
+};
+
+hàm công khai chỉ số cột(cột, tên) {
+    ds = [];
+    nếu (độ dài(tên) == 0) { tên = tên cột(cột); };
+    lặp(i = 0; i < độ dài(tên); i++) { thêm(ds, cần tên(cột, tên[i])); };
+    trả về ds;
+};
+
+hàm công khai cần cột SQL(cột, tên) {
+    vịTrí = -1;
+    lặp(i = 0; i < độ dài(cột); i++) {
+        nếu (cột[i][KEY_NAME()] == tên || lấy từ điển(cột[i], KEY_QUALIFIED(), TEXT_EMPTY()) == tên) {
+            nếu (vịTrí >= 0) { ném ERR_AMBIGUOUS_COLUMN() + tên; };
+            vịTrí = i;
+        };
+    };
+    nếu (vịTrí < 0) { ném ERR_NOT_FOUND() + tên; };
+    trả về vịTrí;
+};
+
+hàm gắn toán hạng(cột, a) {
+    nếu (a[0] == OPERAND_COLUMN()) { trả về [OPERAND_COLUMN(), cần cột SQL(cột, a[1])]; };
+    trả về a;
+};
+
+hàm công khai biên dịch điều kiện(cột, ds) {
+    nếu (độ dài(ds) == 0) { trả về []; };
+    op = ds[0];
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        trả về [op, biên dịch điều kiện(cột, ds[1]), biên dịch điều kiện(cột, ds[2])];
+    };
+    nếu (op == SQL_NOT()) { trả về [op, biên dịch điều kiện(cột, ds[1])]; };
+    a = gắn toán hạng(cột, ds[1]);
+    nếu (op == SQL_IS() || op == SQL_IS_NOT()) { trả về [op, a]; };
+    nếu (op == SQL_IN()) {
+        mục = [];
+        lặp(i = 0; i < độ dài(ds[2]); i++) { thêm(mục, gắn toán hạng(cột, ds[2][i])); };
+        trả về [op, a, mục];
+    };
+    b = gắn toán hạng(cột, ds[2]);
+    nếu (op == SQL_BETWEEN()) { trả về [op, a, b, gắn toán hạng(cột, ds[3])]; };
+    trả về [op, a, b];
+};
+
+hàm công khai so sánh(a, op, b) {
+    nếu (op == SQL_IS()) { trả về a == rỗng; };
+    nếu (op == SQL_IS_NOT()) { trả về a != rỗng; };
+    nếu (a == rỗng || b == rỗng) { trả về sai; };
+    nếu (op == TEXT_EQUAL()) { trả về a == b; };
+    nếu (op == TEXT_NOT_EQUAL_SQL() || op == TEXT_NOT_EQUAL()) { trả về a != b; };
+    nếu (op == TEXT_LESS()) { trả về a < b; };
+    nếu (op == TEXT_LESS_EQUAL()) { trả về a <= b; };
+    nếu (op == TEXT_GREATER()) { trả về a > b; };
+    trả về a >= b;
+};
+
+hàm đọc toán hạng(hàng, a) {
+    nếu (a[0] == OPERAND_COLUMN()) { trả về hàng[a[1]]; };
+    trả về a[1];
+};
+
+// SQL three-valued logic: -1 UNKNOWN, 0 FALSE, 1 TRUE.
+hàm so sánh ba trị(a, op, b) {
+    nếu (a == rỗng || b == rỗng) { trả về -1; };
+    nếu (so sánh(a, op, b)) { trả về 1; };
+    trả về 0;
+};
+
+hàm và ba trị(a, b) {
+    nếu (a == 0 || b == 0) { trả về 0; };
+    nếu (a == -1 || b == -1) { trả về -1; };
+    trả về 1;
+};
+
+// Greedy wildcard matching; % matches any sequence, _ one Unicode character.
+hàm khớp mẫu(v, mẫu) {
+    nếu (loại của(v) != TYPE_STRING() || loại của(mẫu) != TYPE_STRING()) { ném ERR_LIKE_TYPE(); };
+    i = 0; j = 0; sao = -1; mốc = 0;
+    n = độ dài(v); m = độ dài(mẫu);
+    khi (i < n) {
+        nếu (j < m) {
+            c = mẫu[j];
+            nếu (c == TEXT_PERCENT()) { sao = j; mốc = i; j++; bỏ qua; };
+            nếu (c == TEXT_UNDERSCORE() || c == v[i]) { i++; j++; bỏ qua; };
+        };
+        nếu (sao < 0) { trả về 0; };
+        mốc++; i = mốc; j = sao + 1;
+    };
+    khi (j < m) {
+        nếu (mẫu[j] != TEXT_PERCENT()) { trả về 0; };
+        j++;
+    };
+    trả về 1;
+};
+
+hàm đánh giá điều kiện(hàng, d) {
+    nếu (độ dài(d) == 0) { trả về 1; };
+    op = d[0];
+    nếu (op == SQL_NOT()) {
+        a = đánh giá điều kiện(hàng, d[1]);
+        nếu (a == -1) { trả về -1; };
+        trả về 1 - a;
+    };
+    nếu (op == SQL_AND()) {
+        a = đánh giá điều kiện(hàng, d[1]);
+        nếu (a == 0) { trả về 0; };
+        trả về và ba trị(a, đánh giá điều kiện(hàng, d[2]));
+    };
+    nếu (op == SQL_OR()) {
+        a = đánh giá điều kiện(hàng, d[1]);
+        nếu (a == 1) { trả về 1; };
+        b = đánh giá điều kiện(hàng, d[2]);
+        nếu (b == 1) { trả về 1; };
+        nếu (a == -1 || b == -1) { trả về -1; };
+        trả về 0;
+    };
+    a = đọc toán hạng(hàng, d[1]);
+    nếu (op == SQL_IS()) { nếu (a == rỗng) { trả về 1; }; trả về 0; };
+    nếu (op == SQL_IS_NOT()) { nếu (a != rỗng) { trả về 1; }; trả về 0; };
+    nếu (op == SQL_IN()) {
+        kq = 0;
+        lặp(i = 0; i < độ dài(d[2]); i++) {
+            b = so sánh ba trị(a, TEXT_EQUAL(), đọc toán hạng(hàng, d[2][i]));
+            nếu (b == 1) { trả về 1; };
+            nếu (b == -1) { kq = -1; };
+        };
+        trả về kq;
+    };
+    b = đọc toán hạng(hàng, d[2]);
+    nếu (op == SQL_BETWEEN()) {
+        trả về và ba trị(so sánh ba trị(a, TEXT_GREATER_EQUAL(), b), so sánh ba trị(a, TEXT_LESS_EQUAL(), đọc toán hạng(hàng, d[3])));
+    };
+    nếu (op == SQL_LIKE()) {
+        nếu (a == rỗng || b == rỗng) { trả về -1; };
+        trả về khớp mẫu(a, b);
+    };
+    trả về so sánh ba trị(a, op, b);
+};
+
+hàm công khai khớp(hàng, điềuKiện) {
+    trả về đánh giá điều kiện(hàng, điềuKiện) == 1;
+};
+
+hàm công khai đứng trước(a, b, giảm) {
+    nếu (a == rỗng) { trả về b != rỗng && !giảm; };
+    nếu (b == rỗng) { trả về giảm; };
+    nếu (giảm) { trả về a > b; };
+    trả về a < b;
+};
+
+hàm công khai kết quả(cột, hàng) {
+    trả về bản ghi kết quả(cột, hàng);
+};
+
+hàm công khai thay đổi(n) { trả về bản ghi thay đổi(n); };
+
+hàm công khai tìm bảng(máy, tên) {
+    ds = máy.bảng hiện tại()[KEY_TABLES()];
+    trả về ds[cần tên(ds, tên)];
+};
+
+
+// Views have a separate namespace collection but share relation names with tables.
+hàm công khai danh sách view(db) {
+    trả về lấy từ điển(db, KEY_VIEWS(), []);
+};
+
+hàm công khai có quan hệ(db, tên) {
+    trả về tìm tên(db[KEY_TABLES()], tên) >= 0 || tìm tên(danh sách view(db), tên) >= 0;
+};
+
+hàm công khai kiểm view phụ thuộc(db, tên) {
+    ds = danh sách view(db);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        q = ds[i][KEY_QUERY()];
+        nếu (q[KEY_NAME()] == tên) { ném ERR_VIEW_DEPENDENCY() + ds[i][KEY_NAME()]; };
+        nối = q[KEY_JOINS()];
+        lặp(j = 0; j < độ dài(nối); j++) {
+            nếu (nối[j][KEY_NAME()] == tên) { ném ERR_VIEW_DEPENDENCY() + ds[i][KEY_NAME()]; };
+        };
+    };
+};
+
+hàm công khai metadata quan hệ(máy, tên) {
+    db = máy.bảng hiện tại();
+    ds = danh sách view(db); i = tìm tên(ds, tên);
+    nếu (i >= 0) { trả về ds[i]; };
+    trả về tìm bảng(máy, tên);
+};

@@ -1,0 +1,28 @@
+#!/bin/sh
+# Hold a kernel file lock across exec, including unexpected server exits.
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+state=${VDB_STUDIO_STATE:?Thiếu đường dẫn cấu hình Studio}
+dir=$(CDPATH= cd -- "$(dirname -- "$state")" && pwd -P)
+VDB_STUDIO_STATE="$dir/$(basename -- "$state")"
+export VDB_STUDIO_STATE
+umask 077
+
+# Keep the lock inode in place; deleting it could split concurrent locks.
+exec 9>>"$VDB_STUDIO_STATE.lock"
+case $(uname -s) in
+    Darwin|FreeBSD)
+        lockf -s -t 0 9 || {
+            echo 'VDB Studio: không thể khóa cấu hình (có thể đang được phiên khác sử dụng).' >&2
+            exit 1
+        }
+        ;;
+    Linux)
+        flock -n 9 || {
+            echo 'VDB Studio: không thể khóa cấu hình (có thể đang được phiên khác sử dụng).' >&2
+            exit 1
+        }
+        ;;
+    *) echo 'VDB Studio: nền tảng chưa hỗ trợ khóa cấu hình.' >&2; exit 1 ;;
+esac
+exec "$root/build/vdb-studio"

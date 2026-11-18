@@ -1,0 +1,100 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập command.foreign.*;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+nhập algorithm.index.bplus_tree.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân tích alter(bộ) {
+    bộ.cần(SQL_TABLE());
+    tên = bộ.tên định danh();
+    nếu (bộ.nhận(SQL_ADD())) {
+        tênFK = TEXT_EMPTY();
+        nếu (bộ.nhận(SQL_CONSTRAINT())) { tênFK = bộ.tên định danh(); bộ.cần(SQL_FOREIGN()); trả về bản ghi lệnh alter(tên, SQL_FOREIGN(), phân tích khóa ngoại(bộ, tên, tênFK), TEXT_EMPTY()); };
+        nếu (bộ.nhận(SQL_FOREIGN())) { trả về bản ghi lệnh alter(tên, SQL_FOREIGN(), phân tích khóa ngoại(bộ, tên, tênFK), TEXT_EMPTY()); };
+        bộ.nhận(SQL_COLUMN());
+        c = bộ.cột();
+        cmd = bản ghi lệnh alter(tên, SQL_ADD(), c, TEXT_EMPTY());
+        nếu (bộ.nhận(SQL_REFERENCES())) { cmd[KEY_FOREIGN_KEYS()] = [phân tích tham chiếu(bộ, tên, tênFK, [c[KEY_NAME()]])]; };
+        trả về cmd;
+    };
+    nếu (bộ.nhận(SQL_DROP())) {
+        nếu (bộ.nhận(SQL_FOREIGN())) { bộ.cần(SQL_KEY()); trả về bản ghi lệnh alter(tên, SQL_CONSTRAINT(), bộ.tên định danh(), TEXT_EMPTY()); };
+        bộ.nhận(SQL_COLUMN());
+        trả về bản ghi lệnh alter(tên, SQL_DROP(), bộ.tên định danh(), TEXT_EMPTY());
+    };
+    bộ.cần(SQL_RENAME());
+    nếu (bộ.nhận(SQL_COLUMN())) {
+        cũ = bộ.tên định danh();
+        bộ.cần(SQL_TO());
+        trả về bản ghi lệnh alter(tên, SQL_COLUMN(), cũ, bộ.tên định danh());
+    };
+    bộ.cần(SQL_TO());
+    trả về bản ghi lệnh alter(tên, SQL_RENAME(), TEXT_EMPTY(), bộ.tên định danh());
+};
+
+hàm công khai thực thi alter(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]);
+    cột = bảng[KEY_COLUMNS()];
+    hàng = bảng[KEY_ROWS()];
+    op = cmd[KEY_OPERATION()];
+    mục = cmd[KEY_ITEM()];
+    tênMới = cmd[KEY_NEW_NAME()];
+    nếu (op == SQL_RENAME() || op == SQL_COLUMN() || op == SQL_ADD() || op == SQL_DROP()) { kiểm view phụ thuộc(máy.bảng hiện tại(), bảng[KEY_NAME()]); };
+    nếu (op == SQL_FOREIGN()) { thêm khóa ngoại(bảng, mục); }
+    hoặc nếu (op == SQL_CONSTRAINT()) {
+        dsFK = danh sách khóa ngoại(bảng);
+        bảng[KEY_FOREIGN_KEYS()] = bỏ phần tử(dsFK, cần tên(dsFK, mục));
+    } hoặc nếu (op == SQL_RENAME()) {
+        nếu (có quan hệ(máy.bảng hiện tại(), tênMới)) { ném ERR_TABLE_EXISTS() + tênMới; };
+        đổi tên khóa ngoại(máy.bảng hiện tại(), bảng[KEY_NAME()], TEXT_EMPTY(), tênMới);
+        bảng[KEY_NAME()] = tênMới;
+    } hoặc nếu (op == SQL_COLUMN()) {
+        vịTrí = cần tên(cột, mục);
+        nếu (tìm tên(cột, tênMới) >= 0) { ném ERR_DUPLICATE_COLUMN(); };
+        đổi tên khóa ngoại(máy.bảng hiện tại(), bảng[KEY_NAME()], mục, tênMới);
+        cột[vịTrí][KEY_NAME()] = tênMới;
+        dsIndex = danh sách index(bảng);
+        lặp(i = 0; i < độ dài(dsIndex); i++) {
+            c = cột index(dsIndex[i]);
+            lặp(j = 0; j < độ dài(c); j++) { nếu (c[j] == mục) { c[j] = tênMới; }; };
+            dsIndex[i][KEY_INDEX_COLUMNS()] = c;
+        };
+    } hoặc {
+        cộtMới = []; hàngMới = [];
+        nếu (op == SQL_ADD()) {
+            nếu (tìm tên(cột, mục[KEY_NAME()]) >= 0) { ném ERR_DUPLICATE_COLUMN(); };
+            lặp(i = 0; i < độ dài(cột); i++) {
+                nếu (mục[KEY_PRIMARY()] && cột[i][KEY_PRIMARY()]) { ném ERR_MULTIPLE_PRIMARY_KEYS(); };
+                thêm(cộtMới, cột[i]);
+            };
+            thêm(cộtMới, mục);
+            lặp(i = 0; i < độ dài(hàng); i++) {
+                dòng = [];
+                lặp(j = 0; j < độ dài(hàng[i]); j++) { thêm(dòng, hàng[i][j]); };
+                thêm(dòng, rỗng);
+                thêm(hàngMới, dòng);
+            };
+        } hoặc {
+            vịTrí = cần tên(cột, mục);
+            nếu (độ dài(cột) == 1) { ném ERR_DROP_LAST_COLUMN(); };
+            dsIndex = danh sách index(bảng);
+            lặp(i = 0; i < độ dài(dsIndex); i++) {
+                c = cột index(dsIndex[i]);
+                lặp(j = 0; j < độ dài(c); j++) { nếu (c[j] == mục) { ném ERR_INDEXED_COLUMN() + mục; }; };
+            };
+            cộtMới = bỏ phần tử(cột, vịTrí);
+            lặp(i = 0; i < độ dài(hàng); i++) { thêm(hàngMới, bỏ phần tử(hàng[i], vịTrí)); };
+        };
+        kiểm bảng(bản ghi bảng(bảng[KEY_NAME()], cộtMới, hàngMới));
+        bảng[KEY_COLUMNS()] = cộtMới;
+        bảng[KEY_ROWS()] = hàngMới;
+        fks = lấy từ điển(cmd, KEY_FOREIGN_KEYS(), []);
+        lặp(i = 0; i < độ dài(fks); i++) { thêm khóa ngoại(bảng, fks[i]); };
+    };
+    cập nhật index(bảng);
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};

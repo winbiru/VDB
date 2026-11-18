@@ -1,0 +1,33 @@
+nhập constants.*;
+nhập command.common.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm trước hàng(a, b, sắp) {
+    lặp(i = 0; i < độ dài(sắp); i++) {
+        k = sắp[i]; x = a[KEY_SORT()][i]; y = b[KEY_SORT()][i];
+        nếu (x != y) { trả về đứng trước(x, y, k[1]); };
+    };
+    trả về sai;
+};
+
+// Stable bottom-up merge sort, O(n log n) comparisons.
+hàm công khai sắp hợp nhất(ds, sắp) {
+    n = độ dài(ds); rộng = 1;
+    khi (rộng < n) {
+        kq = []; đầu = 0;
+        khi (đầu < n) {
+            giữa = đầu + rộng; cuối = giữa + rộng;
+            nếu (giữa > n) { giữa = n; }; nếu (cuối > n) { cuối = n; };
+            i = đầu; j = giữa;
+            khi (i < giữa && j < cuối) {
+                nếu (trước hàng(ds[j], ds[i], sắp)) { thêm(kq, ds[j]); j++; }
+                hoặc { thêm(kq, ds[i]); i++; };
+            };
+            khi (i < giữa) { thêm(kq, ds[i]); i++; };
+            khi (j < cuối) { thêm(kq, ds[j]); j++; };
+            đầu = cuối;
+        };
+        ds = kq; rộng = rộng * 2;
+    };
+    trả về ds;
+};

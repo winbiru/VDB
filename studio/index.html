@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>VDB Studio</title>
+<style>
+:root{color-scheme:light;--ink:#23334a;--muted:#718198;--line:#dce3eb;--blue:#2764b3;--nav:#18304e;--panel:#f5f7fa;--white:#fff;--green:#267b63;font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--panel);color:var(--ink);height:100dvh;min-height:540px;display:flex;flex-direction:column}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;background:transparent;border:1px solid transparent;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;padding:6px 9px}button:hover{background:#e8edf5}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #6299e1;outline-offset:1px}svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}.header{height:58px;background:var(--nav);color:#f0f5ff;display:flex;align-items:center;gap:22px;padding:0 20px;flex:none}.brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;letter-spacing:-.4px}.brandmark{width:32px;height:32px;border-radius:9px;background:#4385d8;color:white;display:grid;place-items:center}.brandmark svg{width:21px;height:21px}.connection{display:flex;align-items:center;gap:8px;color:#b5c7de;font-size:12px;border-left:1px solid #49617d;padding-left:20px}.dot{width:7px;height:7px;border-radius:50%;background:#8c9bae;display:inline-block}.dot.ok{background:#6bddae;box-shadow:0 0 0 3px #6bddae22}.dot.bad{background:#e3a052}.header-end{margin-left:auto;font-size:11px;color:#b5c7de;display:flex;align-items:center;gap:10px}.toolbar{background:white;border-bottom:1px solid var(--line);height:47px;display:flex;align-items:center;padding:0 13px;gap:6px;flex:none}.toolbar button{height:32px}.separator{height:23px;border-left:1px solid var(--line);margin:0 5px}.primary{background:var(--blue);color:white;border:1px solid var(--blue);font-weight:600}.primary:hover{background:#1d5299}.toolbar label{margin-left:auto;color:var(--muted);display:flex;align-items:center;gap:8px}.toolbar select{background:white;border:1px solid var(--line);padding:6px 22px 6px 8px;border-radius:5px;max-width:170px}.workspace{display:grid;grid-template-columns:258px minmax(0,1fr);flex:1;min-height:0}.sidebar{border-right:1px solid var(--line);background:#f8fafc;display:flex;flex-direction:column;min-height:0}.side-title{padding:17px 14px 10px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:12px;letter-spacing:.8px;text-transform:uppercase}.side-title button{padding:4px;color:var(--muted)}.search{position:relative;margin:0 12px 12px}.search svg{position:absolute;top:9px;left:8px;color:#8291a5}.search input{width:100%;border:1px solid var(--line);border-radius:5px;padding:8px 8px 8px 30px;background:white;font-size:12px}.side-actions{display:flex;gap:5px;padding:0 12px 10px}.side-actions button{border:1px solid var(--line);background:#fff;font-size:11px;flex:1}.tree{flex:1;overflow:auto;padding:0 8px}.tree button{width:100%;justify-content:flex-start;padding:7px 6px;text-align:left;font-size:12px;gap:6px}.tree button.selected{background:#dfebfb;color:#1b5aa4;font-weight:600}.tree .chev{width:11px;height:11px;color:#8b9bb0}.tree .db-icon{color:#5582ba}.tree .table-icon{color:#8191a8}.tree .table-row{padding-left:34px}.tree .folder{display:flex;align-items:center;gap:7px;color:#8b99aa;padding:6px 0 6px 27px;font-size:11px}.tree .empty{padding:7px 12px;color:var(--muted);font-size:12px}.sidebar-bottom{border-top:1px solid var(--line);padding:13px 14px;background:#f0f4f9;color:var(--muted);font-size:11px;line-height:1.6}.sidebar-bottom b{display:block;color:#41546d;font-size:12px}.main{display:flex;flex-direction:column;min-width:0;min-height:0;background:white}.tabs{display:flex;align-items:stretch;gap:2px;background:#f0f3f7;border-bottom:1px solid var(--line);height:38px;flex:none;overflow-x:auto}.tab{display:flex;align-items:center;gap:8px;border-right:1px solid var(--line);padding:0 9px 0 13px;flex:none;cursor:pointer;color:#66768a}.tab.active{background:white;color:var(--blue);font-weight:600;border-top:2px solid var(--blue)}.tab .close{padding:2px;margin-left:5px;color:#8795a7}.tab .close:hover{color:var(--ink)}.tab .close svg{width:13px;height:13px}.add-tab{padding:0 12px;color:var(--muted)}.editor-region{height:39%;min-height:150px;display:flex;flex-direction:column;border-bottom:1px solid var(--line);position:relative;flex:none}.editor-meta{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid #eef1f5;color:var(--muted);font-size:11px}.editor-meta strong{color:#4b5d74;font-weight:600}.editor-shell{display:flex;flex:1;min-height:0;overflow:hidden;background:#fff}.lines{flex:none;width:48px;background:#f8fafc;border-right:1px solid #edf0f5;color:#9aa8ba;text-align:right;padding:12px 11px 12px 0;overflow:hidden;white-space:pre;font:13px/22px "SF Mono",Consolas,monospace}.editor{position:relative;flex:1;min-width:0;overflow:hidden}.editor textarea,.editor pre{position:absolute;inset:0;box-sizing:border-box;margin:0;border:0;padding:12px 15px;font:13px/22px "SF Mono",Consolas,monospace;letter-spacing:0;tab-size:4;white-space:pre;overflow:auto;resize:none;width:100%;height:100%;background:transparent}.editor pre{pointer-events:none;color:#24354b;overflow:hidden}.editor textarea{color:transparent;caret-color:#1b416e;outline:none}.editor textarea::selection{background:#a6c7f666;color:transparent}.kw{color:#245eb3;font-weight:600}.str{color:#a26227}.num{color:#14836e}.comment{color:#8c9aab}.editor-foot{display:flex;align-items:center;justify-content:space-between;padding:5px 12px;color:var(--muted);font-size:11px;background:#fbfcfe;border-top:1px solid #f0f2f6}.splitter{height:5px;background:#edf1f6;cursor:row-resize;flex:none}.splitter:hover{background:#b9d1ee}.results{display:flex;flex:1;min-height:90px;flex-direction:column;overflow:hidden}.panel-head{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);min-height:39px;padding:5px 12px;background:#fafbfd}.panel-head h2{font-size:12px;margin:0;font-weight:700;white-space:nowrap}.panel-head .count{color:var(--muted);font-size:11px}.panel-head .spacer{flex:1}.panel-head input{width:155px;padding:5px 8px;border:1px solid var(--line);border-radius:4px;font-size:11px}.panel-head button{font-size:11px;border:1px solid var(--line);background:white}.result-tabs{display:flex;gap:4px;overflow:auto;padding:5px 10px;border-bottom:1px solid var(--line);flex:none}.result-tabs:empty{display:none}.result-tabs button{font-size:11px;color:var(--muted);padding:4px 9px}.result-tabs button.active{color:var(--blue);background:#e6effb;font-weight:600}.grid-wrap{overflow:auto;flex:1;min-height:0}.grid{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%;white-space:nowrap}.grid th{position:sticky;top:0;background:#edf2f8;color:#53657d;font-size:11px;letter-spacing:.25px;text-align:left;font-weight:600;z-index:1}.grid th,.grid td{padding:8px 12px;border-bottom:1px solid #e6ebf1;border-right:1px solid #e6ebf1;max-width:450px;overflow:hidden;text-overflow:ellipsis}.grid tr:nth-child(even) td{background:#f8fafd}.grid tr:hover td{background:#eaf2fd}.grid .row-index{color:#8290a4;background:#f4f7fa;width:45px;text-align:right}.grid td.null{color:#9ba8b7;font-style:italic}.grid td.number{text-align:right;font-variant-numeric:tabular-nums}.empty-state{height:100%;min-height:95px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);text-align:center;padding:16px}.empty-state svg{width:27px;height:27px;color:#9db4d0}.empty-state strong{font-weight:600;color:#51647d}.empty-state.error{color:#a65b28;white-space:pre-wrap}.log{height:132px;flex:none;border-top:1px solid var(--line);display:flex;flex-direction:column}.log .panel-head{min-height:31px;padding:3px 12px}.log .grid th,.log .grid td{padding:5px 10px;font-size:11px}.log .ok{color:var(--green)}.log .err{color:#ad602e}.statusbar{background:#e9eef5;border-top:1px solid #d3dce8;height:27px;display:flex;align-items:center;gap:15px;padding:0 12px;color:#64758b;font-size:11px;flex:none}.statusbar .right{margin-left:auto}.statusbar .dot{margin-right:5px}dialog{border:1px solid var(--line);border-radius:10px;box-shadow:0 15px 50px #182d5033;padding:20px;max-width:420px;width:calc(100% - 28px);color:var(--ink)}dialog::backdrop{background:#152a4b50}dialog h2{margin:0 0 8px;font-size:17px}dialog p{color:var(--muted);line-height:1.5}dialog input{padding:9px;border:1px solid var(--line);border-radius:5px;width:100%;margin:8px 0 16px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px}.dialog-actions button:not(.primary){border:1px solid var(--line)}@media(max-width:760px){.workspace{grid-template-columns:185px minmax(0,1fr)}.toolbar .optional,.header-end,.connection{display:none}.toolbar{gap:3px;padding:0 5px}.toolbar label{font-size:0}.toolbar select{font-size:12px;max-width:100px}.side-actions{flex-direction:column}.panel-head input{width:80px}.log{height:110px}}
+[hidden]{display:none!important}
+.connection-nav{display:flex;align-items:stretch;min-height:40px;flex:none;background:#e8edf4;border-bottom:1px solid var(--line);padding:0 10px;gap:3px}
+.connection-nav>button{align-self:center;margin-right:3px}.connection-nav>button.active{background:white;color:var(--blue);font-weight:600}
+.connection-tabs{display:flex;overflow-x:auto;min-width:0;flex:1;gap:3px}
+.connection-tab{display:flex;align-items:center;gap:4px;flex:none;background:#e1e8f2;border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;margin-top:5px;padding:0 4px 0 8px}
+.connection-tab.active{background:#fff;border-color:var(--line);color:var(--blue)}
+.connection-tab .open-connection{font-weight:600;max-width:230px;overflow:hidden;text-overflow:ellipsis;display:inline-block;padding:7px 3px}
+.connection-tab .dot{flex:none}.connection-tab .close{padding:4px}
+.home{flex:1;min-height:0;overflow:auto;background:#f5f7fa;padding:34px clamp(22px,5vw,74px)}
+.home-title{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.home-title h1{font-size:25px;letter-spacing:-.6px;margin:0 0 7px}.home-title p{margin:0;color:var(--muted)}
+.home-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+.home-tools input,.home-tools select,dialog select{border:1px solid var(--line);background:white;border-radius:5px;padding:9px}
+.home-tools input{width:min(310px,100%)}.home-tools label{color:var(--muted);margin-left:auto}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.profile-card{border:1px solid var(--line);border-radius:9px;background:white;padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.profile-card:hover{border-color:#9db9dc}.profile-open{display:flex;align-items:center;gap:12px;text-align:left;justify-content:flex-start;width:100%;padding:0;min-width:0;white-space:normal}
+.profile-open:hover{background:transparent;color:var(--blue)}.profile-open .brandmark{flex:none}.profile-title{display:block;font-size:15px;font-weight:700;overflow-wrap:anywhere}.profile-caption{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.profile-path{font:11px/1.5 "SF Mono",Consolas,monospace;color:#596d86;overflow-wrap:anywhere;min-height:32px}
+.profile-actions{display:flex;align-items:center;gap:4px;border-top:1px solid var(--line);padding-top:8px;margin-top:auto}.profile-actions .spacer{flex:1}
+.profile-actions button{font-size:12px;color:var(--blue)}.home-message{min-height:20px;color:var(--muted);margin:14px 0;overflow-wrap:anywhere}
+.profile-form label{display:block;font-weight:600;margin:12px 0 6px}.profile-form input,.profile-form select{width:100%}.path-field{display:flex;gap:6px}.path-field input{min-width:0;flex:1}.path-field button{border:1px solid var(--line)}.form-message{min-height:20px;color:#a65b28;overflow-wrap:anywhere;margin-top:10px}
+.dirty-mark{color:#af7b25;font-weight:700}.connection-tab .dot.bad{background:#d99a58}
+
+/* Resizable VDB workbench panels. */
+.workspace{grid-template-columns:var(--nav-width,258px) 5px minmax(0,1fr) 5px var(--right-width,240px)}
+.workspace.no-nav{grid-template-columns:0 0 minmax(0,1fr) 5px var(--right-width,240px)}
+.workspace.no-right{grid-template-columns:var(--nav-width,258px) 5px minmax(0,1fr) 0 0}
+.workspace.no-nav.no-right{grid-template-columns:0 0 minmax(0,1fr) 0 0}
+.sidebar,.additions{min-width:0;overflow:hidden}
+#navigator{grid-column:1}#navSplitter{grid-column:2}#mainPanel{grid-column:3}#rightSplitter{grid-column:4}#sqlAdditions{grid-column:5}
+.workspace>*{grid-row:1}
+.navigator-content{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.sidebar.info-only .sidebar-bottom{flex:1;height:auto}
+.editor-region{flex-shrink:0}
+.sidebar-bottom{height:var(--info-height,100px);flex:none;overflow:auto;box-sizing:border-box}
+.additions{display:flex;flex-direction:column;background:#f8fafc;border-left:1px solid var(--line)}
+.additions p{margin:8px 0;color:var(--muted);line-height:1.6}
+.addition-content{flex:1;min-height:0;overflow:auto;padding:12px}
+.addition-content h3{font-size:13px;margin:0 0 8px;color:var(--blue)}
+.addition-content pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid var(--line);border-radius:4px;padding:9px;font:12px/1.6 ui-monospace,monospace;margin:8px 0}
+.snippet-fields{display:flex;flex-direction:column;gap:7px}
+.snippet-fields input,.snippet-fields select{width:100%;box-sizing:border-box;min-width:0}
+.snippet-fields select[size]{min-height:100px;background:white}
+.snippet-actions{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.snippet-actions button{flex:1;white-space:normal}
+#snippetSql{width:100%;min-height:150px;resize:vertical;font:12px/1.5 ui-monospace,monospace;box-sizing:border-box}
+#snippetDialog{width:min(520px,90vw)}
+.splitter.vertical{height:auto;width:5px;cursor:col-resize}
+.splitter{touch-action:none}
+.editor-region{height:var(--editor-height,39%);min-height:90px;max-height:calc(100% - 150px)}
+.log{height:var(--output-height,132px);min-height:65px;max-height:45%;overflow:hidden}
+.toolbar{overflow-x:auto;gap:4px;padding:0 8px}.toolbar button{flex:none}
+.toolbar label{flex:none}
+.layout-toggle[aria-pressed="true"]{background:#dce9fa;color:#205ca8}
+.layout-controls{display:flex;gap:2px;flex:none;margin-left:auto}
+.layout-controls button{padding:5px 7px}
+.info-head{font-weight:600;margin-bottom:5px;color:#41546d}
+.find-row{display:flex;align-items:center;gap:5px;padding:5px 8px;background:#f0f4f9;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.find-row input{min-width:90px;width:140px;padding:5px;border:1px solid var(--line);border-radius:4px}
+.find-row span{font-size:11px;color:var(--muted)}
+@media(max-width:760px){.toolbar .optional{display:none}.layout-controls{margin-left:0}.sidebar-bottom{padding:8px}}
+/* Navigator object metadata and schema tools. */
+.tree .table-entry{display:flex;align-items:center;padding-left:20px}
+.tree .table-entry .expand-table{width:22px;flex:none;padding:5px 2px;justify-content:center}
+.tree .table-entry .table-row{min-width:0;padding:6px 3px;flex:1;overflow:hidden}
+.tree .node-name{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tree .column-row{padding:5px 5px 5px 55px;color:#53657d;font-size:11px}
+.tree .column-group{padding-left:48px}
+.tree .column-row{flex-wrap:wrap}.tree .column-row .node-name{flex:1 1 100%;min-width:0}
+.constraint{display:inline-block;background:#e5edf7;color:#375d89;font-size:10px;padding:1px 4px;border-radius:3px;white-space:nowrap}
+.tree .default-schema{font-weight:700}.tree .selected.default-schema{color:var(--blue)}
+.sidebar-bottom{padding:0;display:flex;flex-direction:column}
+.info-tabs{display:flex;flex:none;border-bottom:1px solid var(--line);background:#e8eef6}
+.info-tabs button{flex:1;border-radius:0;font-size:11px;padding:6px 3px}
+.info-tabs button[aria-selected="true"]{background:#fff;color:var(--blue);font-weight:600;border-bottom:2px solid var(--blue)}
+.info-body{padding:8px 10px;overflow:auto;min-height:0;flex:1;overflow-wrap:anywhere}
+.info-body dl{margin:5px 0}.info-body dt{font-size:10px;color:var(--muted)}.info-body dd{margin:0 0 5px;color:var(--ink)}
+.info-column{display:flex;flex-wrap:wrap;gap:4px;align-items:baseline;border-top:1px solid var(--line);padding:4px 0}
+.info-column strong{color:var(--ink);font-size:11px}.info-column .type{margin-left:auto;color:#53657d}
+.context-menu{position:fixed;z-index:20;min-width:190px;max-width:calc(100vw - 12px);max-height:calc(100vh - 12px);overflow:auto;background:white;border:1px solid #ccd7e4;border-radius:6px;box-shadow:0 5px 22px #182d5029;padding:4px}
+.context-menu button{display:flex;width:100%;justify-content:flex-start;padding:7px 10px;text-align:left;font-size:12px}
+.context-menu button.danger,.danger-text{color:#a24435}.context-menu hr{border:0;border-top:1px solid var(--line);margin:3px 5px}
+#tableDialog,#inspectorDialog{max-width:760px;width:calc(100% - 28px);max-height:85vh;overflow:auto}
+.designer-fields{display:flex;gap:12px;align-items:end}.designer-fields label{flex:1;min-width:0;font-weight:600}
+.designer-fields input,.designer-fields select{display:block;width:100%;margin:5px 0 10px}
+.designer-grid{width:100%;border-collapse:collapse;font-size:12px}
+.designer-grid th{background:#edf2f8;color:#53657d;text-align:left;padding:7px 5px;white-space:nowrap}
+.designer-grid td{padding:5px;border-bottom:1px solid var(--line)}
+.designer-grid input:not([type="checkbox"]),.designer-grid select{width:100%;margin:0;padding:6px;min-width:65px}
+.designer-grid input[type="checkbox"]{width:auto;margin:0;accent-color:var(--blue)}
+.designer-grid .check-cell{text-align:center}.designer-scroll{overflow:auto;margin-bottom:8px}
+.designer-preview{width:100%;min-height:100px;max-height:180px;overflow:auto;resize:vertical;background:#f5f7fa;border:1px solid var(--line);border-radius:5px;padding:8px;font:12px/1.5 "SF Mono",Consolas,monospace}
+#inspectorColumns{max-height:45vh;overflow:auto}#inspectorColumns .grid{white-space:normal}
+/* Query and data tools */
+.editor-tools,.grid-tools{display:flex;align-items:center;gap:4px;padding:4px 8px;border-bottom:1px solid var(--line);background:#f5f8fc;overflow:auto;flex:none}
+.editor-tools button,.grid-tools button{white-space:nowrap;font-size:11px;border:1px solid var(--line);background:white}
+.editor-tools label{white-space:nowrap;font-size:11px}
+#completion{max-width:240px}#validationStatus{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grid th{position:sticky}.grid th .resize-column{position:absolute;right:0;top:0;height:100%;width:7px;cursor:col-resize;touch-action:none}.grid th .sort-column{padding:0;font-size:inherit;color:inherit;text-align:left}
+.grid td.selected-cell{outline:2px solid var(--blue);outline-offset:-2px;background:#dce9fa}
+#dataDialog,#detailDialog{max-width:800px;width:calc(100% - 28px);max-height:85vh;overflow:auto}
+#dataFields{display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:4px 10px;max-height:35vh;overflow:auto}
+#dataFields input{margin:0}#dataFields input[type=checkbox]{width:auto}
+#dataDialog select,#outputMode,#outputFilter,#outputDate{font-size:11px;max-width:160px}
+#dataPreview,#detailText,#csvText{width:100%;min-height:100px;max-height:32vh;resize:vertical;font:12px/1.5 monospace}
+#dataMessage{white-space:pre-wrap;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header class="header"><div class="brand"><span class="brandmark" data-icon="db"></span>VDB Studio</div><div class="connection"><span class="dot" id="connectionDot"></span><span id="connectionText">Đang kết nối…</span></div><div class="header-end">VIETNAM DATABASE <span>·</span> 0.1.0</div></header>
+<nav class="connection-nav" aria-label="Kết nối">
+<button id="homeButton" data-icon="home" title="Trang chủ">Home</button>
+<div id="connectionTabs" class="connection-tabs" role="tablist" aria-label="Tab kết nối"></div>
+<button id="newConnection" data-icon="plus" title="Tạo kết nối">Kết nối</button>
+</nav>
+<section class="home" id="home">
+<div class="home-title"><div><h1>Kết nối cơ sở dữ liệu</h1><p>Chọn catalog VDB cục bộ để bắt đầu làm việc.</p></div><button id="homeNew" class="primary" data-icon="plus">Kết nối mới</button></div>
+<div class="home-tools"><input id="profileSearch" placeholder="Tìm tên hoặc đường dẫn…" aria-label="Tìm kết nối"><label>Sắp xếp <select id="profileSort"><option value="recent">Gần đây</option><option value="name">Tên kết nối</option></select></label></div>
+<div id="profiles" class="profile-grid"></div><div id="homeMessage" class="home-message" role="status"></div>
+</section>
+<nav id="sqlToolbar" class="toolbar" aria-label="Công cụ SQL" hidden>
+<button id="toolHome" data-icon="home" title="Trang chủ"></button><button id="toolConnect" data-icon="plus" title="Kết nối mới"></button><span class="separator"></span><button id="newTab" data-icon="file" title="Tab SQL mới (⌘N)">Tab mới</button><button id="openFile" data-icon="folder" title="Mở tệp SQL (⌘O)"><span class="optional">Mở</span></button><button id="saveFile" data-icon="save" title="Lưu tệp SQL (⌘S)"><span class="optional">Lưu</span></button><span class="separator"></span>
+<button class="primary" id="run" data-icon="play" title="Chạy toàn bộ SQL">Chạy SQL</button><button id="runSelection" data-icon="bolt" title="Chạy vùng SQL đã chọn">Chạy vùng chọn</button><button id="runCurrent" data-icon="bolt" title="Chạy câu SQL tại con trỏ (Ctrl/⌘ + Shift + Enter)">Câu hiện tại</button><span class="separator"></span><button id="toolDb" data-icon="db" title="Tạo database"></button><button id="toolTable" data-icon="table" title="Tạo bảng trực quan"></button><button id="toolSearch" data-icon="search" title="Tìm schema hoặc bảng"></button><button id="toolStructure" data-icon="table" title="Xem cấu trúc bảng"></button><button id="toolPreferences" title="Tùy chọn bố cục">Tùy chọn</button><button id="toolImport" data-icon="folder" title="Import CSV vào bảng">Import</button><button id="toolExport" data-icon="download" title="Xuất kết quả CSV"></button><button id="refresh" data-icon="refresh" title="Làm mới schema"></button>
+<button id="toolModel" title="Mô hình quan hệ từ metadata VDB">Mô hình</button><button id="toolAdmin" title="Quản trị catalog và sao lưu">Administration</button>
+<label>Database <select id="database" aria-label="Database hiện tại"><option>DEFAULT</option></select></label>
+<div class="layout-controls" aria-label="Bố cục">
+<button id="toggleNav" class="layout-toggle" title="Hiện/ẩn Navigator" aria-pressed="true">Nav</button>
+<button id="toggleInfo" class="layout-toggle" title="Hiện/ẩn Information" aria-pressed="true">Info</button>
+<button id="toggleRight" class="layout-toggle" title="Hiện/ẩn SQL Additions" aria-pressed="false">SQL+</button>
+<button id="toggleOutput" class="layout-toggle" title="Hiện/ẩn Output" aria-pressed="true">Output</button>
+<button id="resetLayout" data-icon="refresh" title="Khôi phục bố cục mặc định"></button>
+</div><input id="fileInput" type="file" accept=".sql,.txt,text/plain" hidden>
+</nav>
+<div class="workspace" id="workspace" hidden>
+<aside class="sidebar" id="navigator"><div class="navigator-content" id="navigatorContent">
+<div class="side-title">Schemas <button id="refreshSide" data-icon="refresh" title="Làm mới schemas"></button></div>
+<div class="search"><span data-icon="search"></span><input id="schemaSearch" placeholder="Tìm database, bảng hoặc cột…" aria-label="Tìm database, bảng hoặc cột"></div>
+<div class="side-actions"><button id="createDb" data-icon="plus" title="Tạo database">Database</button><button id="createTable" data-icon="plus" title="Tạo bảng trực quan">Table</button><button id="createView" data-icon="plus" title="Soạn CREATE VIEW">View</button></div>
+<div class="tree" id="tree"></div></div>
+<div class="splitter" id="infoSplitter" title="Kéo để thay đổi chiều cao Information"></div><div class="sidebar-bottom" id="information"><div class="info-tabs" role="tablist" aria-label="Information"><button id="objectInfoTab" role="tab" aria-selected="true">Object Info</button><button id="sessionInfoTab" role="tab" aria-selected="false">Session</button></div><div id="objectInfo" class="info-body" role="tabpanel"><b id="catalogTitle">VDB local catalog</b><span id="schemaSummary">Đang tải schemas…</span><div id="objectDetails"></div></div><div id="sessionInfo" class="info-body" role="tabpanel" hidden></div></div>
+</aside>
+<div class="splitter vertical" id="navSplitter" title="Kéo để đổi chiều rộng Navigator"></div><main class="main" id="mainPanel">
+<div class="tabs" id="tabs" role="tablist"></div>
+<section class="editor-region" id="editorRegion">
+<div class="editor-meta"><strong>SQL Editor</strong><span>Ctrl / ⌘ + Enter để chạy</span></div>
+<div class="editor-tools"><button id="editorRun" data-icon="play" title="Chạy toàn bộ (Cmd/Ctrl+Enter)">Chạy</button><button id="editorCurrent" data-icon="bolt" title="Câu tại con trỏ (Cmd/Ctrl+Shift+Enter)">Câu hiện tại</button><button id="editorFind" data-icon="search" title="Tìm/thay thế (Cmd/Ctrl+F)">Tìm</button><button id="editorUndo" title="Undo (Cmd/Ctrl+Z)">↶</button><button id="editorRedo" title="Redo (Cmd/Ctrl+Shift+Z)">↷</button><button id="formatSql" title="Viết hoa từ khóa, bố trí dòng SQL">Format</button><button id="explainSql" title="Xem kế hoạch SELECT tại con trỏ hoặc vùng chọn">EXPLAIN</button><button id="validateSql" title="Phân tích cú pháp bằng parser VDB">Kiểm tra</button><button id="suggestSql" title="Gợi ý tại con trỏ (Ctrl+Space)">Gợi ý</button><select id="completion" aria-label="Gợi ý SQL" hidden></select><label>Limit <select id="rowLimit" title="Áp dụng cho một câu SELECT * FROM bảng chưa có LIMIT"><option value="0">Không giới hạn</option><option value="100">100</option><option value="500">500</option><option value="1000">1000</option></select></label><span id="validationStatus" role="status"></span></div>
+<div class="find-row" id="findRow" hidden><input id="findText" placeholder="Tìm SQL" aria-label="Tìm SQL"><input id="replaceText" placeholder="Thay thế" aria-label="Thay thế"><button id="findNext">Tìm tiếp</button><button id="replaceOne">Thay thế</button><button id="replaceAll">Thay tất cả</button><span id="findStatus" role="status"></span><button id="closeFind" data-icon="close" title="Đóng tìm kiếm"></button></div>
+<div class="editor-shell"><div class="lines" id="lines" aria-hidden="true">1</div><div class="editor"><pre id="highlight" aria-hidden="true"></pre><textarea id="sql" aria-label="Trình soạn thảo SQL" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"></textarea></div></div>
+<div class="editor-foot"><span id="cursor">Dòng 1, cột 1</span><span>SQL · UTF-8</span></div>
+</section>
+<div class="splitter" id="splitter" title="Kéo để thay đổi chiều cao trình soạn thảo"></div>
+<section class="results">
+<div class="panel-head"><h2>Result Grid</h2><span class="count" id="resultCount"></span><button id="pagePrev" title="Trang trước" hidden>‹</button><button id="pageNext" title="Trang sau (có thể rỗng nếu đã hết hàng)" hidden>›</button><span class="count" id="pageInfo" hidden></span><span class="spacer"></span><input id="resultSearch" placeholder="Lọc kết quả…" aria-label="Lọc kết quả"><button id="exportCsv" data-icon="download" disabled>CSV</button></div>
+<div class="grid-tools"><button id="copyCell" title="Sao chép ô được chọn">Copy ô</button><button id="copyRow" title="Sao chép hàng được chọn">Copy hàng</button><button id="inspectCell">Xem ô</button><button id="editRow">Sửa hàng</button><button id="insertRow">Thêm hàng</button><button id="deleteRow">Xóa hàng</button><span id="gridHint"></span></div>
+<div id="resultTabs" class="result-tabs"></div><div class="grid-wrap" id="resultGrid"></div>
+</section>
+<div class="splitter" id="outputSplitter" title="Kéo để đổi chiều cao Output"></div><section class="log" id="outputPanel">
+<div class="panel-head"><h2>Output</h2><select id="outputMode" aria-label="Loại nhật ký"><option value="logs">Action Output</option><option value="history">History</option></select><select id="outputFilter" aria-label="Trạng thái"><option value="">Tất cả</option><option value="ok">OK</option><option value="error">Lỗi</option></select><input id="outputDate" type="date" aria-label="Ngày nhật ký"><button id="exportLog">CSV</button><span class="spacer"></span><button id="clearLog" data-icon="trash" title="Xóa nhật ký">Xóa</button></div>
+<div class="grid-wrap"><table class="grid"><thead><tr><th>#</th><th>Thời gian</th><th>SQL</th><th>Kết quả</th><th>Engine (ms)</th><th>Xuất kết quả (ms)</th><th>Đọc phản hồi (ms)</th><th>HTTP (ms)</th></tr></thead><tbody id="logs"></tbody></table></div>
+</section>
+</main><div class="splitter vertical" id="rightSplitter" title="Kéo để đổi chiều rộng SQL Additions"></div>
+<aside class="additions" id="sqlAdditions" hidden>
+<div class="side-title">SQL Additions</div>
+<div class="info-tabs" role="tablist" aria-label="SQL Additions"><button id="contextHelpTab" role="tab" aria-controls="contextHelpPanel" aria-selected="true">Context Help</button><button id="snippetsTab" role="tab" aria-controls="snippetsPanel" aria-selected="false">Snippets</button></div>
+<section class="addition-content" id="contextHelpPanel" role="tabpanel" aria-labelledby="contextHelpTab"><h3 id="contextTitle">SQL Context Help</h3><p id="contextDescription">Đặt con trỏ vào từ khóa SQL để xem hướng dẫn.</p><pre id="contextExample" hidden></pre></section>
+<section class="addition-content" id="snippetsPanel" role="tabpanel" aria-labelledby="snippetsTab" hidden>
+<div class="snippet-fields"><select id="snippetScope" aria-label="Nhóm snippet"><option value="all">Tất cả snippets</option><option value="builtin">Built-in Snippets</option><option value="personal">My Snippets</option></select><input id="snippetSearch" placeholder="Tìm snippet…" aria-label="Tìm snippet"><select id="snippetList" size="7" aria-label="Danh sách snippet"></select></div>
+<div class="snippet-actions"><button id="snippetNew">Thêm</button><button id="snippetEdit">Sửa</button><button id="snippetDelete">Xóa</button></div>
+<h3 id="snippetTitle">SQL xem trước</h3><pre id="snippetPreview"></pre>
+<div class="snippet-actions"><button id="snippetInsert">Chèn tại con trỏ</button><button id="snippetNewTab">Mở tab mới</button></div><p id="snippetStatus" role="status">Chọn snippet để chèn vào editor.</p>
+</section></aside>
+</div>
+<footer class="statusbar"><span><span class="dot" id="statusDot"></span><span id="status">Sẵn sàng</span></span><span id="activeDb">Database: DEFAULT</span><span class="right">VDB Studio · Native V++ engine</span></footer>
+<dialog id="dbDialog"><form id="dbForm"><h2>Tạo database</h2><p>Nhập tên định danh SQL (chữ ASCII, số và dấu gạch dưới).</p><input id="dbName" required pattern="[A-Za-z_][A-Za-z0-9_]*" placeholder="kho_hang" aria-label="Tên database"><div class="dialog-actions"><button type="button" id="cancelDb">Hủy</button><button class="primary" type="submit">Tạo database</button></div></form></dialog>
+<dialog id="profileDialog"><form id="profileForm" class="profile-form"><h2 id="profileHeading">Kết nối mới</h2><p>Chọn tệp catalog trên máy này hoặc tạo catalog mới.</p>
+<label for="profileName">Tên kết nối</label><input id="profileName" required maxlength="100" placeholder="Kho hàng">
+<label for="profileMode">Loại catalog</label><select id="profileMode"><option value="existing">Mở catalog hiện có</option><option value="new">Tạo catalog mới</option></select>
+<label for="profilePath">Đường dẫn catalog</label><div class="path-field"><input id="profilePath" required placeholder="/Users/…/catalog.json"><button type="button" id="pickCatalog" title="Chọn tệp trên máy">Chọn…</button></div>
+<div id="profileMessage" class="form-message" role="status"></div><div class="dialog-actions"><button type="button" id="cancelProfile">Hủy</button><button type="button" id="testProfile">Kiểm tra</button><button type="submit" class="primary" id="saveProfile">Lưu & mở</button></div></form></dialog>
+<dialog id="confirmDialog"><h2 id="confirmTitle">Xác nhận</h2><p id="confirmText"></p><div class="dialog-actions"><button id="cancelConfirm">Hủy</button><button id="acceptConfirm" class="primary">Đồng ý</button></div></dialog>
+<dialog id="structureDialog"><h2>Xem cấu trúc bảng</h2><form id="structureForm" class="profile-form"><label>Database</label><select id="structureDb"></select><label>Table</label><select id="structureTable"></select><div class="dialog-actions"><button type="button" id="cancelStructure">Hủy</button><button class="primary" type="submit">Table Inspector</button></div></form></dialog><dialog id="preferencesDialog"><h2>Tùy chọn bố cục</h2><p>Bố cục hiện tại được lưu tự động. Khôi phục kích thước và trạng thái panel mặc định.</p><div class="dialog-actions"><button id="preferencesReset">Khôi phục</button><button id="closePreferences">Đóng</button></div></dialog><dialog id="helpDialog"><h2>VDB Studio 0.1.0</h2><p id="helpContent"></p><div class="dialog-actions"><button id="closeHelp">Đóng</button></div></dialog>
+<div class="context-menu" id="schemaMenu" role="menu" hidden></div>
+<dialog id="modelDialog" style="width:min(1000px,92vw);max-width:92vw"><h2>Mô hình dữ liệu</h2><p id="modelCatalog"></p><label>Database <select id="modelDb"></select></label><p id="modelSummary" role="status"></p><div id="modelCanvas" style="overflow:auto;max-height:48vh;border:1px solid var(--line);background:#f8fafc"></div><h3>Quan hệ khóa ngoại</h3><div id="modelRelations" style="overflow:auto;max-height:20vh"></div><div class="dialog-actions"><button id="closeModel">Đóng</button></div></dialog>
+<dialog id="adminDialog"><h2>Administration</h2><p id="adminCatalog"></p><p id="adminStatus" role="status"></p><h3>Sao lưu và phục hồi</h3><form id="adminForm" class="profile-form"><label>Thao tác <select id="adminMode"><option value="backup">Sao lưu catalog</option><option value="restore">Phục hồi thành catalog mới</option></select></label><label for="adminBackup">Đường dẫn bản sao lưu</label><input id="adminBackup" required autocomplete="off"><button type="button" id="adminPickBackup">Chọn tệp…</button><div id="adminDestinationRow" hidden><label for="adminDestination">Đường dẫn catalog mới</label><input id="adminDestination" autocomplete="off"><button type="button" id="adminPickDestination">Chọn đích…</button></div><p id="adminMessage" role="status"></p><div class="dialog-actions"><button type="button" id="adminClose">Đóng</button><button type="submit" class="primary" id="adminApply">Sao lưu</button></div></form></dialog>
+<dialog id="schemaChangeDialog"><h2>Thay đổi cấu trúc</h2><p id="schemaChangeTarget"></p><form id="schemaChangeForm"><label>Thao tác <select id="schemaChangeOp"><option value="add">Thêm cột</option><option value="renameColumn">Đổi tên cột</option><option value="dropColumn">Xóa cột</option><option value="renameTable">Đổi tên bảng</option><option value="createIndex">Tạo index</option><option value="createUniqueIndex">Tạo unique index</option><option value="dropIndex">Xóa index</option><option value="createForeignKey">Tạo khóa ngoại</option><option value="dropForeignKey">Xóa khóa ngoại</option></select></label><label id="schemaChangeOldRow">Đối tượng <select id="schemaChangeOld"></select></label><label id="schemaChangeNameRow">Tên mới <input id="schemaChangeName" autocomplete="off"></label><label id="schemaChangeTypeRow">Kiểu <select id="schemaChangeType"><option>INT</option><option>INTEGER</option><option>REAL</option><option>TEXT</option><option>VARCHAR</option><option>BOOLEAN</option></select> <input id="schemaChangeLimit" type="number" min="1" value="100" aria-label="Độ dài VARCHAR"></label><label id="schemaChangeColumnsRow">Các cột (phân cách dấu phẩy, theo thứ tự) <input id="schemaChangeColumns" placeholder="ID, NAME"></label><label id="schemaChangeReferenceRow" hidden>Bảng tham chiếu <select id="schemaChangeReference"></select></label><label id="schemaChangeReferenceColumnsRow" hidden>Các cột được tham chiếu <input id="schemaChangeReferenceColumns" placeholder="ID"></label><p id="schemaChangeMessage" role="status"></p><pre id="schemaChangePreview"></pre><div class="dialog-actions"><button type="button" id="schemaChangeCancel">Hủy</button><button type="submit" id="schemaChangeDraft">Mở bản nháp SQL</button></div></form></dialog>
+<dialog id="inspectorDialog"><h2 id="inspectorTitle">Table Inspector</h2><p id="inspectorSummary"></p><div id="inspectorColumns"></div><h3>Indexes</h3><div id="inspectorIndexes"></div><h3>Foreign Keys</h3><div id="inspectorForeignKeys"></div><h3>Thống kê bảng</h3><button id="inspectorStats">Tải thống kê</button><div id="inspectorStatsResult" role="status"></div><div class="dialog-actions"><button id="inspectorChange">Thay đổi cấu trúc…</button><button id="inspectorDescribe">DESCRIBE</button><button id="closeInspector">Đóng</button></div></dialog>
+<dialog id="tableDialog"><form id="tableForm"><h2>Tạo bảng</h2><div class="designer-fields"><label>Database<select id="tableDb"></select></label><label>Tên bảng<input id="tableName" placeholder="san_pham" required></label></div><div class="designer-scroll"><table class="designer-grid"><thead><tr><th>Tên cột</th><th>Kiểu</th><th>Độ dài</th><th>PK</th><th>NOT NULL</th><th>UNIQUE</th><th></th></tr></thead><tbody id="designerColumns"></tbody></table></div><button type="button" id="addColumn" data-icon="plus">Thêm cột</button><p>SQL xem trước</p><textarea class="designer-preview" id="tablePreview" readonly aria-label="SQL xem trước"></textarea><div class="form-message" id="tableMessage" role="status"></div><div class="dialog-actions"><button type="button" id="cancelTable">Hủy</button><button type="button" id="draftTable">Mở trong Editor</button><button type="submit" class="primary" id="applyTable">Tạo bảng</button></div></form></dialog>
+<dialog id="dropDialog"><form id="dropForm"><h2>Xóa bảng</h2><p id="dropMessage" class="danger-text"></p><label for="dropName">Nhập chính xác tên bảng để xác nhận</label><input id="dropName" required autocomplete="off"><div class="dialog-actions"><button type="button" id="cancelDrop">Hủy</button><button type="submit" class="primary" id="applyDrop" disabled>DROP TABLE</button></div></form></dialog>
+<dialog id="copyDialog"><h2>Copy Name</h2><p>Chọn tên và dùng Cmd/Ctrl+C để sao chép.</p><input id="copyName" readonly aria-label="Tên đối tượng"><div class="dialog-actions"><button id="closeCopy">Đóng</button></div></dialog>
+<dialog id="detailDialog"><h2 id="detailTitle"></h2><textarea id="detailText" readonly></textarea><div class="dialog-actions"><button id="detailRerun" hidden>Mở trong Editor</button><button id="detailCopy">Copy</button><button id="closeDetail">Đóng</button></div></dialog>
+<dialog id="dataDialog"><h2 id="dataTitle"></h2><p id="dataTarget"></p><div id="csvImportFields" hidden><label>Database <select id="importDb"></select></label> <label>Bảng <select id="importTable"></select></label><p>Dòng đầu là tên cột (có thể chọn ánh xạ). Ô trống không quote = NULL; "" = chuỗi rỗng.</p><button id="pickCsv">Mở CSV…</button><input id="csvFile" type="file" accept=".csv,text/csv" hidden><textarea id="csvText" placeholder="Hoặc dán nội dung CSV"></textarea><button id="parseCsv">Đọc CSV / ánh xạ</button></div><div id="dataFields"></div><button id="stageData">Tạo SQL xem trước</button><p>SQL xem trước</p><textarea id="dataPreview" readonly></textarea><div id="dataMessage" role="status"></div><div class="dialog-actions"><button id="cancelData">Đóng / Revert</button><button id="revertData">Xóa batch</button><button id="applyData" class="primary" disabled>Apply</button></div></dialog>
+<dialog id="snippetDialog"><form id="snippetForm" class="profile-form"><h2 id="snippetHeading">Thêm snippet</h2><label for="snippetName">Tên snippet</label><input id="snippetName" required maxlength="100"><label for="snippetSql">Nội dung SQL</label><textarea id="snippetSql" required maxlength="4000" spellcheck="false"></textarea><div id="snippetMessage" class="form-message" role="status"></div><div class="dialog-actions"><button id="snippetCancel" type="button">Hủy</button><button type="submit" class="primary">Lưu snippet</button></div></form></dialog>
+<script>
+'use strict';
+const paths={home:'<path d="m3 10 9-7 9 7v11h-6v-7H9v7H3z"/>',db:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/>',file:'<path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/>',folder:'<path d="M3 6h7l2 2h9v12H3z"/>',save:'<path d="M4 3h13l3 3v15H4zM8 3v6h8V3M8 21v-8h8v8"/>',play:'<path d="m8 4 13 8-13 8z" fill="currentColor" stroke="none"/>',bolt:'<path d="m13 2-8 12h7l-1 8 8-12h-7z"/>',refresh:'<path d="M20 7v5h-5M4 17v-5h5M5 10a7 7 0 0 1 12-5l3 3M4 16l3 3a7 7 0 0 0 12-5"/>',search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',plus:'<path d="M12 5v14M5 12h14"/>',table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 10v10"/>',right:'<path d="m9 5 7 7-7 7"/>',down:'<path d="m5 9 7 7 7-7"/>',close:'<path d="m6 6 12 12M18 6 6 18"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-14-2 16"/>'};
+const icon=(name,cls='')=>'<svg class="'+cls+'" viewBox="0 0 24 24" aria-hidden="true">'+paths[name]+'</svg>';
+const $=id=>document.getElementById(id);
+document.querySelectorAll('[data-icon]').forEach(el=>el.insertAdjacentHTML('afterbegin',icon(el.dataset.icon)));
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let token=location.hash.slice(1)||sessionStorage.getItem('vdb-token')||'';
+if(location.hash){sessionStorage.setItem('vdb-token',token);history.replaceState(null,'',location.pathname);}
+const editor=$('sql');
+let profiles=[], connections=[], active=null, editingProfile=null, defaultCatalog='';
+let initialized=false, saveTimer, saving=Promise.resolve(), persistError='';
+let profileBusy=false, pendingSave=null, pendingOpen=null, quitting=false;
+const defaultLayout={nav:true,info:true,right:false,output:true,navWidth:258,rightWidth:240,infoHeight:200,editorHeight:null,outputHeight:132};
+function normalizeLayout(value){
+  const next={...defaultLayout};
+  for(const key of ['nav','info','right','output'])if(typeof value?.[key]==='boolean')next[key]=value[key];
+  for(const [key,min,max] of [['navWidth',160,520],['rightWidth',170,520],['infoHeight',65,400],['editorHeight',90,1500],['outputHeight',65,600]]){
+    if(Number.isFinite(value?.[key]))next[key]=Math.max(min,Math.min(max,value[key]));
+  }
+  return next;
+}
+let layout=normalizeLayout();
+function applyLayout(){
+  const w=$('workspace'), width=w.clientWidth||window.innerWidth||1000;
+  const navWidth=Math.min(layout.navWidth,Math.max(160,Math.floor(width*.3)));
+  const rightWidth=Math.min(layout.rightWidth,Math.max(170,Math.floor(width*.28)));
+  const nav=layout.nav||layout.info,right=layout.right&&width>=700;
+  $('navigator').classList.toggle('info-only',!layout.nav);
+  w.classList.toggle('no-nav',!nav);w.classList.toggle('no-right',!right);
+  for(const [id,visible] of [['navigator',nav],['navigatorContent',layout.nav],['navSplitter',nav],['information',layout.info],['infoSplitter',layout.info&&layout.nav],['sqlAdditions',right],['rightSplitter',right],['outputPanel',layout.output],['outputSplitter',layout.output]])$(id).hidden=!visible;
+  for(const [id,key] of [['toggleNav','nav'],['toggleInfo','info'],['toggleRight','right'],['toggleOutput','output']])$(id).setAttribute('aria-pressed',String(key==='right'?right:layout[key]));
+  const height=$('mainPanel').clientHeight||600;
+  const outputHeight=Math.min(layout.outputHeight,Math.max(65,height*.35));
+  const editorHeight=Math.max(90,Math.min(layout.editorHeight??Math.round(height*.39),height-(layout.output?outputHeight:0)-145));
+  for(const [key,value] of Object.entries({'nav-width':navWidth+'px','right-width':rightWidth+'px','info-height':Math.min(layout.infoHeight,Math.max(65,height-130))+'px','editor-height':editorHeight+'px','output-height':outputHeight+'px'}))w.style.setProperty('--'+key,value);
+}
+function toggleLayout(key){layout[key]=!layout[key];applyLayout();updateActions();persist();}
+function resetLayout(){layout=normalizeLayout();applyLayout();updateActions();persist(true);}
+function bindSplitter(id,key,axis,sign,region,min,max){
+  const el=$(id);
+  el.onpointerdown=e=>{
+    e.preventDefault();el.setPointerCapture(e.pointerId);
+    const start=axis==='x'?e.clientX:e.clientY;
+    const size=axis==='x'?$(region).offsetWidth:$(region).offsetHeight;
+    el.onpointermove=m=>{layout[key]=Math.max(min,Math.min(max(),size+sign*((axis==='x'?m.clientX:m.clientY)-start)));applyLayout();};
+    el.onpointerup=el.onpointercancel=()=>{el.onpointermove=null;persist(true);};
+  };
+}
+const initialSql='-- VDB Studio\n-- Chọn database hoặc bảng bên trái.\nSHOW DATABASES;\n';
+const newId=()=>crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2);
+const tab=(c=active)=>c?.tabs.find(t=>t.id===c.current);
+const profile=id=>profiles.find(p=>p.id===id);
+const connection=id=>connections.find(c=>c.id===id);
+function makeTab(c,sql='',name='',db=tab(c)?.db||'DEFAULT',saved=sql){
+  const id=c.nextId++;const t={id,fileKey:newId(),name:name||'Query '+id,sql,saved,db,results:[],selected:0,error:'',ran:false,filter:'',rowLimit:0,page:null,source:null,gridSelection:null,undo:[],redo:[]};c.tabs.push(t);c.current=id;return t;
+}
+function makeConnection(p,session){
+  const c={id:p.id,path:p.path,schemas:[],expanded:new Set(),expandedTables:new Set(),selectedObject:null,infoTab:'object',schemaError:'',tabs:[],current:0,nextId:1,busy:false,logs:[],history:[],outputMode:'logs',outputFilter:'',outputDate:'',status:'Đang kết nối…',online:null,search:''};
+  if(session&&Array.isArray(session.tabs)){
+    for(const t of session.tabs){
+      if(!t||typeof t.sql!=='string'||typeof t.name!=='string')continue;
+      const restored=makeTab(c,t.sql,t.name,typeof t.db==='string'?t.db:'DEFAULT',typeof t.saved==='string'?t.saved:'');restored.rowLimit=[100,500,1000].includes(t.rowLimit)?t.rowLimit:0;
+    }
+    if(Number.isInteger(session.selected)&&c.tabs[session.selected])c.current=c.tabs[session.selected].id;
+  }
+  if(Array.isArray(session?.history))c.history=session.history.filter(l=>l&&typeof l.sql==='string'&&typeof l.db==='string'&&Number.isFinite(l.timestamp)&&Math.abs(l.timestamp)<=8640000000000000&&typeof l.ok==='boolean'&&typeof l.message==='string'&&typeof l.time==='string'&&Number.isFinite(l.ms)).slice(0,50);
+  if(!c.tabs.length)makeTab(c,initialSql);
+  return c;
+}
+function snapshot(){
+  return {version:1,profiles,snippets:personalSnippets,layout:{...layout},active:active?.id||null,sessions:connections.map(c=>({id:c.id,selected:c.tabs.findIndex(t=>t.id===c.current),history:c.history,tabs:c.tabs.map(({name,sql,saved,db,rowLimit})=>({name,sql,saved,db,rowLimit}))}))};
+}
+function persist(immediate=false){
+  if(!initialized)return Promise.resolve();
+  clearTimeout(saveTimer);
+  const send=()=>{
+    const workspace=JSON.parse(JSON.stringify(snapshot()));
+    saving=saving.catch(()=>{}).then(()=>api('/api/workspace/save',{workspace})).then(()=>{persistError='';}).catch(e=>{
+      persistError='Không lưu được phiên: '+e.message;
+      if(!active)$('homeMessage').textContent=persistError;
+      else $('status').textContent=persistError;
+    });
+    return saving;
+  };
+  if(immediate)return send();
+  saveTimer=setTimeout(send,250);
+}
+window.vdbPrepareQuit=async()=>{
+  if(quitting)return;
+  quitting=true;updateActions();
+  document.body.inert=true;
+  try{
+    if(!initialized||profileBusy||pendingSave||pendingOpen||dataTarget?.locked||connections.some(c=>c.busy)){
+      const message='Studio đang tải hoặc thực thi. Hãy đóng lại khi thao tác hoàn tất.';
+      if(active)setStatus(active,message);else $('homeMessage').textContent=message;
+      window.webkit.messageHandlers.vdbQuit.postMessage(false);
+      return;
+    }
+    await persist(true);
+    window.webkit.messageHandlers.vdbQuit.postMessage(!persistError);
+  }finally{quitting=false;document.body.inert=false;updateActions();}
+};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persist(true);});
+async function api(path,body={}){
+  const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-VDB-Token':token},body:JSON.stringify(body)});
+  const fetchStart=performance.now();
+  const data=await response.json();
+  const fetchMs=performance.now()-fetchStart;
+  if(!response.ok)throw new Error(data.error||'HTTP '+response.status);
+  if(path==='/api/query'||path==='/api/guarded-query')data.fetch_ms=fetchMs;
+  return data;
+}
+function query(c,sql,database=''){return api('/api/query',{catalog:c.path,sql,database}).then(d=>d.results);}
+function addTab(sql='',name='',db=tab()?.db||'DEFAULT',saved=sql){
+  if(!active)return;const t=makeTab(active,sql,name,db,saved);activate(t.id);
+}
+function activate(id){if(!active)return;active.current=id;renderActive();persist();}
+function renderActive(){
+  if(!active)return;const t=tab();editor.value=t.sql;$('schemaSearch').value=active.search;$('resultSearch').value=t.filter;
+  editor.setSelectionRange(0,0);$('rowLimit').value=String(t.rowLimit);$('validationStatus').textContent='';$('completion').hidden=true;renderTabs();renderDatabase();paintEditor();renderResults();renderTree();renderLogs();renderStatus();renderBusy();
+}
+function renderStatus(){
+  const c=active,p=c&&profile(c.id);
+  $('connectionText').textContent=c?p?.name||c.path:'Home';
+  $('connectionText').title=c?.path||'';
+  for(const id of ['connectionDot','statusDot'])$(id).className='dot'+(c?.online===true?' ok':c?.online===false?' bad':'');
+  $('status').textContent=persistError||(c?c.status:'Chọn một kết nối');
+  $('catalogTitle').textContent=p?.name||'VDB local catalog';if(c)renderInfo(c);
+}
+function setStatus(c,text,ok){
+  c.status=text;if(ok!==undefined)c.online=ok;
+  if(active===c)renderStatus();renderConnections();
+}
+function renderConnections(){
+  const root=$('connectionTabs');root.replaceChildren();$('homeButton').classList.toggle('active',!active);
+  for(const c of connections){
+    const el=document.createElement('div');el.className='connection-tab'+(active===c?' active':'');
+    const dot=document.createElement('span');dot.className='dot'+(c.online===true?' ok':c.online===false?' bad':'');dot.title=c.busy?'Đang chạy':c.online===true?'Đã kết nối':c.online===false?'Lỗi kết nối':'Đang kết nối';
+    const b=document.createElement('button');b.className='open-connection';b.textContent=profile(c.id)?.name||c.path;b.title=c.path;b.setAttribute('role','tab');b.setAttribute('aria-selected',String(active===c));b.onclick=()=>showConnection(c);
+    const x=document.createElement('button');x.className='close';x.title='Đóng kết nối';x.setAttribute('aria-label','Đóng '+b.textContent);x.innerHTML=icon('close');x.disabled=c.busy||pendingOpen?.c===c||pendingSave?.c===c;x.onclick=()=>closeConnection(c);
+    el.append(dot,b,x);root.append(el);
+  }
+}
+function showConnection(c){
+  closeSchemaMenu();active=c;$('home').hidden=true;$('workspace').hidden=false;$('sqlToolbar').hidden=false;renderConnections();renderActive();applyLayout();updateActions();persist();
+}
+function showHome(){
+  closeSchemaMenu();active=null;$('home').hidden=false;$('workspace').hidden=true;$('sqlToolbar').hidden=true;$('activeDb').textContent='';renderConnections();renderProfiles();renderStatus();updateActions();persist();
+}
+function renderProfiles(){
+  const q=$('profileSearch').value.toLowerCase(),root=$('profiles');root.replaceChildren();
+  const list=profiles.filter(p=>(p.name+' '+p.path).toLowerCase().includes(q)).sort((a,b)=>$('profileSort').value==='name'?a.name.localeCompare(b.name,'vi'):(b.lastUsed||0)-(a.lastUsed||0));
+  for(const p of list){
+    const card=document.createElement('article');card.className='profile-card';
+    const open=document.createElement('button');open.className='profile-open';open.innerHTML='<span class="brandmark">'+icon('db')+'</span><span><span class="profile-title">'+escapeHtml(p.name)+'</span><span class="profile-caption">'+(connection(p.id)?'Đang mở':'Catalog cục bộ')+'</span></span>';open.onclick=()=>openProfile(p);
+    const path=document.createElement('div');path.className='profile-path';path.textContent=p.path;
+    const actions=document.createElement('div');actions.className='profile-actions';
+    const make=(label,action)=>{const b=document.createElement('button');b.textContent=label;b.onclick=action;return b;};
+    const spacer=document.createElement('span');spacer.className='spacer';
+    actions.append(make('Mở',()=>openProfile(p)),make('Kiểm tra',()=>checkProfile(p)),spacer,make('Sửa',()=>editProfile(p)),make('Xóa',()=>removeProfile(p)));
+    card.append(open,path,actions);root.append(card);
+  }
+  if(!list.length){const msg=document.createElement('p');msg.textContent=q?'Không tìm thấy kết nối.':'Chưa có kết nối. Tạo hoặc chọn một catalog VDB.';root.append(msg);}
+}
+async function checkProfile(p){
+  $('homeMessage').textContent='Đang kiểm tra '+p.name+'…';
+  try{await api('/api/catalog',{catalog:p.path});$('homeMessage').textContent='Kết nối thành công: '+p.name;}
+  catch(e){$('homeMessage').textContent='Kết nối thất bại: '+e.message;}
+}
+async function openProfile(p){
+  let c=connection(p.id);
+  p.lastUsed=Date.now();
+  if(c){showConnection(c);if(c.online===false)refreshAction(c);return;}
+  c=makeConnection(p);connections.push(c);showConnection(c);await refreshAction(c);
+}
+function confirmAction(title,message,action){
+  $('confirmTitle').textContent=title;$('confirmText').textContent=message;
+  $('acceptConfirm').onclick=()=>{$('confirmDialog').close();action();};
+  $('cancelConfirm').onclick=()=>$('confirmDialog').close();$('confirmDialog').showModal();
+}
+function dirty(c){return c.tabs.some(t=>t.sql!==t.saved);}
+function closeConnection(c,after){
+  if(c.busy||pendingOpen?.c===c||pendingSave?.c===c){$('homeMessage').textContent='Kết nối đang thực thi. Hãy thử lại sau.';return;}
+  const close=()=>{connections=connections.filter(x=>x!==c);if(active===c){if(connections.length)showConnection(connections.at(-1));else showHome();}else{renderConnections();renderProfiles();persist(true);}after?.();};
+  if(dirty(c))confirmAction('Đóng kết nối','Kết nối có SQL chưa lưu. Đóng sẽ bỏ các bản nháp trong kết nối này. Tiếp tục?',close);else close();
+}
+function editProfile(p=null){
+  editingProfile=p;$('profileHeading').textContent=p?'Sửa kết nối':'Kết nối mới';
+  $('profileName').value=p?.name||'';$('profilePath').value=p?.path||'';$('profileMode').value='existing';
+  const opened=!!(p&&connection(p.id));
+  $('profilePath').readOnly=opened;$('profileMode').disabled=opened;$('pickCatalog').disabled=opened||!window.webkit?.messageHandlers?.vdbCatalog;
+  $('profileMessage').textContent=opened?'Đóng kết nối trước khi đổi catalog.':window.webkit?.messageHandlers?.vdbCatalog?'':'Nhập đường dẫn tuyệt đối đến catalog trên máy chạy VDB.';
+  $('profileDialog').showModal();$('profileName').focus();
+}
+function removeProfile(p){
+  const remove=()=>{profiles=profiles.filter(x=>x!==p);renderProfiles();persist(true);};
+  confirmAction('Xóa hồ sơ kết nối','Chỉ xóa hồ sơ '+p.name+'. Tệp catalog và dữ liệu vẫn được giữ.',()=>{
+    const c=connection(p.id);if(c)closeConnection(c,remove);else remove();
+  });
+}
+async function submitProfile(test=false){
+  if(profileBusy||!$('profileForm').reportValidity())return;
+  const name=$('profileName').value.trim(),path=$('profilePath').value.trim(),create=$('profileMode').value==='new';
+  if(!name||!path){$('profileMessage').textContent='Tên và đường dẫn không được để trống.';return;}
+  profileBusy=true;for(const id of ['testProfile','saveProfile','cancelProfile','pickCatalog'])$(id).disabled=true;
+  try{
+    if(test&&create){$('profileMessage').textContent='Chọn Lưu & mở để tạo catalog mới; kiểm tra sẽ được thực hiện khi tạo.';return;}
+    const result=await api('/api/catalog',{catalog:path,create});
+    const duplicate=profiles.find(p=>p.path===result.catalog&&p!==editingProfile);
+    if(duplicate){$('profileMessage').textContent='Catalog đã có hồ sơ: '+duplicate.name;return;}
+    if(test){$('profileMessage').textContent='Kết nối thành công.';return;}
+    const p=editingProfile||{id:newId(),lastUsed:0};p.name=name;p.path=result.catalog;if(!editingProfile)profiles.push(p);
+    $('profileDialog').close();await openProfile(p);persist(true);
+  }catch(e){$('profileMessage').textContent=e.message;}
+  finally{profileBusy=false;for(const id of ['testProfile','saveProfile','cancelProfile'])$(id).disabled=false;$('pickCatalog').disabled=$('profilePath').readOnly||!window.webkit?.messageHandlers?.vdbCatalog;}
+}
+window.vdbCatalogPicked=encoded=>{
+  if(adminPicker){const id=adminPicker;adminPicker=null;if(encoded&&$('adminDialog').open){$(id).value=new TextDecoder().decode(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)));$('adminMessage').textContent='';}lockAdmin(adminBusy);return;}
+  if(encoded&&$('profileDialog').open){$('profilePath').value=new TextDecoder().decode(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)));$('profileMessage').textContent='';}
+};
+$('pickCatalog').onclick=()=>window.webkit?.messageHandlers?.vdbCatalog?.postMessage($('profileMode').value);
+let adminTarget=null,adminBusy=false,adminPicker=null;
+function lockAdmin(value){
+  adminBusy=value;
+  for(const id of ['adminMode','adminBackup','adminDestination','adminClose','adminApply'])$(id).disabled=value||!!adminPicker;
+  for(const id of ['adminPickBackup','adminPickDestination'])$(id).disabled=value||!!adminPicker||!window.webkit?.messageHandlers?.vdbCatalog;
+}
+function adminModeChanged(){
+  const restore=$('adminMode').value==='restore';
+  $('adminDestinationRow').hidden=!restore;$('adminDestination').required=restore;
+  $('adminApply').textContent=restore?'Phục hồi':'Sao lưu';$('adminMessage').textContent='';
+}
+async function openAdmin(){
+  const c=active;if(!c||c.busy||adminBusy)return;
+  adminTarget=c;$('adminCatalog').textContent=c.path;$('adminStatus').textContent='Đang kiểm tra catalog…';
+  $('adminMode').value='backup';$('adminBackup').value='';$('adminDestination').value='';adminModeChanged();
+  lockAdmin(true);$('adminDialog').showModal();setBusy(c,true);
+  try{const result=await query(c,'SHOW DATABASES;');$('adminStatus').textContent='Catalog hoạt động · '+result[0].rows.length+' database · '+connections.length+' kết nối Studio · '+c.logs.length+' mục Action Output';}
+  catch(e){$('adminStatus').textContent='Không thể đọc catalog: '+e.message;}
+  finally{lockAdmin(false);setBusy(c,false);updateActions();}
+}
+async function submitAdmin(){
+  const c=adminTarget;if(!c||adminBusy||adminPicker||c.busy)return;
+  const restore=$('adminMode').value==='restore',backup=$('adminBackup').value.trim(),catalog=restore?$('adminDestination').value.trim():c.path;
+  if(!backup.startsWith('/')||!catalog.startsWith('/')||backup===catalog|| (restore&&catalog===c.path)){$('adminMessage').textContent='Chọn hai đường dẫn tuyệt đối khác nhau; catalog phục hồi phải là tệp mới.';return;}
+  const action=restore?'RESTORE':'BACKUP',start=performance.now();lockAdmin(true);setBusy(c,true);
+  try{const result=await api(restore?'/api/restore':'/api/backup',{catalog,backup});const message=restore?'Đã phục hồi '+result.catalog+'. Mở catalog mới từ Home.':'Đã sao lưu '+result.backup;$('adminMessage').textContent=message;log(c,action,true,message,performance.now()-start);}
+  catch(e){$('adminMessage').textContent=e.message;log(c,action,false,e.message,performance.now()-start);}
+  finally{lockAdmin(false);setBusy(c,false);updateActions();}
+}
+function pickAdmin(id,mode){const native=window.webkit?.messageHandlers?.vdbCatalog;if(!native||adminBusy||adminPicker)return;adminPicker=id;lockAdmin(false);native.postMessage(mode);}
+$('toolAdmin').onclick=openAdmin;$('adminMode').onchange=adminModeChanged;
+$('adminPickBackup').onclick=()=>pickAdmin('adminBackup',$('adminMode').value==='restore'?'existing':'new');
+$('adminPickDestination').onclick=()=>pickAdmin('adminDestination','new');
+$('adminForm').onsubmit=e=>{e.preventDefault();return submitAdmin();};
+$('adminClose').onclick=()=>{if(!adminBusy&&!adminPicker){$('adminDialog').close();adminTarget=null;updateActions();}};
+$('adminDialog').addEventListener('cancel',e=>{if(adminBusy||adminPicker)e.preventDefault();else adminTarget=null;});
+$('profileForm').onsubmit=e=>{e.preventDefault();submitProfile();};
+$('testProfile').onclick=()=>submitProfile(true);$('cancelProfile').onclick=()=>$('profileDialog').close();
+$('profileDialog').addEventListener('cancel',e=>{if(profileBusy)e.preventDefault();});
+$('homeButton').onclick=showHome;$('newConnection').onclick=$('homeNew').onclick=()=>editProfile();
+$('profileSearch').oninput=renderProfiles;$('profileSort').onchange=renderProfiles;
+function renderTabs(){
+  const c=active;$('tabs').replaceChildren();
+  for(const t of c.tabs){
+    const el=document.createElement('div');el.className='tab'+(t.id===c.current?' active':'');el.setAttribute('role','tab');el.setAttribute('aria-selected',String(t.id===c.current));el.tabIndex=0;
+    el.innerHTML=icon('code')+'<span>'+escapeHtml(t.name)+'</span>'+(t.sql!==t.saved?'<span class="dirty-mark" title="Chưa lưu">•</span>':'')+'<button class="close" title="Đóng tab">'+icon('close')+'</button>';
+    el.addEventListener('click',()=>activate(t.id));el.addEventListener('keydown',e=>{if(e.target===el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();activate(t.id);}});
+    el.querySelector('button').onclick=e=>{e.stopPropagation();closeTab(c,t);};
+    $('tabs').append(el);
+  }
+  const plus=document.createElement('button');plus.className='add-tab';plus.title='Tab mới';plus.innerHTML=icon('plus');plus.onclick=()=>addTab();$('tabs').append(plus);
+}
+function closeTab(c,t){
+  if(!c||!t||c.busy||pendingSave?.t===t||pendingOpen?.c===c)return;
+  const close=()=>{const i=c.tabs.indexOf(t);if(i<0||c.busy||pendingSave?.t===t||pendingOpen?.c===c)return;c.tabs.splice(i,1);if(!c.tabs.length)makeTab(c);else if(c.current===t.id)c.current=c.tabs[Math.max(0,i-1)].id;if(active===c)renderActive();persist(true);};
+  if(t.sql!==t.saved)confirmAction('Đóng tab SQL','Bỏ nội dung SQL chưa lưu?',close);else close();
+}
+function renderDatabase(){
+  const names=active.schemas.map(s=>s.name);if(!names.includes('DEFAULT'))names.unshift('DEFAULT');
+  if(!names.includes(tab().db))names.push(tab().db);
+  $('database').replaceChildren(...names.map(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;return o;}));
+  $('database').value=tab().db;$('activeDb').textContent='Database: '+tab().db;
+}
+const identifier=/^[A-Za-z_][A-Za-z0-9_]*$/;
+const validIdentifier=name=>typeof name==='string'&&identifier.test(name);
+const columnTypes=['INT','INTEGER','REAL','TEXT','VARCHAR','BOOLEAN'];
+const schemaReady=c=>!!c&&!c.busy&&!c.schemaError&&c.schemas.length>0;
+const tableKey=(db,name)=>db+'.'+name;
+const schemaFor=(c,db)=>c.schemas.find(s=>s.name===db);
+const hasTable=(c,db,name)=>schemaFor(c,db)?.tables.includes(name)===true;
+const hasView=(c,db,name)=>schemaFor(c,db)?.views?.includes(name)===true;
+const hasRelation=(c,db,name)=>hasTable(c,db,name)||hasView(c,db,name);
+const columnsFor=(c,db,name)=>schemaFor(c,db)?.columns?.get(name)||[];
+const indexesFor=(c,db,name)=>schemaFor(c,db)?.indexes?.get(name)||[];
+const foreignKeysFor=(c,db,name)=>schemaFor(c,db)?.foreignKeys?.get(name)||[];
+function describeForeignKeys(result,columns,allColumns){
+  const names=new Set();
+  const parseKeys=(value,available)=>{
+    const keys=typeof value==='string'?value.split(','):[];
+    if(!keys.length||new Set(keys).size!==keys.length||keys.some(key=>!available?.some(col=>col.name===key)))throw new Error('Metadata khóa ngoại không hợp lệ');
+    return keys;
+  };
+  return metadataRows(result,['FOREIGN_KEY','COLUMN','REFERENCED_TABLE','REFERENCED_COLUMN']).map(([name,column,target,targetColumn])=>{
+    if(!validIdentifier(name)||names.has(name)||!validIdentifier(target))throw new Error('Metadata khóa ngoại không hợp lệ');
+    const keys=parseKeys(column,columns),targetKeys=parseKeys(targetColumn,allColumns.get(target));
+    if(keys.length!==targetKeys.length)throw new Error('Metadata khóa ngoại không hợp lệ');
+    names.add(name);return {name,keys,target,targetKeys};
+  });
+}
+function describeIndexes(result,columns){
+  const names=new Set();
+  const hasUnique=result?.columns?.includes('UNIQUE');
+  const keysRequired=['INDEX','COLUMN','ENTRIES','CARDINALITY','HEIGHT'];
+  if(hasUnique)keysRequired.push('UNIQUE');
+  return metadataRows(result,keysRequired).map(([name,column,entries,cardinality,height,unique=0])=>{
+    const keys=typeof column==='string'?column.split(','):[];
+    if(!validIdentifier(name)||names.has(name)||!keys.length||new Set(keys).size!==keys.length||keys.some(key=>!columns.some(col=>col.name===key))||![entries,cardinality,height].every(Number.isSafeInteger)||entries<0||cardinality<0||cardinality>entries||height<1||![0,1,false,true].includes(unique))throw new Error('Metadata index không hợp lệ');
+    names.add(name);return {name,keys,entries,cardinality,height,unique:Boolean(unique)};
+  });
+}
+const columnType=column=>column.type==='VARCHAR'?column.type+'('+column.limit+')':column.type;
+const columnFlags=column=>[column.primary?'PK':'',column.unique?'UNIQUE':'',column.required?'NOT NULL':''].filter(Boolean);
+function metadataRows(result,keys){
+  if(!Array.isArray(result?.columns)||!Array.isArray(result?.rows)||keys.some(k=>result.columns.indexOf(k)<0||result.columns.indexOf(k)!==result.columns.lastIndexOf(k)))throw new Error('Metadata SQL không hợp lệ');
+  const indexes=keys.map(k=>result.columns.indexOf(k));
+  return result.rows.map(row=>{
+    if(!Array.isArray(row)||row.length!==result.columns.length)throw new Error('Hàng metadata không hợp lệ');
+    return indexes.map(i=>row[i]);
+  });
+}
+function metadataNames(result,key){
+  const names=metadataRows(result,[key]).map(row=>row[0]);
+  if(names.some(n=>!validIdentifier(n))||new Set(names).size!==names.length)throw new Error('Tên đối tượng trong catalog không hợp lệ');
+  return names;
+}
+function describeColumns(result){
+  const keys=['NAME','TYPE','LIMIT','NOT_NULL','UNIQUE','PRIMARY_KEY'];
+  const flag=v=>{
+    if(v===true||v===1)return true;
+    if(v===false||v===0)return false;
+    throw new Error('Ràng buộc DESCRIBE không hợp lệ');
+  };
+  const columns=metadataRows(result,keys).map(([name,type,limit,required,unique,primary])=>{
+    if(!validIdentifier(name)||!columnTypes.includes(type)||!Number.isInteger(limit)||(type==='VARCHAR'?(limit<1||limit>2147483647):limit!==0))throw new Error('Kiểu hoặc tên cột DESCRIBE không hợp lệ');
+    const column={name,type,limit,required:flag(required),unique:flag(unique),primary:flag(primary)};
+    if(column.primary&&(!column.required||!column.unique))throw new Error('PRIMARY KEY không hợp lệ');
+    return column;
+  });
+  if(!columns.length||new Set(columns.map(c=>c.name)).size!==columns.length||columns.filter(c=>c.primary).length>1)throw new Error('Danh sách cột DESCRIBE không hợp lệ');
+  return columns;
+}
+async function describeTables(c,db,tables){
+  const columns=new Map();
+  // Bound each SQL argument for the native CLI and keep metadata order stable.
+  for(let offset=0;offset<tables.length;){
+    const batch=[];let length=0;
+    while(offset<tables.length&&batch.length<64){
+      const name=tables[offset],statement='DESCRIBE '+name+';';
+      if(batch.length&&length+statement.length>16384)break;
+      batch.push(name);length+=statement.length+1;offset++;
+    }
+    const results=await query(c,batch.map(n=>'DESCRIBE '+n+';').join('\n'),db);
+    if(!Array.isArray(results)||results.length!==batch.length)throw new Error('Thiếu kết quả DESCRIBE');
+    batch.forEach((name,i)=>columns.set(name,describeColumns(results[i])));
+  }
+  return columns;
+}
+async function describeTableIndexes(c,db,tables,columns){
+  const indexes=new Map();
+  for(let offset=0;offset<tables.length;){
+    const batch=[];let length=0;
+    while(offset<tables.length&&batch.length<64){
+      const name=tables[offset],statement='SHOW INDEX FROM '+name+';';
+      if(batch.length&&length+statement.length>16384)break;
+      batch.push(name);length+=statement.length+1;offset++;
+    }
+    const results=await query(c,batch.map(name=>'SHOW INDEX FROM '+name+';').join('\n'),db);
+    if(!Array.isArray(results)||results.length!==batch.length)throw new Error('Thiếu kết quả SHOW INDEX');
+    batch.forEach((name,i)=>indexes.set(name,describeIndexes(results[i],columns.get(name))));
+  }
+  return indexes;
+}
+async function describeTableForeignKeys(c,db,tables,columns){
+  const foreignKeys=new Map();
+  for(let offset=0;offset<tables.length;){
+    const batch=[];let length=0;
+    while(offset<tables.length&&batch.length<64){
+      const name=tables[offset],statement='SHOW FOREIGN KEYS FROM '+name+';';
+      if(batch.length&&length+statement.length>16384)break;
+      batch.push(name);length+=statement.length+1;offset++;
+    }
+    const results=await query(c,batch.map(name=>'SHOW FOREIGN KEYS FROM '+name+';').join('\n'),db);
+    if(!Array.isArray(results)||results.length!==batch.length)throw new Error('Thiếu kết quả SHOW FOREIGN KEYS');
+    batch.forEach((name,i)=>foreignKeys.set(name,describeForeignKeys(results[i],columns.get(name),columns)));
+  }
+  return foreignKeys;
+}
+function selectObject(c,db,name=null,column=null){
+  if(active!==c)return;
+  c.selectedObject={db,name,column};renderTree();
+}
+function selectDatabase(db){
+  if(tab().db!==db){tab().page=null;tab().source=null;}
+  tab().db=db;active.expanded.add(db);active.selectedObject={db,name:null,column:null};renderDatabase();renderTree();updateActions();persist();
+}
+async function refresh(c){
+  try{
+    const list=metadataNames((await query(c,'SHOW DATABASES;'))[0],'DATABASE');const next=[];
+    for(const name of list){
+      const result=await query(c,'SHOW TABLES;',name),tables=metadataNames(result[0],'TABLE');
+      const views=metadataNames((await query(c,'SHOW VIEWS;',name))[0],'VIEW');
+      if(views.some(view=>tables.includes(view)))throw new Error('Tên bảng và view bị trùng');
+      const columns=await describeTables(c,name,[...tables,...views]);
+      const indexes=await describeTableIndexes(c,name,tables,columns);
+      const foreignKeys=await describeTableForeignKeys(c,name,tables,columns);
+      next.push({name,tables,views,columns,indexes,foreignKeys});
+    }
+    c.schemas=next;c.schemaError='';
+    c.expanded=new Set([...c.expanded].filter(name=>list.includes(name)));
+    for(const t of c.tabs)if(!list.includes(t.db)){t.db='DEFAULT';t.page=null;t.source=null;}
+    if(!c.expanded.size)c.expanded.add(tab(c).db);
+    const object=c.selectedObject;
+    if(object){
+      if(!list.includes(object.db))c.selectedObject=null;
+      else if(object.name&&!hasRelation(c,object.db,object.name))c.selectedObject={db:object.db,name:null,column:null};
+      else if(object.column&&!columnsFor(c,object.db,object.name).some(col=>col.name===object.column))c.selectedObject={...object,column:null};
+    }
+    c.expandedTables=new Set(next.flatMap(s=>s.tables.map(n=>tableKey(s.name,n))).filter(key=>c.expandedTables.has(key)));
+    if(active===c){renderDatabase();renderTree();}setStatus(c,'Đã cập nhật schemas',true);persist();
+  }catch(e){c.schemaError=e.message;if(active===c)renderTree();throw e;}
+}
+function objectMarkup(c){
+  const obj=c.selectedObject||{db:tab(c).db},schema=schemaFor(c,obj.db);
+  const prefix=c.schemaError?'<p class="danger-text">Metadata có thể đã cũ: '+escapeHtml(c.schemaError)+'</p>':'';
+  if(!schema)return prefix+'<p>Chọn database hoặc bảng để xem thông tin.</p>';
+  if(!obj.name)return prefix+'<b>'+escapeHtml(obj.db)+'</b><dl><dt>Loại</dt><dd>Database</dd><dt>Số bảng</dt><dd>'+schema.tables.length+'</dd><dt>Số view</dt><dd>'+(schema.views||[]).length+'</dd></dl>';
+  const columns=columnsFor(c,obj.db,obj.name);
+  const selected=obj.column?columns.filter(col=>col.name===obj.column):columns;
+  if(hasView(c,obj.db,obj.name))return prefix+'<b>'+escapeHtml(obj.db+'.'+obj.name)+'</b><dl><dt>Loại</dt><dd>View · chỉ đọc</dd><dt>Số cột</dt><dd>'+columns.length+'</dd></dl>'+selected.map(col=>'<div class="info-column"><strong>'+escapeHtml(col.name)+'</strong><span class="type">'+escapeHtml(columnType(col))+'</span></div>').join('');
+  const indexes=indexesFor(c,obj.db,obj.name);
+  const foreignKeys=foreignKeysFor(c,obj.db,obj.name).filter(fk=>!obj.column||fk.keys.includes(obj.column));
+  return prefix+'<b>'+escapeHtml(obj.db+'.'+obj.name)+'</b><dl><dt>Loại</dt><dd>'+(obj.column?'Column · '+escapeHtml(obj.column):'Table')+'</dd><dt>Số cột</dt><dd>'+columns.length+'</dd></dl>'+
+    selected.map(col=>'<div class="info-column"><strong>'+escapeHtml(col.name)+'</strong><span class="type">'+escapeHtml(columnType(col))+'</span>'+columnFlags(col).map(flag=>'<span class="constraint">'+flag+'</span>').join('')+'</div>').join('')+(!obj.column?'<p>Indexes ('+indexes.length+')</p>'+indexes.map(ix=>'<div class="info-column"><strong>'+escapeHtml(ix.name)+(ix.unique?' · UNIQUE':'')+'</strong><span>'+escapeHtml(ix.keys.join(', '))+'</span><span>'+ix.entries+' khóa · '+ix.cardinality+' phân biệt · cao '+ix.height+'</span></div>').join(''):'')+'<p>Foreign Keys ('+foreignKeys.length+')</p>'+foreignKeys.map(fk=>'<div class="info-column"><strong>'+escapeHtml(fk.name)+'</strong><span>'+escapeHtml(fk.keys.join(', ')+' → '+fk.target+' ('+fk.targetKeys.join(', ')+')')+'</span></div>').join('');
+}
+function renderInfo(c=active){
+  if(!c||active!==c)return;
+  $('objectInfoTab').setAttribute('aria-selected',String(c.infoTab==='object'));
+  $('sessionInfoTab').setAttribute('aria-selected',String(c.infoTab==='session'));
+  $('objectInfo').hidden=c.infoTab!=='object';$('sessionInfo').hidden=c.infoTab!=='session';
+  $('schemaSummary').textContent=c.schemas.length+' database · '+c.schemas.reduce((n,s)=>n+s.tables.length,0)+' bảng · '+c.schemas.reduce((n,s)=>n+(s.views||[]).length,0)+' view';
+  $('objectDetails').innerHTML=objectMarkup(c);
+  const fields=[['Kết nối',profile(c.id)?.name||c.id],['Catalog',c.path],['Database hiện tại',tab(c).db],['Trạng thái',c.busy?'Đang thực thi':c.online===true?'Đã kết nối':c.online===false?'Lỗi kết nối':'Đang kết nối'],['Engine','VDB 0.1.0 · V++']];
+  $('sessionInfo').innerHTML='<dl>'+fields.map(([name,value])=>'<dt>'+name+'</dt><dd>'+escapeHtml(value)+'</dd>').join('')+'</dl>';
+}
+$('objectInfoTab').onclick=()=>{if(active){active.infoTab='object';renderInfo();}};
+$('sessionInfoTab').onclick=()=>{if(active){active.infoTab='session';renderInfo();}};
+function renderTree(){
+  const c=active,q=c.search.toLowerCase(),root=$('tree');root.replaceChildren();
+  if(c.schemaError){const warning=document.createElement('p');warning.className='empty danger-text';warning.textContent='Metadata có thể đã cũ. Hãy Refresh.';root.append(warning);}
+  for(const s of c.schemas){
+    const matches=s.tables.filter(n=>!q||s.name.toLowerCase().includes(q)||n.toLowerCase().includes(q)||columnsFor(c,s.name,n).some(col=>col.name.toLowerCase().includes(q))||indexesFor(c,s.name,n).some(ix=>ix.name.toLowerCase().includes(q))||foreignKeysFor(c,s.name,n).some(fk=>fk.name.toLowerCase().includes(q)));
+    const viewMatches=(s.views||[]).filter(n=>!q||s.name.toLowerCase().includes(q)||n.toLowerCase().includes(q)||columnsFor(c,s.name,n).some(col=>col.name.toLowerCase().includes(q)));
+    if(q&&!s.name.toLowerCase().includes(q)&&!matches.length&&!viewMatches.length)continue;
+    const open=c.expanded.has(s.name)||!!q;
+    const b=document.createElement('button');b.className=(tab().db===s.name?'default-schema ':'')+((c.selectedObject?.db===s.name&&!c.selectedObject.name)||(!c.selectedObject&&tab().db===s.name)?'selected':'');b.innerHTML=icon(open?'down':'right','chev')+icon('db','db-icon')+'<span class="node-name">'+escapeHtml(s.name)+'</span>';b.title='Chọn '+s.name;b.setAttribute('aria-expanded',String(open));
+    b.onclick=()=>{const wasOpen=c.expanded.has(s.name);if(tab().db!==s.name){tab().page=null;tab().source=null;}tab().db=s.name;c.selectedObject={db:s.name,name:null,column:null};if(wasOpen)c.expanded.delete(s.name);else c.expanded.add(s.name);renderDatabase();renderTree();updateActions();persist();};
+    b.oncontextmenu=e=>openSchemaMenu(e,c,s.name);root.append(b);
+    if(open){
+      const folder=document.createElement('div');folder.className='folder';folder.innerHTML=icon('folder')+'Tables ('+matches.length+')';root.append(folder);
+      for(const name of matches){
+        const key=tableKey(s.name,name),columns=columnsFor(c,s.name,name),indexes=indexesFor(c,s.name,name),foreignKeys=foreignKeysFor(c,s.name,name);
+        const expanded=c.expandedTables.has(key)||Boolean(q&&(columns.some(col=>col.name.toLowerCase().includes(q))||indexes.some(ix=>ix.name.toLowerCase().includes(q))||foreignKeys.some(fk=>fk.name.toLowerCase().includes(q))));
+        const entry=document.createElement('div');entry.className='table-entry';
+        const toggle=document.createElement('button');toggle.className='expand-table';toggle.innerHTML=icon(expanded?'down':'right','chev');toggle.title='Hiện/ẩn cột '+name;toggle.setAttribute('aria-expanded',String(expanded));
+        toggle.onclick=()=>{if(c.expandedTables.has(key))c.expandedTables.delete(key);else c.expandedTables.add(key);selectObject(c,s.name,name);};
+        const row=document.createElement('button');row.className='table-row'+(c.selectedObject?.db===s.name&&c.selectedObject?.name===name&&!c.selectedObject.column?' selected':'');row.innerHTML=icon('table','table-icon')+'<span class="node-name">'+escapeHtml(name)+'</span>';row.title='Chọn bảng · nhấp đúp để xem dữ liệu';
+        row.onclick=()=>{c.selectedObject={db:s.name,name,column:null};renderInfo(c);root.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));row.classList.add('selected');};
+        row.ondblclick=()=>runObjectQuery(c,s.name,name,false);
+        row.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runObjectQuery(c,s.name,name,false);}};
+        row.oncontextmenu=e=>openSchemaMenu(e,c,s.name,name);entry.append(toggle,row);root.append(entry);
+        if(expanded){
+          const group=document.createElement('div');group.className='folder column-group';group.textContent='Columns ('+columns.length+')';root.append(group);
+          for(const col of columns){
+            const colRow=document.createElement('button');colRow.className='column-row'+(c.selectedObject?.db===s.name&&c.selectedObject?.name===name&&c.selectedObject?.column===col.name?' selected':'');
+            const flags=columnFlags(col);if(foreignKeys.some(fk=>fk.keys.includes(col.name)))flags.push('FK');
+            colRow.innerHTML='<span class="node-name">'+escapeHtml(col.name)+'</span>'+flags.map(flag=>'<span class="constraint">'+flag+'</span>').join('');
+            colRow.title=col.name+' · '+columnType(col)+' · '+columnFlags(col).join(', ');
+            colRow.onclick=()=>selectObject(c,s.name,name,col.name);colRow.oncontextmenu=e=>openSchemaMenu(e,c,s.name,name,col.name);root.append(colRow);
+          }
+          const indexGroup=document.createElement('div');indexGroup.className='folder column-group';indexGroup.textContent='Indexes ('+indexes.length+')';root.append(indexGroup);
+          for(const ix of indexes){const item=document.createElement('button');item.className='column-row';item.textContent=ix.name+(ix.unique?' · UNIQUE':'')+' ('+ix.keys.join(', ')+')';item.title=ix.entries+' khóa · '+ix.cardinality+' phân biệt · cao '+ix.height;item.onclick=()=>showInspector(c,s.name,name);item.oncontextmenu=e=>openSchemaMenu(e,c,s.name,name);root.append(item);}
+          const fkGroup=document.createElement('div');fkGroup.className='folder column-group';fkGroup.textContent='Foreign Keys ('+foreignKeys.length+')';root.append(fkGroup);
+          for(const fk of foreignKeys){const item=document.createElement('button');item.className='column-row';item.textContent=fk.name;item.title=fk.keys.join(', ')+' → '+fk.target+' ('+fk.targetKeys.join(', ')+')';item.onclick=()=>showInspector(c,s.name,name);item.oncontextmenu=e=>openSchemaMenu(e,c,s.name,name);root.append(item);}
+        }
+      }
+      if(!matches.length){const empty=document.createElement('div');empty.className='empty';empty.style.paddingLeft='36px';empty.textContent='Chưa có bảng';root.append(empty);}
+      const viewFolder=document.createElement('div');viewFolder.className='folder';viewFolder.innerHTML=icon('folder')+'Views ('+viewMatches.length+')';root.append(viewFolder);
+      for(const name of viewMatches){
+        const row=document.createElement('button');row.className='table-row'+(c.selectedObject?.db===s.name&&c.selectedObject?.name===name?' selected':'');
+        row.innerHTML=icon('table','table-icon')+'<span class="node-name">'+escapeHtml(name)+'</span>';row.title='View · chỉ đọc · nhấp đúp để xem dữ liệu';
+        row.onclick=()=>selectObject(c,s.name,name);row.ondblclick=()=>runObjectQuery(c,s.name,name,false);
+        row.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runObjectQuery(c,s.name,name,false);}};
+        row.oncontextmenu=e=>openSchemaMenu(e,c,s.name,name);root.append(row);
+      }
+    }
+  }
+  if(!root.childElementCount){const p=document.createElement('div');p.className='empty';p.textContent='Không có schema';root.append(p);}
+  renderInfo(c);
+}
+const syntax=/--[^\n]*|'(?:''|[^'])*'|\b(?:SELECT|DISTINCT|FROM|WHERE|AND|OR|IS|NOT|IN|BETWEEN|LIKE|NULL|TRUE|FALSE|JOIN|INNER|LEFT|OUTER|ON|AS|GROUP|HAVING|ORDER|BY|ASC|DESC|LIMIT|OFFSET|COUNT|SUM|AVG|MIN|MAX|CREATE|DATABASE|TABLE|PRIMARY|KEY|UNIQUE|INT|INTEGER|REAL|TEXT|VARCHAR|BOOLEAN|INSERT|INTO|VALUES|UPDATE|SET|DELETE|DROP|SHOW|DATABASES|TABLES|DESCRIBE|USE|BEGIN|TRANSACTION|COMMIT|ROLLBACK|EXPLAIN|ALTER|ADD|COLUMN|RENAME|TO|INDEX|INDEXES|FOREIGN|KEYS|REFERENCES|CONSTRAINT|VIEW|VIEWS|STATISTICS)\b|\b\d+(?:\.\d+)?\b/gi;
+function paintEditor(){
+  const sql=editor.value;let result='',last=0;
+  for(const m of sql.matchAll(syntax)){result+=escapeHtml(sql.slice(last,m.index));let type=m[0].startsWith('--')?'comment':m[0].startsWith("'")?'str':/^\d/.test(m[0])?'num':'kw';result+='<span class="'+type+'">'+escapeHtml(m[0])+'</span>';last=m.index+m[0].length;}
+  $('highlight').innerHTML=result+escapeHtml(sql.slice(last))+'\n';
+  $('lines').textContent=sql.split('\n').map((_,i)=>i+1).join('\n');
+  syncScroll();cursor();
+}
+function syncScroll(){$('highlight').scrollTop=editor.scrollTop;$('highlight').scrollLeft=editor.scrollLeft;$('lines').scrollTop=editor.scrollTop;}
+function cursor(){const a=editor.value.slice(0,editor.selectionStart).split('\n');$('cursor').textContent='Dòng '+a.length+', cột '+(a.at(-1).length+1);renderContextHelp();updateActions();}
+function emptyState(title,detail,err=false){$('resultGrid').innerHTML='<div class="empty-state'+(err?' error':'')+'">'+icon('table')+'<strong>'+escapeHtml(title)+'</strong><span>'+escapeHtml(detail)+'</span></div>';}
+function rowMatches(row){const q=$('resultSearch').value.toLowerCase();return !q||row.some(v=>String(v??'NULL').toLowerCase().includes(q));}
+function visibleRows(result){
+  const rows=result.rows.filter(rowMatches);
+  if(result.sort){const {column,direction}=result.sort;rows.sort((a,b)=>{const x=a[column],y=b[column];return direction*(x===y?0:x===null?-1:y===null?1:typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'vi'));});}
+  return rows;
+}
+function renderResults(){
+  updateActions();
+  const t=tab(),r=t.results[t.selected];$('resultTabs').replaceChildren();$('resultCount').textContent='';$('resultSearch').disabled=!r?.columns;
+  t.results.forEach((res,i)=>{const b=document.createElement('button');b.className=i===t.selected?'active':'';b.textContent='Kết quả '+(i+1)+(res.columns?' · '+res.rows.length+' hàng':' · OK');b.onclick=()=>{t.selected=i;t.gridSelection=null;t.filter='';$('resultSearch').value='';renderResults();};$('resultTabs').append(b);});
+  updateGridTools();
+  if(t.error){emptyState('SQL thực thi thất bại',t.error,true);return;}
+  if(!r){emptyState(t.ran?'Không có kết quả':'Chưa có kết quả truy vấn',t.ran?'Batch đã thực thi.':'Chạy SQL hoặc nhấp đúp vào một bảng trong Schemas.');return;}
+  if(!r.columns){emptyState('Query OK',r.affected_rows+' hàng bị ảnh hưởng');return;}
+  if(!selectedCell())t.gridSelection=null;
+  const rows=visibleRows(r);$('resultCount').textContent=rows.length+' / '+r.rows.length+' hàng';
+  const table=document.createElement('table');table.className='grid';const head=table.createTHead().insertRow();
+  const index=document.createElement('th');index.className='row-index';index.textContent='#';head.append(index);
+  r.columns.forEach((name,i)=>{
+    const th=document.createElement('th'),b=document.createElement('button'),handle=document.createElement('span');
+    b.className='sort-column';b.textContent=name+(r.sort?.column===i?(r.sort.direction===1?' ▲':' ▼'):'');b.title='Sắp xếp cột';b.onclick=()=>{r.sort={column:i,direction:r.sort?.column===i?-r.sort.direction:1};renderResults();};
+    handle.className='resize-column';handle.title='Kéo đổi chiều rộng cột';handle.onpointerdown=e=>{e.preventDefault();handle.setPointerCapture(e.pointerId);const start=e.clientX,width=th.offsetWidth;handle.onpointermove=m=>{const size=Math.max(65,Math.min(900,width+m.clientX-start));(r.widths??={})[i]=size;th.style.minWidth=size+'px';th.style.maxWidth=size+'px';};handle.onpointerup=handle.onpointercancel=()=>{handle.onpointermove=null;};};
+    if(r.widths?.[i])th.style.minWidth=th.style.maxWidth=r.widths[i]+'px';th.append(b,handle);head.append(th);
+  });
+  const body=table.createTBody();
+  const indices=new Map(r.rows.map((row,i)=>[row,i+1]));
+  const select=(row,column,cell)=>{
+    table.querySelector('.selected-cell')?.classList.remove('selected-cell');
+    t.gridSelection={row,column};cell.classList.add('selected-cell');updateGridTools();
+  };
+  rows.forEach(row=>{
+    const tr=body.insertRow(),td=tr.insertCell();td.className='row-index';td.textContent=(pageResult(active,t)?.offset||0)+indices.get(row);
+    td.onclick=()=>select(row,0,tr.cells[1]);
+    row.forEach((v,column)=>{
+      const c=tr.insertCell();c.textContent=v===null?'NULL':String(v);c.title=c.textContent;
+      c.className=(v===null?'null':typeof v==='number'?'number':'')+(t.gridSelection?.row===row&&t.gridSelection.column===column?' selected-cell':'');
+      c.onclick=()=>select(row,column,c);c.ondblclick=()=>showDetail(r.columns[column],valueText(v));
+    });
+  });
+  $('resultGrid').replaceChildren(table);
+}
+function timingValue(value){return Number.isFinite(value)&&value>=0?value:null;}
+function timingText(value){return timingValue(value)===null?'—':value.toFixed(3);}
+function log(c,sql,ok,message,ms,db=null,response=null){
+  const entry={sql,ok,message,ms,executionMs:timingValue(response?.timing?.execution_ms),serializationMs:timingValue(response?.timing?.serialization_ms),fetchMs:timingValue(response?.fetch_ms),time:new Date().toLocaleTimeString('vi-VN'),timestamp:Date.now(),db};
+  c.logs.unshift(entry);if(c.logs.length>100)c.logs.pop();
+  if(db&&sql.length<=16000){c.history.unshift({...entry,message:String(message).slice(0,1000)});if(c.history.length>50)c.history.pop();persist();}
+  if(active===c)renderLogs();
+}
+function outputRows(c){return (c.outputMode==='history'?c.history:c.logs).filter(l=>(!c.outputFilter||l.ok===(c.outputFilter==='ok'))&&(!c.outputDate||localDate(l.timestamp)===c.outputDate));}
+function localDate(time){const d=new Date(time);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+function renderLogs(){
+  const c=active;$('outputMode').value=c.outputMode;$('outputFilter').value=c.outputFilter;$('outputDate').value=c.outputDate;
+  $('logs').replaceChildren(...outputRows(c).map((l,i)=>{const tr=document.createElement('tr');[i+1,localDate(l.timestamp)+' '+l.time,l.sql,l.message,timingText(l.executionMs),timingText(l.serializationMs),timingText(l.fetchMs),l.ms+' ms'].forEach((v,j)=>{const td=tr.insertCell();td.textContent=v;td.title=String(v);if(j===3)td.className=l.ok?'ok':'err';});tr.onclick=()=>showDetail('Chi tiết truy vấn',l.sql+'\n\n'+l.message+'\nEngine (gồm ghi snapshot): '+timingText(l.executionMs)+' ms\nXuất JSON/stdout: '+timingText(l.serializationMs)+' ms\nĐọc và phân tích HTTP body: '+timingText(l.fetchMs)+' ms\nHTTP round-trip: '+l.ms+' ms',l.db?()=>{if(active===c)addTab(l.sql,'History',l.db,'');}:null);return tr;}));
+}
+function renderBusy(){updateActions();}
+function setBusy(c,value){c.busy=value;if(active===c){renderBusy();renderInfo(c);closeSchemaMenu();}renderConnections();}
+// Split SQL at semicolons outside quoted strings and line comments.
+function currentStatement(sql,position){
+  let start=0,quoted=false,comment=false,hasSql=false;
+  const ranges=[];
+  for(let i=0;i<sql.length;i++){
+    const ch=sql[i],next=sql[i+1];
+    if(comment){if(ch==='\n')comment=false;continue;}
+    if(quoted){if(ch==="'"&&next==="'"){i++;continue;}if(ch==="'")quoted=false;continue;}
+    if(ch==='-'&&next==='-'){comment=true;i++;continue;}
+    if(ch==="'"){quoted=true;hasSql=true;continue;}
+    if(ch===';'){ranges.push({start,end:i+1,hasSql});start=i+1;hasSql=false;continue;}
+    if(!/\s/.test(ch))hasSql=true;
+  }
+  ranges.push({start,end:sql.length,hasSql});
+  const range=ranges.find(r=>position>=r.start&&position<r.end)||ranges.at(-1);
+  if(range.hasSql)return sql.slice(range.start,range.end).trim();
+  if(position===sql.length&&!sql.slice(range.start,range.end).trim()){const last=ranges.at(-2);return last?.hasSql?sql.slice(last.start,last.end).trim():'';}
+  return '';
+}
+function explainStatement(sql){
+  const tokens=sqlTokens(sql).filter(t=>!t.text.startsWith('--')).map(t=>t.text);
+  if(tokens.at(-1)===';')tokens.pop();
+  if(tokens[0]?.toUpperCase()!=='SELECT'||tokens.includes(';'))return '';
+  return 'EXPLAIN '+sql.trim();
+}
+function editorExplain(){
+  const sql=editor.selectionStart!==editor.selectionEnd?editor.value.slice(editor.selectionStart,editor.selectionEnd):currentStatement(tab()?.sql||'',editor.selectionStart);
+  return explainStatement(sql);
+}
+$('explainSql').onclick=()=>{
+  if(!active||active.busy)return;
+  const sql=editorExplain();if(!sql)return;
+  addTab(sql,'EXPLAIN',tab().db,'');return execute();
+};
+async function execute(selection=false){
+  const c=active;if(!c||c.busy)return;const t=tab(c);const original=selection==='current'?currentStatement(t.sql,editor.selectionStart):selection?editor.value.slice(editor.selectionStart,editor.selectionEnd):t.sql;
+  const db=t.db,sql=limitSelect(original,t.rowLimit),page=!selection?browsePage(c,t):null;
+  t.page=page;
+  if(!sql.trim()){setStatus(c,selection?'Hãy chọn một đoạn SQL':'SQL trống');return;}
+  setBusy(c,true);setStatus(c,'Đang thực thi…');const start=performance.now();t.error='';t.results=[];t.source=null;t.gridSelection=null;t.ran=true;t.filter='';if(tab()===t){$('resultSearch').value='';renderResults();}
+  try{const response=await api('/api/query',{catalog:c.path,sql,database:db});t.results=response.results;for(const other of c.tabs)other.source=null;t.selected=Math.max(0,t.results.findIndex(r=>r.columns));log(c,sql,true,'OK · '+t.results.length+' câu lệnh',Math.round(performance.now()-start),db,response);
+    try{await refresh(c);const currentPage=page&&t.page===page&&t.sql===sql&&t.db===db?page:null;if(currentPage)currentPage.result=t.results[0];t.source=gridSource(c,db,sql,t.results,currentPage);setStatus(c,'Thực thi thành công',true);}catch(e){setStatus(c,'SQL thành công · lỗi cập nhật schemas');log(c,'SHOW DATABASES / TABLES',false,e.message,0);}
+  }catch(e){t.error=e.message;log(c,sql,false,e.message,Math.round(performance.now()-start),db);setStatus(c,'SQL thực thi thất bại');}
+  finally{setBusy(c,false);if(tab()===t)renderResults();updateActions();}
+}
+async function refreshAction(c=active){if(!c||c.busy)return;for(const t of c.tabs)t.source=null;setBusy(c,true);try{await refresh(c);}catch(e){setStatus(c,e.message,false);log(c,'SHOW DATABASES / TABLES',false,e.message,0);}finally{setBusy(c,false);}}
+function download(name,text,mime,key){
+  const native=window.webkit?.messageHandlers?.vdbSave;
+  if(native){native.postMessage({name,text,key:key||null});return false;}
+  const url=URL.createObjectURL(new Blob([text],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return true;
+}
+function csvCell(v){if(v===null)return '';let s=String(v);if(typeof v==='string'&&/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';}
+$('newTab').onclick=()=>addTab();$('run').onclick=()=>execute(false);$('runSelection').onclick=()=>execute(true);$('refresh').onclick=$('refreshSide').onclick=()=>refreshAction();
+$('database').onchange=()=>selectDatabase($('database').value);$('schemaSearch').oninput=()=>{active.search=$('schemaSearch').value;renderTree();};$('resultSearch').oninput=()=>{tab().filter=$('resultSearch').value;renderResults();};
+$('clearLog').onclick=()=>{const c=active;if(c.outputMode==='history')confirmAction('Xóa History','Xóa lịch sử truy vấn của kết nối này?',()=>{c.history=[];persist(true);renderLogs();});else{c.logs=[];renderLogs();}};
+for(const [id,key] of [['outputMode','outputMode'],['outputFilter','outputFilter'],['outputDate','outputDate']])$(id).onchange=()=>{active[key]=$(id).value;renderLogs();};
+$('exportLog').onclick=()=>{if(pendingOpen||pendingSave)return;const rows=outputRows(active);pendingSave={};updateActions();if(download('vdb-output.csv','\ufeff'+[['Date','Database','SQL','Status','Message','HTTP milliseconds','Engine milliseconds','Serialization milliseconds','Response read milliseconds'],...rows.map(l=>[new Date(l.timestamp).toISOString(),l.db,l.sql,l.ok?'OK':'Error',l.message,l.ms,timingValue(l.executionMs),timingValue(l.serializationMs),timingValue(l.fetchMs)])].map(r=>r.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8'))window.vdbFileSaved(true);};
+let fileConnection=null;
+const decodeText=encoded=>new TextDecoder().decode(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)));
+$('openFile').onclick=()=>{
+  if(!active||pendingOpen||pendingSave)return;
+  const native=window.webkit?.messageHandlers?.vdbOpenSQL;
+  if(native){pendingOpen={c:active,key:newId()};updateActions();renderConnections();native.postMessage(pendingOpen.key);}
+  else{fileConnection=active;$('fileInput').click();}
+};
+$('fileInput').onchange=async e=>{const f=e.target.files[0],c=fileConnection;e.target.value='';if(f&&connections.includes(c)){try{const text=await f.text();if(connections.includes(c)){makeTab(c,text,f.name);if(active===c)renderActive();persist(true);}}catch(error){setStatus(c,error.message);}}};
+window.vdbFileOpened=(name,text,error=false)=>{
+  const request=pendingOpen;pendingOpen=null;updateActions();renderConnections();
+  if(!request||!connections.includes(request.c))return;
+  const {c,key}=request;
+  if(request.csv){
+    if(dataTarget!==request.target)return;
+    setDataLocked(false);
+    if(!error&&name!==null){$('csvText').value=decodeText(text);prepareImport();}
+    else if(error)$('dataMessage').textContent='Không đọc được CSV UTF-8';
+    return;
+  }
+  if(error){setStatus(c,'Không đọc được tệp SQL UTF-8.');return;}
+  if(name!==null){const t=makeTab(c,decodeText(text),decodeText(name));t.fileKey=key;if(active===c)renderActive();persist(true);}
+};
+window.vdbFileSaved=(ok,encodedName)=>{
+  const request=pendingSave;pendingSave=null;updateActions();renderConnections();
+  if(ok&&request?.t&&connections.includes(request.c)&&request.c.tabs.includes(request.t)){const {c,t,sql,key}=request;t.saved=sql;t.fileKey=key;if(encodedName)t.name=decodeText(encodedName);if(active===c)renderTabs();persist(true);}
+};
+function saveSql(as=false){
+  const c=active,t=tab();if(!t||pendingSave||pendingOpen)return;
+  const key=as?newId():t.fileKey;
+  pendingSave={c,t,sql:t.sql,key};updateActions();renderConnections();
+  if(download(t.name.replace(/\.sql$/i,'')+'.sql',t.sql,'text/plain;charset=utf-8',key)){pendingSave=null;updateActions();renderConnections();setStatus(c,'Đã gửi yêu cầu tải SQL; bản nháp vẫn được giữ.');}
+}
+$('saveFile').onclick=()=>saveSql();
+$('exportCsv').onclick=()=>{const t=tab(),r=t.results[t.selected];if(pendingSave||pendingOpen||!r?.columns)return;pendingSave={};updateActions();if(download(t.name.replace(/\.sql$/i,'')+'.csv','\ufeff'+[r.columns,...visibleRows(r)].map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8'))window.vdbFileSaved(true);};
+let dbConnection=null;
+$('createDb').onclick=()=>{if(!active||active.busy)return;dbConnection=active;$('dbName').value='';$('dbDialog').showModal();$('dbName').focus();};
+$('cancelDb').onclick=()=>$('dbDialog').close();$('dbForm').onsubmit=e=>{e.preventDefault();const name=$('dbName').value;if(!identifier.test(name))return;$('dbDialog').close();if(active!==dbConnection||active.busy)return;addTab('CREATE DATABASE '+name+';','Create database');execute(false);};
+$('createTable').onclick=()=>showTableDesigner(active,tab()?.db);
+$('createView').onclick=()=>draftView(active,tab()?.db);
+
+function editSql(record=true){
+  if(!active)return;
+  const t=tab(),wasDirty=t.sql!==t.saved;
+  if(t.sql!==editor.value&&record){
+    t.undo.push(t.sql);if(t.undo.length>100)t.undo.shift();t.redo=[];
+  }
+  $('validationStatus').textContent='';$('completion').hidden=true;
+  if(t.sql!==editor.value)t.page=null;
+  t.sql=editor.value;if(wasDirty!==(t.sql!==t.saved))renderTabs();
+  paintEditor();persist();
+}
+function editorHistory(redo=false){
+  const t=tab();if(!t)return;
+  const from=redo?t.redo:t.undo,to=redo?t.undo:t.redo;
+  if(!from.length)return;
+  to.push(t.sql);editor.value=from.pop();editor.focus();
+  editor.setSelectionRange(editor.value.length,editor.value.length);editSql(false);
+}
+editor.oninput=e=>{if(!tab())return;if(e.inputType==='historyUndo'||e.inputType==='historyRedo'){editor.value=tab().sql;editorHistory(e.inputType==='historyRedo');}else editSql();};
+editor.onbeforeinput=e=>{if(e.cancelable&&(e.inputType==='historyUndo'||e.inputType==='historyRedo')){e.preventDefault();editorHistory(e.inputType==='historyRedo');}};editor.onscroll=syncScroll;editor.onkeyup=cursor;editor.onclick=cursor;editor.onselect=cursor;
+editor.onkeydown=e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();editorHistory(e.shiftKey);return;}if(e.ctrlKey&&e.code==='Space'){e.preventDefault();suggest();return;}if(e.key==='Tab'){e.preventDefault();editor.setRangeText('    ',editor.selectionStart,editor.selectionEnd,'end');editSql();}};
+function findNext(){
+  const needle=$('findText').value;if(!needle)return false;
+  const text=editor.value;let index=text.indexOf(needle,editor.selectionEnd);
+  if(index<0)index=text.indexOf(needle);
+  $('findStatus').textContent=index<0?'Không tìm thấy':'Đã tìm thấy';
+  if(index<0)return false;
+  editor.focus();editor.setSelectionRange(index,index+needle.length);cursor();return true;
+}
+function replaceMatch(all=false){
+  const needle=$('findText').value,replacement=$('replaceText').value;if(!needle||!active)return;
+  if(!all&&editor.value.slice(editor.selectionStart,editor.selectionEnd)!==needle&&!findNext())return;
+  const before=editor.value;
+  const parts=all?before.split(needle):null;
+  if(all&&parts.length<2){$('findStatus').textContent='Không tìm thấy';return;}
+  editor.focus();
+  if(all)editor.select();
+  const start=editor.selectionStart,end=editor.selectionEnd;
+  const text=all?parts.join(replacement):replacement;
+  const expected=before.slice(0,start)+text+before.slice(end);
+  if(expected!==before){
+    editor.setRangeText(text,start,end,'end');
+    if(editor.value!==expected){
+      $('findStatus').textContent='Không thể thay thế SQL.';
+      editSql();return;
+    }
+    editSql();
+  }
+  if(all)$('findStatus').textContent='Đã thay '+(parts.length-1)+' kết quả';
+  else findNext();
+}
+$('findNext').onclick=findNext;$('replaceOne').onclick=()=>replaceMatch();$('replaceAll').onclick=()=>replaceMatch(true);
+$('closeFind').onclick=()=>{$('findRow').hidden=true;editor.focus();};
+$('findText').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();findNext();}};
+let structureConnection=null;
+function draftView(c,db){
+  if(active!==c||!schemaReady(c)||!schemaFor(c,db))return;
+  const schema=schemaFor(c,db),selected=c.selectedObject;
+  const source=selected?.db===db&&hasRelation(c,db,selected.name)?selected.name:schema.tables[0]||schema.views?.[0]||'TABLE_NAME';
+  let name='NEW_VIEW',suffix=1;
+  while(hasRelation(c,db,name))name='NEW_VIEW_'+suffix++;
+  addTab('CREATE VIEW '+name+' AS SELECT * FROM '+source+';','Create view',db,'');
+}
+const pageSize=100;
+function browseSql(page){return 'SELECT * FROM '+page.name+(page.pk?' ORDER BY '+page.pk:'')+' LIMIT '+pageSize+(page.offset?' OFFSET '+page.offset:'')+';';}
+function browsePage(c,t){
+  const p=t?.page;
+  if(!p||!schemaReady(c)||t.db!==p.db||t.sql!==browseSql(p)||!hasRelation(c,p.db,p.name))return null;
+  const primary=columnsFor(c,p.db,p.name).filter(col=>col.primary);
+  const pk=primary.length===1&&hasTable(c,p.db,p.name)?primary[0].name:null;
+  return pk===p.pk?p:null;
+}
+function pageResult(c,t){const p=browsePage(c,t);return p&&t.results.length===1&&t.results[0]?.columns&&p.result===t.results[0]?p:null;}
+function updatePageTools(){
+  const t=tab(),p=pageResult(active,t),r=t?.results[0];
+  const locked=!p||quitting||document.querySelector('dialog[open]');
+  for(const id of ['pagePrev','pageNext','pageInfo'])$(id).hidden=!p;
+  $('pagePrev').disabled=locked||!p.offset;
+  $('pageNext').disabled=locked||r.rows.length<pageSize||p.offset>2147483647-pageSize;
+  $('pageInfo').textContent=p?'Trang '+(p.offset/pageSize+1)+' · '+(r.rows.length?(p.offset+1)+'–'+(p.offset+r.rows.length):'0 hàng'):'';
+  $('pageInfo').title='Mỗi trang là một truy vấn mới. Dữ liệu thay đổi có thể làm dịch vị trí hàng. Lọc, sắp xếp và CSV chỉ áp dụng cho trang hiện tại.';
+}
+function movePage(direction){
+  const c=active,t=tab(),p=pageResult(c,t);
+  if(!p||quitting||document.querySelector('dialog[open]')||(direction>0&&t.results[0].rows.length<pageSize))return;
+  const offset=p.offset+direction*pageSize;
+  if(offset<0||offset>2147483647)return;
+  t.page={...p,offset,result:null};t.undo.push(t.sql);if(t.undo.length>100)t.undo.shift();t.redo=[];t.sql=browseSql(t.page);editor.value=t.sql;renderActive();persist();return execute();
+}
+$('pagePrev').onclick=()=>movePage(-1);$('pageNext').onclick=()=>movePage(1);
+function runObjectQuery(c,db,name,describe){
+  if(active!==c||!schemaReady(c)||!hasRelation(c,db,name)||!validIdentifier(name))return;
+  if(describe)addTab('DESCRIBE '+name+';',name+' · schema',db);
+  else{
+    const primary=columnsFor(c,db,name).filter(col=>col.primary);
+    const pk=primary.length===1&&hasTable(c,db,name)?primary[0].name:null;
+    const page={db,name,pk,offset:0,result:null};
+    addTab(browseSql(page),name,db);tab(c).page=page;
+  }
+  return execute();
+}
+function closeSchemaMenu(){$('schemaMenu').hidden=true;}
+function copyObjectName(name){
+  const field=$('copyName');
+  field.value=name;$('copyDialog').showModal();field.focus();field.select();
+  try{if(document.execCommand('copy'))$('copyDialog').close();}catch(_){}
+}
+$('closeCopy').onclick=()=>$('copyDialog').close();
+function openSchemaMenu(event,c,db,name=null,column=null){
+  event.preventDefault();if(active!==c)return;
+  c.selectedObject={db,name,column};renderTree();
+  const menu=$('schemaMenu');menu.replaceChildren();
+  const add=(label,action,disabled=false,danger=false)=>{
+    const button=document.createElement('button');button.textContent=label;button.setAttribute('role','menuitem');button.disabled=disabled;button.className=danger?'danger':'';
+    button.onclick=()=>{closeSchemaMenu();if(active===c)action();};menu.append(button);
+  };
+  if(name&&hasView(c,db,name)){
+    add('Select Rows · LIMIT 100',()=>runObjectQuery(c,db,name,false),!schemaReady(c));
+    add('DESCRIBE',()=>runObjectQuery(c,db,name,true),!schemaReady(c));
+    add('Copy Name',()=>copyObjectName(name));
+    add('DROP VIEW · SQL…',()=>addTab('DROP VIEW '+name+';','Drop '+name,db,''),!schemaReady(c),true);
+  }else if(column){add('Copy Name' ,()=>copyObjectName(column));add('Table Inspector',()=>showInspector(c,db,name),c.busy);}
+  else if(name){
+    add('Select Rows · LIMIT 100',()=>runObjectQuery(c,db,name,false),!schemaReady(c));
+    add('Table Inspector',()=>showInspector(c,db,name),c.busy);
+    add('DESCRIBE',()=>runObjectQuery(c,db,name,true),!schemaReady(c));
+    add('Thay đổi bảng / index…',()=>showSchemaChange(c,db,name),!schemaReady(c));
+    add('Copy Name',()=>copyObjectName(name));
+    add('DROP TABLE…',()=>showDrop(c,db,name),!schemaReady(c),true);
+  }else{
+    add('Set Default Schema',()=>selectDatabase(db));
+    add('Create Table…',()=>showTableDesigner(c,db),!schemaReady(c));
+    add('Create View…',()=>draftView(c,db),!schemaReady(c));
+    add('Copy Name',()=>copyObjectName(db));
+  }
+  add('Refresh',()=>refreshAction(c),c.busy);
+  menu.hidden=false;menu.style.left=Math.max(6,Math.min(event.clientX,window.innerWidth-menu.offsetWidth-6))+'px';menu.style.top=Math.max(6,Math.min(event.clientY,window.innerHeight-menu.offsetHeight-6))+'px';
+  menu.querySelector('button:not(:disabled)')?.focus();
+}
+document.addEventListener('pointerdown',e=>{if(!$('schemaMenu').contains(e.target))closeSchemaMenu();});
+document.addEventListener('keydown',e=>{
+  const menu=$('schemaMenu');if(menu.hidden)return;
+  if(e.key==='Escape'){e.preventDefault();closeSchemaMenu();return;}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    const items=[...menu.querySelectorAll('button:not(:disabled)')],index=items.indexOf(document.activeElement);
+    if(items.length){e.preventDefault();items[(index+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}
+  }
+});
+window.addEventListener?.('blur',closeSchemaMenu);
+window.addEventListener?.('resize',closeSchemaMenu);
+let inspectorTarget=null;
+function showInspector(c,db,name){
+  if(active!==c||c.busy||!hasTable(c,db,name))return;
+  inspectorTarget={c,db,name};const columns=columnsFor(c,db,name);
+  $('inspectorTitle').textContent='Table Inspector · '+name;
+  $('inspectorDescribe').disabled=!schemaReady(c);
+  $('inspectorSummary').textContent=db+'.'+name+' · '+columns.length+' cột'+(c.schemaError?' · Metadata có thể đã cũ':'');
+  $('inspectorColumns').innerHTML='<table class="grid"><thead><tr><th>Cột</th><th>Kiểu</th><th>Ràng buộc</th></tr></thead><tbody>'+columns.map(col=>'<tr><td>'+escapeHtml(col.name)+'</td><td>'+escapeHtml(columnType(col))+'</td><td>'+escapeHtml(columnFlags(col).join(', ')||'—')+'</td></tr>').join('')+'</tbody></table>';
+  const indexes=indexesFor(c,db,name);
+  $('inspectorIndexes').innerHTML='<table class="grid"><thead><tr><th>Index</th><th>Cột</th><th>Entries</th><th>Cardinality</th><th>Height</th><th>Unique</th></tr></thead><tbody>'+indexes.map(ix=>'<tr><td>'+escapeHtml(ix.name)+'</td><td>'+escapeHtml(ix.keys.join(', '))+'</td><td>'+ix.entries+'</td><td>'+ix.cardinality+'</td><td>'+ix.height+'</td><td>'+(ix.unique?'Có':'—')+'</td></tr>').join('')+'</tbody></table>';
+  const foreignKeys=foreignKeysFor(c,db,name);
+  $('inspectorForeignKeys').innerHTML='<table class="grid"><thead><tr><th>Khóa ngoại</th><th>Cột</th><th>Bảng đích</th><th>Cột đích</th></tr></thead><tbody>'+foreignKeys.map(fk=>'<tr><td>'+escapeHtml(fk.name)+'</td><td>'+escapeHtml(fk.keys.join(', '))+'</td><td>'+escapeHtml(fk.target)+'</td><td>'+escapeHtml(fk.targetKeys.join(', '))+'</td></tr>').join('')+'</tbody></table>';
+  $('inspectorChange').disabled=!schemaReady(c);
+  $('inspectorStats').disabled=!schemaReady(c);$('inspectorStatsResult').textContent='Tính thống kê từ dữ liệu hiện tại khi yêu cầu.';
+  $('inspectorDialog').showModal();
+}
+function statisticsMarkup(result,columns){
+  const expected=['COLUMN','ROWS','JSON_BYTES','NULL_COUNT','NON_NULL_COUNT','DISTINCT_COUNT','MIN','MAX'];
+  if(JSON.stringify(result?.columns)!==JSON.stringify(expected)||!Array.isArray(result.rows)||!result.rows.length||result.rows.length!==columns.length)throw new Error('Kết quả thống kê không hợp lệ.');
+  const rows=result.rows;
+  if(rows.some((r,i)=>!Array.isArray(r)||r.length!==expected.length||r[0]!==columns[i].name||r.slice(1,6).some(v=>!Number.isSafeInteger(v)||v<0)||r[1]!==rows[0][1]||r[2]!==rows[0][2]||r[3]+r[4]!==r[1]||r[5]>r[4]))throw new Error('Dữ liệu thống kê không hợp lệ.');
+  return '<p>'+rows[0][1]+' hàng · '+rows[0][2]+' byte JSON của bản ghi bảng (gồm schema, index và dữ liệu).</p><table class="grid"><thead><tr>'+['Cột','NULL','Khác NULL','Phân biệt','Min','Max'].map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+[r[0],...r.slice(3)].map(v=>'<td>'+escapeHtml(valueText(v))+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+$('inspectorStats').onclick=async()=>{
+  const target=inspectorTarget;if(!target||active!==target.c||!schemaReady(target.c)||!hasTable(target.c,target.db,target.name))return;
+  const {c,db,name}=target;const button=$('inspectorStats'),output=$('inspectorStatsResult');
+  button.disabled=true;output.textContent='Đang tính thống kê…';setBusy(c,true);
+  const current=()=>inspectorTarget===target&&active===c&&$('inspectorDialog').open;
+  try{const results=await query(c,'SHOW STATISTICS FROM '+name+';',db);if(current())output.innerHTML=statisticsMarkup(results[0],columnsFor(c,db,name));}
+  catch(e){if(current())output.textContent=e.message;}
+  finally{setBusy(c,false);if(current())button.disabled=!schemaReady(c);}
+};
+$('inspectorChange').onclick=()=>{if(inspectorTarget){const {c,db,name}=inspectorTarget;$('inspectorDialog').close();showSchemaChange(c,db,name);}};
+let schemaChangeTarget=null;
+function schemaChangeSql(c,db,table,op,old,name,type,limit,keys,target='',targetKeys=''){
+  if(!schemaReady(c)||!hasTable(c,db,table)||!validIdentifier(table))throw new Error('Metadata bảng không sẵn sàng.');
+  const columns=columnsFor(c,db,table),indexes=indexesFor(c,db,table),prefix='ALTER TABLE '+table+' ';
+  if(['add','renameColumn','renameTable','createIndex','createUniqueIndex','createForeignKey'].includes(op)&&!validIdentifier(name))throw new Error('Tên mới không hợp lệ.');
+  if(['dropColumn','renameColumn'].includes(op)&&!columns.some(col=>col.name===old))throw new Error('Cột không tồn tại.');
+  if(['add','renameColumn'].includes(op)&&columns.some(col=>col.name===name.toUpperCase()))throw new Error('Tên cột đã tồn tại.');
+  if(op==='add'){
+    if(!columnTypes.includes(type)||type==='VARCHAR'&&(!Number.isInteger(limit)||limit<1||limit>2147483647))throw new Error('Kiểu hoặc độ dài không hợp lệ.');
+    return prefix+'ADD COLUMN '+name+' '+columnType({type,limit})+';';
+  }
+  if(op==='renameColumn')return prefix+'RENAME COLUMN '+old+' TO '+name+';';
+  if(op==='renameTable'){
+    if(hasRelation(c,db,name.toUpperCase()))throw new Error('Tên bảng đã tồn tại.');
+    return prefix+'RENAME TO '+name+';';
+  }
+  if(op==='dropColumn'){
+    if(columns.length===1||indexes.some(ix=>ix.keys.includes(old)))throw new Error('Không thể xóa cột cuối hoặc cột thuộc index.');
+    if(foreignKeysFor(c,db,table).some(fk=>fk.keys.includes(old))||schemaFor(c,db).tables.some(child=>foreignKeysFor(c,db,child).some(fk=>fk.target===table&&fk.targetKeys.includes(old))))throw new Error('Cột thuộc khóa ngoại. Hãy xóa khóa ngoại trước.');
+    return prefix+'DROP COLUMN '+old+';';
+  }
+  if(op==='createIndex'||op==='createUniqueIndex'){
+    if(indexes.some(ix=>ix.name===name.toUpperCase()))throw new Error('Index đã tồn tại.');
+    const names=keys.split(',').map(k=>k.trim().toUpperCase());
+    if(new Set(names).size!==names.length||names.some(k=>!columns.some(col=>col.name===k&&['INT','INTEGER','TEXT','VARCHAR'].includes(col.type))))throw new Error('Chọn các cột khác nhau có kiểu INT, INTEGER, TEXT hoặc VARCHAR.');
+    return (op==='createUniqueIndex'?'CREATE UNIQUE INDEX ':'CREATE INDEX ')+name+' ON '+table+' ('+names.join(', ')+');';
+  }
+  if(op==='dropIndex'&&indexes.some(ix=>ix.name===old))return 'DROP INDEX '+old+' ON '+table+';';
+  if(op==='createForeignKey'){
+    if(foreignKeysFor(c,db,table).some(fk=>fk.name===name.toUpperCase()))throw new Error('Khóa ngoại đã tồn tại.');
+    const names=keys.split(',').map(k=>k.trim().toUpperCase());
+    const referenced=targetKeys.split(',').map(k=>k.trim().toUpperCase());
+    const targetColumns=columnsFor(c,db,target);
+    if(!hasTable(c,db,target)||names.length!==referenced.length||new Set(names).size!==names.length||new Set(referenced).size!==referenced.length||names.some(k=>!columns.some(col=>col.name===k))||referenced.some(k=>!targetColumns.some(col=>col.name===k)))throw new Error('Chọn bảng và các cột khóa ngoại hợp lệ, cùng số lượng.');
+    const unique=referenced.length===1&&targetColumns.some(col=>col.name===referenced[0]&&col.unique)||indexesFor(c,db,target).some(ix=>ix.unique&&ix.keys.length===referenced.length&&ix.keys.every((k,i)=>k===referenced[i]));
+    if(!unique)throw new Error('Cột đích cần PRIMARY KEY hoặc UNIQUE.');
+    const family=type=>type==='INTEGER'?'INT':type==='VARCHAR'?'TEXT':type;
+    if(names.some((k,i)=>family(columns.find(col=>col.name===k).type)!==family(targetColumns.find(col=>col.name===referenced[i]).type)))throw new Error('Kiểu dữ liệu khóa ngoại không tương thích.');
+    return prefix+'ADD CONSTRAINT '+name+' FOREIGN KEY ('+names.join(', ')+') REFERENCES '+target+' ('+referenced.join(', ')+');';
+  }
+  if(op==='dropForeignKey'&&foreignKeysFor(c,db,table).some(fk=>fk.name===old))return prefix+'DROP FOREIGN KEY '+old+';';
+  throw new Error('Thao tác không hợp lệ.');
+}
+function previewSchemaChange(){
+  if(!schemaChangeTarget)return '';
+  const {c,db,name}=schemaChangeTarget,op=$('schemaChangeOp').value;
+  try{
+    const sql=schemaChangeSql(c,db,name,op,$('schemaChangeOld').value,$('schemaChangeName').value.trim(),$('schemaChangeType').value,Number($('schemaChangeLimit').value),$('schemaChangeColumns').value,$('schemaChangeReference').value,$('schemaChangeReferenceColumns').value);
+    $('schemaChangePreview').textContent=sql;$('schemaChangeMessage').textContent=op==='dropColumn'?'Xóa cột sẽ mất dữ liệu của cột. Kiểm tra bản nháp trước khi chạy.':'Kiểm tra bản nháp trước khi chạy.';$('schemaChangeDraft').disabled=false;return sql;
+  }catch(e){$('schemaChangePreview').textContent='';$('schemaChangeMessage').textContent=e.message;$('schemaChangeDraft').disabled=true;return '';}
+}
+function changeSchemaOperation(){
+  if(!schemaChangeTarget)return;
+  const {c,db,name}=schemaChangeTarget,op=$('schemaChangeOp').value;
+  $('schemaChangeOldRow').hidden=!['dropColumn','renameColumn','dropIndex','dropForeignKey'].includes(op);
+  $('schemaChangeNameRow').hidden=['dropColumn','dropIndex','dropForeignKey'].includes(op);
+  $('schemaChangeTypeRow').hidden=op!=='add';$('schemaChangeLimit').hidden=$('schemaChangeType').value!=='VARCHAR';
+  $('schemaChangeColumnsRow').hidden=!['createIndex','createUniqueIndex','createForeignKey'].includes(op);
+  $('schemaChangeReferenceRow').hidden=$('schemaChangeReferenceColumnsRow').hidden=op!=='createForeignKey';
+  fillOptions('schemaChangeOld',(op==='dropIndex'?indexesFor(c,db,name):op==='dropForeignKey'?foreignKeysFor(c,db,name):columnsFor(c,db,name)).map(item=>item.name));
+  if(op==='createForeignKey')fillOptions('schemaChangeReference',schemaFor(c,db).tables);
+  previewSchemaChange();
+}
+function showSchemaChange(c,db,name){
+  if(active!==c||!schemaReady(c)||!hasTable(c,db,name))return;
+  schemaChangeTarget={c,db,name};$('schemaChangeTarget').textContent=db+'.'+name+' · '+c.path;
+  $('schemaChangeOp').value='add';$('schemaChangeName').value='';$('schemaChangeColumns').value='';$('schemaChangeReferenceColumns').value='';$('schemaChangeType').value='INT';$('schemaChangeLimit').value='100';changeSchemaOperation();$('schemaChangeDialog').showModal();
+}
+$('schemaChangeOp').onchange=changeSchemaOperation;
+$('schemaChangeType').onchange=()=>{$('schemaChangeLimit').hidden=$('schemaChangeType').value!=='VARCHAR';previewSchemaChange();};
+for(const id of ['schemaChangeOld','schemaChangeName','schemaChangeLimit','schemaChangeColumns','schemaChangeReference','schemaChangeReferenceColumns'])$(id).oninput=previewSchemaChange;
+$('schemaChangeCancel').onclick=()=>{$('schemaChangeDialog').close();schemaChangeTarget=null;};
+$('schemaChangeForm').onsubmit=e=>{
+  e.preventDefault();if(!schemaChangeTarget||!$('schemaChangeDialog').open)return;
+  const {c,db,name}=schemaChangeTarget;if(active!==c)return;
+  const sql=previewSchemaChange();if(!sql)return;
+  $('schemaChangeDialog').close();schemaChangeTarget=null;addTab(sql,'Alter '+name,db,'');
+};
+$('closeInspector').onclick=()=>$('inspectorDialog').close();
+$('inspectorDescribe').onclick=()=>{$('inspectorDialog').close();if(inspectorTarget){const {c,db,name}=inspectorTarget;runObjectQuery(c,db,name,true);}};
+let dropTarget=null;
+function showDrop(c,db,name){
+  if(active!==c||!schemaReady(c)||!hasTable(c,db,name)||!validIdentifier(name))return;
+  dropTarget={c,db,name};$('dropMessage').textContent='DROP TABLE '+db+'.'+name+' sẽ xóa bảng và toàn bộ dữ liệu của bảng khỏi catalog '+c.path+'.';
+  $('dropName').value='';$('applyDrop').disabled=true;$('dropDialog').showModal();$('dropName').focus();
+}
+$('dropName').oninput=()=>{$('applyDrop').disabled=$('dropName').value!==dropTarget?.name;};
+$('cancelDrop').onclick=()=>{dropTarget=null;$('dropDialog').close();};
+$('dropDialog').addEventListener('close',()=>{if(!$('dropDialog').open)dropTarget=null;});
+$('dropForm').onsubmit=e=>{
+  e.preventDefault();if(!dropTarget||!$('dropDialog').open)return;const {c,db,name}=dropTarget;
+  if(active!==c||!schemaReady(c)||!hasTable(c,db,name)||$('dropName').value!==name)return;
+  $('dropDialog').close();dropTarget=null;addTab('DROP TABLE '+name+';','Drop '+name,db);execute();
+};
+function createTableSql(name,columns){
+  if(!validIdentifier(name))throw new Error('Tên bảng không hợp lệ.');
+  if(!Array.isArray(columns)||!columns.length)throw new Error('Cần ít nhất một cột.');
+  const names=new Set();let primaryCount=0;
+  const definitions=columns.map(col=>{
+    if(!col||!validIdentifier(col.name)||names.has(col.name.toUpperCase()))throw new Error('Tên cột không hợp lệ hoặc bị trùng: '+col.name);
+    names.add(col.name.toUpperCase());
+    if(!columnTypes.includes(col.type))throw new Error('Kiểu dữ liệu không hỗ trợ.');
+    if(col.type==='VARCHAR'&&(!Number.isInteger(col.limit)||col.limit<1||col.limit>2147483647))throw new Error('VARCHAR cần độ dài nguyên dương (tối đa 2147483647).');
+    if(col.primary&&++primaryCount>1)throw new Error('VDB chỉ hỗ trợ một cột PRIMARY KEY.');
+    return '    '+col.name+' '+columnType(col)+(col.primary?' PRIMARY KEY':(col.required?' NOT NULL':'')+(col.unique?' UNIQUE':''));
+  });
+  return 'CREATE TABLE '+name+' (\n'+definitions.join(',\n')+'\n);';
+}
+let designerConnection=null;
+function readDesigner(){
+  return [...$('designerColumns').rows].map(row=>{
+    const field=key=>row.querySelector('[data-field="'+key+'"]');
+    return {name:field('name').value.trim(),type:field('type').value,limit:Number(field('limit').value),primary:field('primary').checked,required:field('required').checked,unique:field('unique').checked};
+  });
+}
+function previewTable(){
+  try{
+    const db=$('tableDb').value,name=$('tableName').value.trim();
+    if(!schemaReady(designerConnection)||active!==designerConnection)throw new Error('Hãy cập nhật schemas trước khi tạo bảng.');
+    if(!schemaFor(designerConnection,db))throw new Error('Chọn database hợp lệ.');
+    if(hasRelation(designerConnection,db,name.toUpperCase()))throw new Error('Bảng đã tồn tại: '+name);
+    const sql=createTableSql(name,readDesigner());$('tablePreview').value=sql;$('tableMessage').textContent='';
+    $('applyTable').disabled=$('draftTable').disabled=false;return sql;
+  }catch(e){$('tablePreview').value='';$('tableMessage').textContent=e.message;$('applyTable').disabled=$('draftTable').disabled=true;return null;}
+}
+function addDesignerColumn(values={}){
+  const row=$('designerColumns').insertRow();
+  row.innerHTML='<td><input data-field="name" aria-label="Tên cột" required></td><td><select data-field="type" aria-label="Kiểu dữ liệu">'+columnTypes.map(t=>'<option>'+t+'</option>').join('')+'</select></td><td><input data-field="limit" aria-label="Độ dài VARCHAR" type="number" min="1" max="2147483647" step="1"></td><td class="check-cell"><input data-field="primary" type="checkbox" aria-label="Primary key"></td><td class="check-cell"><input data-field="required" type="checkbox" aria-label="Not null"></td><td class="check-cell"><input data-field="unique" type="checkbox" aria-label="Unique"></td><td><button type="button" title="Xóa cột" aria-label="Xóa cột">'+icon('trash')+'</button></td>';
+  const field=key=>row.querySelector('[data-field="'+key+'"]');
+  field('name').value=values.name||'';field('type').value=values.type||'INT';field('limit').value=values.limit||100;
+  for(const key of ['primary','required','unique'])field(key).checked=Boolean(values[key]);
+  const sync=()=>{
+    field('limit').disabled=field('type').value!=='VARCHAR';
+    for(const key of ['required','unique']){
+      const checkbox=field(key);
+      if(field('primary').checked){
+        if(!checkbox.disabled)checkbox.dataset.previous=String(checkbox.checked);
+        checkbox.checked=true;checkbox.disabled=true;
+      }else if(checkbox.disabled){
+        checkbox.checked=checkbox.dataset.previous==='true';checkbox.disabled=false;
+      }
+    }
+    previewTable();
+  };
+  row.oninput=sync;row.onchange=sync;row.querySelector('button').onclick=()=>{row.remove();previewTable();};sync();
+}
+function showTableDesigner(c,db){
+  if(active!==c||!schemaReady(c))return;
+  designerConnection=c;fillOptions('tableDb',c.schemas.map(s=>s.name));if(schemaFor(c,db))$('tableDb').value=db;
+  $('tableName').value='';$('designerColumns').replaceChildren();addDesignerColumn({name:'id',type:'INT',primary:true});addDesignerColumn({name:'name',type:'VARCHAR',limit:100,required:true});
+  $('tableDialog').showModal();$('tableName').focus();previewTable();
+}
+function submitTable(run){
+  const c=designerConnection;if(active!==c||!schemaReady(c)||!$('tableDialog').open)return;
+  const sql=previewTable();if(!sql)return;
+  const db=$('tableDb').value,name=$('tableName').value.trim();designerConnection=null;$('tableDialog').close();
+  addTab(sql,'Create '+name,db,'');if(run)return execute();
+}
+$('tableDb').onchange=previewTable;$('tableName').oninput=previewTable;
+$('addColumn').onclick=()=>addDesignerColumn();
+$('cancelTable').onclick=()=>{designerConnection=null;$('tableDialog').close();};
+$('tableDialog').addEventListener('close',()=>{if(!$('tableDialog').open)designerConnection=null;});$('draftTable').onclick=()=>submitTable(false);
+$('tableForm').onsubmit=e=>{e.preventDefault();submitTable(true);};
+
+function fillOptions(id,values){$(id).replaceChildren(...values.map(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;return option;}));}
+function fillStructureTables(){fillOptions('structureTable',structureConnection.schemas.find(s=>s.name===$('structureDb').value)?.tables||[]);}
+function showStructure(){
+  structureConnection=active;const schemas=active.schemas.filter(s=>s.tables.length);
+  fillOptions('structureDb',schemas.map(s=>s.name));
+  if(schemas.some(s=>s.name===tab().db))$('structureDb').value=tab().db;
+  fillStructureTables();$('structureDialog').showModal();
+}
+$('structureDb').onchange=fillStructureTables;
+$('cancelStructure').onclick=()=>$('structureDialog').close();
+$('structureForm').onsubmit=e=>{
+  e.preventDefault();const db=$('structureDb').value,name=$('structureTable').value;
+  $('structureDialog').close();if(active!==structureConnection||active.busy||!name)return;
+  showInspector(active,db,name);
+};
+let modelTarget=null;
+function relationModel(c,db){
+  const schema=schemaFor(c,db),tables=schema?.tables||[];
+  const nodes=tables.map(name=>({name,columns:columnsFor(c,db,name)}));
+  const edges=tables.flatMap(name=>foreignKeysFor(c,db,name).map(fk=>({source:name,...fk})));
+  return {nodes,edges};
+}
+function modelMarkup(model){
+  if(!model.nodes.length)return '<p style="padding:16px">Database chưa có bảng.</p>';
+  const x=20,width=380,positions=new Map();let y=20;
+  const cards=model.nodes.map(node=>{
+    const height=38+node.columns.length*24;positions.set(node.name,{y,height,columns:node.columns});
+    const rows=node.columns.map((col,i)=>'<text x="'+(x+12)+'" y="'+(y+52+i*24)+'" fill="#24364d" font-size="12">'+escapeHtml(col.name+' · '+columnType(col)+(columnFlags(col).length?' · '+columnFlags(col).join(', '):''))+'</text>').join('');
+    const card='<rect x="'+x+'" y="'+y+'" width="'+width+'" height="'+height+'" rx="5" fill="white" stroke="#9caec4"/><rect x="'+x+'" y="'+y+'" width="'+width+'" height="32" rx="5" fill="#dce8f7"/><text x="'+(x+12)+'" y="'+(y+21)+'" font-weight="600" font-size="14" fill="#1b365d">'+escapeHtml(node.name)+'</text>'+rows;
+    y+=height+24;return card;
+  }).join('');
+  const links=model.edges.map((edge,i)=>{
+    const from=positions.get(edge.source),to=positions.get(edge.target);if(!from||!to)return '';
+    const columnY=(node,key)=>node.y+47+Math.max(0,node.columns.findIndex(col=>col.name===key))*24;
+    const a=columnY(from,edge.keys[0]),b=columnY(to,edge.targetKeys[0]);const lane=x+width+30+i*26;
+    const startY=a===b?a-8:a;
+    return '<path d="M '+(x+width)+' '+startY+' H '+lane+' V '+b+' H '+(x+width)+'" fill="none" stroke="#527aa8" stroke-width="1.5" marker-end="url(#modelArrow)"><title>'+escapeHtml(edge.name+': '+edge.source+' ('+edge.keys.join(', ')+') → '+edge.target+' ('+edge.targetKeys.join(', ')+')')+'</title></path>';
+  }).join('');
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+(x+width+70+model.edges.length*26)+'" height="'+y+'" style="width:'+(x+width+70+model.edges.length*26)+'px;height:'+y+'px;max-width:none;display:block;stroke:none" role="img" aria-label="Sơ đồ quan hệ khóa ngoại"><defs><marker id="modelArrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M 0 0 L 7 3.5 L 0 7 Z" fill="#527aa8"/></marker></defs>'+cards+links+'</svg>';
+}
+function renderModel(){
+  if(!modelTarget)return;const db=$('modelDb').value,model=relationModel(modelTarget,db);
+  $('modelSummary').textContent=model.nodes.length+' bảng · '+model.edges.length+' khóa ngoại · Metadata tại lần refresh gần nhất';
+  $('modelCanvas').innerHTML=modelMarkup(model);
+  $('modelRelations').innerHTML='<table class="grid"><thead><tr><th>Khóa ngoại</th><th>Bảng con</th><th>Cột con</th><th>Bảng cha</th><th>Cột cha</th></tr></thead><tbody>'+model.edges.map(e=>'<tr>'+[e.name,e.source,e.keys.join(', '),e.target,e.targetKeys.join(', ')].map(v=>'<td>'+escapeHtml(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+function openModel(){
+  if(!schemaReady(active))return;modelTarget=active;$('modelCatalog').textContent=active.path;
+  fillOptions('modelDb',active.schemas.map(s=>s.name));$('modelDb').value=tab().db;renderModel();$('modelDialog').showModal();updateActions();
+}
+$('toolModel').onclick=openModel;$('modelDb').onchange=renderModel;
+$('closeModel').onclick=()=>{$('modelDialog').close();modelTarget=null;updateActions();};
+$('modelDialog').addEventListener('close',()=>{modelTarget=null;updateActions();});
+function help(about=false){$('helpContent').textContent=about?'Vietnam Database · V++ SQL engine · Catalog cục bộ.':'SQL hỗ trợ: SHOW DATABASES, SHOW TABLES, SHOW VIEWS, DESCRIBE, CREATE DATABASE/TABLE/VIEW, DROP VIEW, SELECT, INSERT, UPDATE, DELETE, DROP TABLE/DATABASE, ALTER TABLE, CREATE/DROP/SHOW INDEX, SHOW STATISTICS, EXPLAIN SELECT và BEGIN/COMMIT/ROLLBACK trong một batch. Truy vấn hỗ trợ DISTINCT, INNER/LEFT JOIN (ON bằng nhau), GROUP BY, COUNT/SUM/AVG/MIN/MAX, HAVING theo cột kết quả hoặc bí danh, ORDER BY, LIMIT/OFFSET. Điều kiện hỗ trợ AND/OR/NOT, IN, BETWEEN, LIKE và IS NULL.';$('helpDialog').showModal();}
+$('closeHelp').onclick=()=>$('helpDialog').close();
+const actions=[
+  ['home',()=>showHome(),()=>initialized],
+  ['connect',()=>editProfile(),()=>initialized&&!profileBusy],
+  ['new',()=>addTab(),()=>!!active],
+  ['open',()=>$('openFile').click(),()=>!!active&&!pendingOpen&&!pendingSave],
+  ['save',()=>$('saveFile').click(),()=>!!active&&!pendingSave&&!pendingOpen],
+  ['saveAs',()=>saveSql(true),()=>!!active&&!pendingSave&&!pendingOpen],
+  ['close',()=>closeTab(active,tab()),()=>!!active&&!active.busy&&pendingSave?.t!==tab()&&pendingOpen?.c!==active],
+  ['find',()=>{$('findRow').hidden=false;$('findText').focus();},()=>!!active],
+  ['nav',()=>toggleLayout('nav'),()=>!!active],
+  ['info',()=>toggleLayout('info'),()=>!!active],
+  ['right',()=>toggleLayout('right'),()=>!!active],
+  ['output',()=>toggleLayout('output'),()=>!!active],
+  ['reset',resetLayout,()=>!!active],
+  ['run',()=>execute(),()=>!!active&&!active.busy&&!!tab()?.sql.trim()],
+  ['selection',()=>execute(true),()=>!!active&&!active.busy&&!!editor.value.slice(editor.selectionStart,editor.selectionEnd).trim()],
+  ['current',()=>execute('current'),()=>!!active&&!active.busy&&!!currentStatement(tab().sql,editor.selectionStart)],
+  ['refresh',()=>refreshAction(),()=>!!active&&!active.busy],
+  ['database',()=>$('createDb').click(),()=>!!active&&!active.busy],
+  ['table',()=>$('createTable').click(),()=>schemaReady(active)],
+  ['search',()=>{if(!layout.nav)toggleLayout('nav');$('schemaSearch').focus();},()=>!!active],
+  ['export',()=>$('exportCsv').click(),()=>!!tab()?.results[tab().selected]?.columns&&!pendingSave&&!pendingOpen],
+  ['help',()=>help(),()=>initialized],
+  ['about',()=>help(true),()=>true],
+  ['structure',showStructure,()=>!!active&&!active.busy&&active.schemas.some(s=>s.tables.length)],
+  ['preferences',()=>{$('preferencesDialog').showModal();},()=>initialized],
+  ['import',openImport,()=>schemaReady(active)&&!pendingOpen&&!pendingSave&&active.schemas.some(s=>s.tables.length)],
+];
+// Bits 26–29 are reserved for native panel visibility.
+actions[30]=['undo',()=>editorHistory(),()=>!!tab()?.undo.length];
+actions[31]=['redo',()=>editorHistory(true),()=>!!tab()?.redo.length];
+const buttons={toolHome:'home',toolConnect:'connect',newTab:'new',openFile:'open',saveFile:'save',run:'run',runSelection:'selection',runCurrent:'current',refresh:'refresh',refreshSide:'refresh',createDb:'database',createTable:'table',toolDb:'database',toolTable:'table',toolSearch:'search',toolStructure:'structure',toolPreferences:'preferences',toolExport:'export',exportCsv:'export',toggleNav:'nav',toggleInfo:'info',toggleRight:'right',toggleOutput:'output',resetLayout:'reset',editorRun:'run',editorCurrent:'current',editorFind:'find'};
+function enabled(action){return !quitting&&!document.querySelector('dialog[open]')&&action[2]();}
+function updateActions(){
+  let mask=0;actions.forEach((a,i)=>{if(enabled(a))mask+=2**i;});
+  for(const [id,name] of Object.entries(buttons))$(id).disabled=!enabled(actions.find(a=>a?.[0]===name));
+  $('toolImport').disabled=!enabled(actions[25]);
+  $('createView').disabled=!enabled(actions.find(a=>a?.[0]==='table'));
+  const editorReady=!!active&&!active.busy&&!quitting&&!document.querySelector('dialog[open]');
+  for(const id of ['formatSql','suggestSql','rowLimit','validateSql'])$(id).disabled=!editorReady;
+  $('explainSql').disabled=!editorReady||!editorExplain();
+  $('toolAdmin').disabled=!editorReady;
+  $('toolModel').disabled=!editorReady||!schemaReady(active);
+  $('editorUndo').disabled=!enabled(actions[30]);$('editorRedo').disabled=!enabled(actions[31]);
+  updateSnippetActions(editorReady);
+  updateGridTools();updatePageTools();
+  ['nav','info','right','output'].forEach((key,i)=>{if(key==='right'?layout.right&&!$('sqlAdditions').hidden:layout[key])mask+=2**(26+i);});
+  window.webkit?.messageHandlers?.vdbMenuState?.postMessage(mask);
+}
+window.vdbAction=index=>{const a=actions[index];if(a&&enabled(a))a[1]();updateActions();};
+for(const [id,name] of Object.entries(buttons)){
+  if(['openFile','saveFile','createDb','createTable','exportCsv'].includes(id))continue;
+  $(id).onclick=()=>window.vdbAction(actions.findIndex(a=>a?.[0]===name));
+}
+document.addEventListener('keydown',e=>{
+  if(document.querySelector('dialog[open]')||pendingOpen||pendingSave)return;
+  if(!(e.metaKey||e.ctrlKey))return;
+  const key=e.key.toLowerCase();
+  const action=key==='enter'?(e.shiftKey?'current':editor.selectionStart!==editor.selectionEnd?'selection':'run'):{n:'new',o:'open',s:e.shiftKey?'saveAs':'save',w:'close',f:'find'}[key];
+  if(action){e.preventDefault();window.vdbAction(actions.findIndex(a=>a?.[0]===action));}
+});
+bindSplitter('splitter','editorHeight','y',1,'editorRegion',90,()=>$('mainPanel').clientHeight-155);
+bindSplitter('outputSplitter','outputHeight','y',-1,'outputPanel',65,()=>$('mainPanel').clientHeight*.45);
+bindSplitter('infoSplitter','infoHeight','y',-1,'information',65,()=>$('navigator').clientHeight-130);
+bindSplitter('navSplitter','navWidth','x',1,'navigator',160,()=>Math.min(520,$('workspace').clientWidth*.3));
+bindSplitter('rightSplitter','rightWidth','x',-1,'sqlAdditions',170,()=>Math.min(520,$('workspace').clientWidth*.28));
+$('closePreferences').onclick=()=>$('preferencesDialog').close();
+$('preferencesReset').onclick=()=>{resetLayout();$('preferencesDialog').close();};
+window.addEventListener?.('resize',()=>{if(active){applyLayout();updateActions();}});
+if(typeof MutationObserver!=='undefined')new MutationObserver(updateActions).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
+async function initialize(){
+  $('newConnection').disabled=$('homeNew').disabled=true;
+  try{
+    const data=await api('/api/workspace');defaultCatalog=data.catalog;const state=data.workspace;layout=normalizeLayout(state?.layout);
+    personalSnippets=normalizeSnippets(state?.version===1?state.snippets:null);renderSnippets();
+    if(state?.version===1&&Array.isArray(state.profiles)){
+      profiles=state.profiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.path==='string');
+      const sessions=Array.isArray(state.sessions)?state.sessions:[];
+      for(const session of sessions){if(!session)continue;const p=profile(session.id);if(p&&!connection(p.id))connections.push(makeConnection(p,session));}
+    }
+    // Always expose the catalog requested via the launcher, even with saved profiles.
+    if(!profiles.some(p=>p.path===defaultCatalog))profiles.push({id:newId(),name:'Local connection',path:defaultCatalog,lastUsed:0});
+    initialized=true;const restored=connection(state?.active);
+    if(restored)showConnection(restored);else showHome();
+    if(data.workspaceError)$('homeMessage').textContent=data.workspaceError;
+    for(const c of connections)await refreshAction(c);
+  }catch(e){$('homeMessage').textContent='Không tải được phiên VDB Studio: '+e.message;}
+  finally{$('newConnection').disabled=$('homeNew').disabled=false;updateActions();}
+}
+
+// Tokenize only the dialect supported by the VDB lexer. Keep comments and
+// literals intact so formatting and row limits never rewrite their contents.
+const sqlKeywords='SELECT DISTINCT FROM WHERE AND OR IS NOT IN BETWEEN LIKE NULL TRUE FALSE JOIN INNER LEFT OUTER ON AS GROUP HAVING ORDER BY ASC DESC LIMIT OFFSET COUNT SUM AVG MIN MAX CREATE DATABASE TABLE PRIMARY KEY UNIQUE INT INTEGER REAL TEXT VARCHAR BOOLEAN INSERT INTO VALUES UPDATE SET DELETE DROP SHOW DATABASES TABLES DESCRIBE USE BEGIN COMMIT ROLLBACK TRANSACTION EXPLAIN ALTER ADD COLUMN RENAME TO INDEX INDEXES FOREIGN KEYS REFERENCES CONSTRAINT VIEW VIEWS STATISTICS'.split(' ');
+function sqlTokens(sql){
+  return Array.from(sql.matchAll(/--[^\n]*|'(?:''|[^'])*(?:'|$)|[A-Za-z_][A-Za-z_0-9]*|-?\d+(?:\.\d+)?|<=|>=|<>|!=|[^\s]/g),m=>({text:m[0],index:m.index}));
+}
+function formatSQL(sql){
+  // Preserve exact whitespace other than safe keyword casing and clause breaks.
+  let result='',last=0;
+  for(const {text,index} of sqlTokens(sql)){
+    const upper=text.toUpperCase();
+    let gap=sql.slice(last,index);
+    if(/^[ \t]+$/.test(gap)&&['FROM','WHERE','GROUP','HAVING','ORDER','LIMIT','VALUES','SET'].includes(upper))gap='\n';
+    result+=gap+(sqlKeywords.includes(upper)?upper:text);
+    last=index+text.length;
+  }
+  return result+sql.slice(last);
+}
+function simpleSelect(sql){
+  const tokens=sqlTokens(sql).filter(t=>!t.text.startsWith('--')).map(t=>t.text);
+  if(tokens.at(-1)===';')tokens.pop();
+  if(tokens.length<4||tokens[0].toUpperCase()!=='SELECT'||tokens[1]!=='*'||tokens[2].toUpperCase()!=='FROM'||!validIdentifier(tokens[3]))return null;
+  if(tokens.length!==4&&!(tokens.length===6&&tokens[4].toUpperCase()==='LIMIT'&&/^\d+$/.test(tokens[5])))return null;
+  return {name:tokens[3].toUpperCase(),limited:tokens.length===6};
+}
+function limitSelect(sql,limit){
+  if(!limit||!simpleSelect(sql)||simpleSelect(sql).limited)return sql;
+  const tokens=sqlTokens(sql).filter(t=>!t.text.startsWith('--'));
+  const last=tokens.at(-1),end=last.text===';'?last.index: last.index+last.text.length;
+  return sql.slice(0,end)+' LIMIT '+limit+sql.slice(end);
+}
+function replaceEditor(start,end,value){
+  editor.focus();editor.setSelectionRange(start,end);
+  const expected=editor.value.slice(0,start)+value+editor.value.slice(end);
+  if(expected===editor.value)return;
+  editor.setRangeText(value,start,end,'end');
+  if(editor.value!==expected){$('validationStatus').textContent='Không thể cập nhật nội dung SQL.';return;}
+  editSql();
+}
+function completionChoices(c,t,prefix){
+  const names=new Set(sqlKeywords);
+  for(const schema of c.schemas)names.add(schema.name);
+  const schema=schemaFor(c,t.db);
+  for(const table of [...(schema?.tables||[]),...(schema?.views||[])]){names.add(table);for(const col of columnsFor(c,t.db,table))names.add(col.name);for(const ix of indexesFor(c,t.db,table))names.add(ix.name);for(const fk of foreignKeysFor(c,t.db,table))names.add(fk.name);}
+  return [...names].filter(n=>n.toUpperCase().startsWith(prefix.toUpperCase())).sort().slice(0,100);
+}
+let completionTarget=null;
+function suggest(){
+  if(!active)return;
+  const end=editor.selectionStart,sql=editor.value;
+  const tokens=sqlTokens(sql);
+  if(tokens.some(x=>x.index<end&&end<=x.index+x.text.length&&(x.text.startsWith("'")||x.text.startsWith('--')))){ $('validationStatus').textContent='Con trỏ đang ở trong chuỗi hoặc chú thích.';return;}
+  const prefix=sql.slice(0,end).match(/[A-Za-z_][A-Za-z_0-9]*$/)?.[0]||'';
+  const suffix=sql.slice(end).match(/^[A-Za-z_0-9]*/)?.[0]||'';
+  const choices=completionChoices(active,tab(),prefix);
+  completionTarget={t:tab(),sql,start:end-prefix.length,end:end+suffix.length};
+  fillOptions('completion',['Chọn gợi ý…',...choices]);$('completion').hidden=!choices.length;
+  if(choices.length)$('completion').focus();else $('validationStatus').textContent='Không có gợi ý phù hợp.';
+}
+$('completion').onchange=()=>{const target=completionTarget,value=$('completion').value;if(target?.t===tab()&&target.sql===editor.value&&value!=='Chọn gợi ý…')replaceEditor(target.start,target.end,value);$('completion').hidden=true;};
+$('suggestSql').onclick=suggest;
+$('formatSql').onclick=()=>replaceEditor(0,editor.value.length,formatSQL(editor.value));
+$('editorUndo').onclick=()=>window.vdbAction(30);
+$('editorRedo').onclick=()=>window.vdbAction(31);
+$('rowLimit').onchange=()=>{tab().rowLimit=Number($('rowLimit').value);persist();};
+$('validateSql').onclick=async()=>{
+  const c=active,t=tab(),sql=t.sql,db=t.db;
+  if(c.busy||!sql.trim())return;
+  setBusy(c,true);$('validationStatus').textContent='Đang kiểm tra…';
+  try{await api('/api/validate',{catalog:c.path,sql,database:db});if(tab()===t&&t.sql===sql&&t.db===db)$('validationStatus').textContent='Cú pháp hợp lệ (chưa thực thi).';}
+  catch(e){if(tab()===t&&t.sql===sql&&t.db===db){$('validationStatus').textContent=e.message;$('validationStatus').title=e.message;}}
+  finally{setBusy(c,false);}
+};
+let detailAction=null;
+function showDetail(title,value,action=null){
+  detailAction=action;$('detailTitle').textContent=title;$('detailText').value=value;$('detailRerun').hidden=!action;$('detailDialog').showModal();
+}
+$('closeDetail').onclick=()=>$('detailDialog').close();
+$('detailCopy').onclick=()=>{$('detailText').focus();$('detailText').select();document.execCommand('copy');};
+$('detailRerun').onclick=()=>{$('detailDialog').close();detailAction?.();};
+function gridSource(c,db,sql,results,page=null){
+  const parsed=simpleSelect(sql)||(page&&page.db===db&&sql===browseSql(page)?{name:page.name}:null),r=results[0];
+  if(!parsed||results.length!==1||!r?.columns||!validIdentifier(db)||!hasTable(c,db,parsed.name))return null;
+  const columns=columnsFor(c,db,parsed.name),pk=columns.findIndex(col=>col.primary);
+  if(pk<0||columns.filter(col=>col.primary).length!==1||JSON.stringify(r.columns)!==JSON.stringify(columns.map(col=>col.name)))return null;
+  const keys=r.rows.map(row=>row[pk]);
+  if(keys.some(k=>k===null||k===undefined)||new Set(keys).size!==keys.length)return null;
+  return {db,name:parsed.name,columns:columns.map(col=>({...col})),pk,sql,result:r};
+}
+function editableSource(c,t){
+  const s=t?.source;
+  return schemaReady(c)&&s&&hasTable(c,s.db,s.name)&&t.results[t.selected]===s.result&&JSON.stringify(columnsFor(c,s.db,s.name))===JSON.stringify(s.columns)?s:null;
+}
+function updateGridTools(){
+  const t=tab();
+  const cell=!!selectedCell()&&!document.querySelector('dialog[open]');
+  for(const id of ['copyCell','copyRow','inspectCell'])$(id).disabled=!cell;
+  const editable=!!editableSource(active,t)&&!document.querySelector('dialog[open]');
+  $('editRow').disabled=$('deleteRow').disabled=!editable||!cell;
+  $('insertRow').disabled=!editable;
+  $('gridHint').textContent=editable?'PK · '+t.source.db+'.'+t.source.name:'Chỉnh sửa cần SELECT * từ bảng có PK.';
+}
+function selectedCell(){const t=tab(),r=t?.results[t.selected],s=t?.gridSelection;return r?.columns&&s&&Number.isInteger(s.column)&&s.column>=0&&s.column<r.columns.length&&r.rows.includes(s.row)&&rowMatches(s.row)?{r,...s}:null;}
+function valueText(v){return v===null?'NULL':String(v);}
+$('copyCell').onclick=()=>{const s=selectedCell();if(s){showDetail(s.r.columns[s.column],valueText(s.row[s.column]));$('detailCopy').click();}};
+$('inspectCell').onclick=()=>{const s=selectedCell();if(s)showDetail(s.r.columns[s.column],valueText(s.row[s.column]));};
+$('copyRow').onclick=()=>{const s=selectedCell();if(s){showDetail('Copy hàng',s.row.map(valueText).join('\t'));$('detailCopy').click();}};
+function sqlLiteral(value,col){
+  if(value===null){if(col.required||col.primary)throw new Error(col.name+' không được NULL');return 'NULL';}
+  const text=String(value);
+  if(text.includes('\0'))throw new Error(col.name+' chứa ký tự NUL');
+  if(col.type==='TEXT'||col.type==='VARCHAR')return "'"+text.replaceAll("'","''")+"'";
+  if(col.type==='BOOLEAN'){
+    if(/^(true|1)$/i.test(text))return 'TRUE';
+    if(/^(false|0)$/i.test(text))return 'FALSE';
+    throw new Error(col.name+' cần TRUE/FALSE hoặc 1/0');
+  }
+  if(col.type==='REAL'){
+    if(!/^-?\d+(?:\.\d+)?$/.test(text)||!Number.isFinite(Number(text)))throw new Error(col.name+' cần số thập phân (không dùng số mũ)');
+    return text.includes('.')?text:text+'.0';
+  }
+  if(!/^-?\d+$/.test(text)||Number(text)<-2147483648||Number(text)>2147483647)throw new Error(col.name+' cần số nguyên 32-bit');
+  return text;
+}
+function originalPredicate(columns,row){
+  return columns.map((col,i)=>row[i]===null?col.name+' IS NULL':col.name+' = '+sqlLiteral(row[i],col)).join(' AND ');
+}
+function rowStatement(source,mode,old,values){
+  const {name,columns,pk}=source;
+  if(!validIdentifier(name)||columns.some(c=>!validIdentifier(c.name)))throw new Error('Metadata không hợp lệ');
+  if(mode==='delete')return 'DELETE FROM '+name+' WHERE '+originalPredicate(columns,old)+';';
+  if(mode==='insert')return 'INSERT INTO '+name+' ('+columns.map(c=>c.name).join(', ')+') VALUES ('+columns.map((c,i)=>sqlLiteral(values[i],c)).join(', ')+');';
+  const assignments=columns.flatMap((c,i)=>i===pk||String(values[i])===String(old[i])&&((values[i]===null)===(old[i]===null))?[]:[c.name+' = '+sqlLiteral(values[i],c)]);
+  if(!assignments.length)throw new Error('Không có thay đổi');
+  return 'UPDATE '+name+' SET '+assignments.join(', ')+' WHERE '+originalPredicate(columns,old)+';';
+}
+function parseCSV(input){
+  const text=input.replace(/^\ufeff/,'');
+  if(!text.length)throw new Error('CSV trống');
+  const rows=[];let row=[],value='',quoted=false,closed=false,wasQuoted=false;
+  const field=()=>{row.push({value,quoted:wasQuoted});value='';wasQuoted=false;closed=false;};
+  const finish=()=>{field();rows.push(row);row=[];};
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(quoted){if(ch==='"'){if(text[i+1]==='"'){value+='"';i++;}else{quoted=false;closed=true;}}else value+=ch;continue;}
+    if(ch===','){field();continue;}
+    if(ch==='\r'||ch==='\n'){if(ch==='\r'&&text[i+1]==='\n')i++;finish();continue;}
+    if(closed)throw new Error('CSV: ký tự sau dấu quote đóng ở dòng '+(rows.length+1));
+    if(ch==='"'){if(value.length)throw new Error('CSV: dấu quote không hợp lệ');quoted=true;wasQuoted=true;}else value+=ch;
+  }
+  if(quoted)throw new Error('CSV: chuỗi chưa đóng quote');
+  if(row.length||value||wasQuoted||closed)finish();
+  if(rows.length<2)throw new Error('CSV cần tiêu đề và ít nhất một hàng');
+  if(rows.some(r=>r.length!==rows[0].length))throw new Error('CSV: số cột không đồng nhất');
+  if(rows.length>501)throw new Error('Tối đa 500 hàng mỗi lần import');
+  return rows;
+}
+function importStatements(source,rows,mapping){
+  const cols=source.columns;
+  if(mapping.length!==cols.length||mapping.some(i=>!Number.isInteger(i)||i< -1||i>=rows[0].length)||new Set(mapping.filter(i=>i>=0)).size!==mapping.filter(i=>i>=0).length)throw new Error('Ánh xạ cột không hợp lệ');
+  if(mapping.every(i=>i===-1))throw new Error('Chọn ít nhất một cột');
+  return rows.slice(1).map((row,i)=>{
+    try{return rowStatement(source,'insert',null,cols.map((col,j)=>{const cell=row[mapping[j]];return !cell||(!cell.quoted&&cell.value==='')?null:cell.value;}));}
+    catch(e){throw new Error('CSV dòng '+(i+2)+': '+e.message);}
+  });
+}
+let dataTarget=null;
+function setDataLocked(locked){
+  const target=dataTarget;if(!target)return;
+  target.locked=locked;
+  for(const id of ['importDb','importTable','pickCsv','csvText','parseCsv','stageData','revertData','cancelData'])$(id).disabled=locked;
+  for(const select of target.mapping||[])select.disabled=locked;
+  for(const {input,check,fixed,required} of target.inputs||[]){
+    check.disabled=locked||fixed||required;input.disabled=locked||fixed||check.checked;
+  }
+  $('applyData').disabled=locked||!target.statements.length;
+}
+function dataPreview(statements){
+  const sql=statements.join('\n');
+  if(new TextEncoder().encode(sql).length>32000)throw new Error('Batch SQL vượt 32 KB. Chia CSV thành các tệp nhỏ hơn.');
+  return sql;
+}
+function setDataPreview(statements){
+  const sql=dataPreview(statements);dataTarget.statements=statements;$('dataPreview').value=sql;$('applyData').disabled=!sql||!!dataTarget.locked;$('dataMessage').textContent=statements.length+' câu lệnh chờ Apply.';
+}
+function clearDataPreview(){
+  if(dataTarget)dataTarget.statements=[];$('dataPreview').value='';$('applyData').disabled=true;$('dataMessage').textContent='';
+}
+function openRowEditor(mode){
+  const c=active,t=tab(),source=editableSource(c,t),selection=selectedCell();
+  if(!source||(mode!=='insert'&&!selection))return;
+  dataTarget={c,t,source,mode,old:selection?.row.slice(),statements:[]};
+  $('dataTitle').textContent={edit:'Sửa hàng',insert:'Thêm hàng',delete:'Xóa hàng'}[mode];
+  $('dataTarget').textContent=source.db+'.'+source.name+' · '+(profile(c.id)?.name||c.path);
+  $('csvImportFields').hidden=true;$('dataFields').replaceChildren();$('stageData').hidden=mode==='delete';
+  clearDataPreview();
+  if(mode==='delete'){
+    try{setDataPreview([rowStatement(source,'delete',dataTarget.old,[])]);}catch(e){$('dataMessage').textContent=e.message;}
+  }else{
+    dataTarget.inputs=source.columns.map((col,i)=>{
+      const label=document.createElement('label'),input=document.createElement('input'),nullLabel=document.createElement('label'),check=document.createElement('input');
+      label.textContent=col.name+' · '+columnType(col);input.value=mode==='edit'?String(dataTarget.old[i]??''):'';
+      check.type='checkbox';check.checked=mode==='edit'?dataTarget.old[i]===null:!col.required;check.disabled=col.required||col.primary||mode==='edit'&&i===source.pk;
+      input.disabled=check.checked||mode==='edit'&&i===source.pk;
+      check.onchange=()=>{input.disabled=check.checked;clearDataPreview();};input.oninput=clearDataPreview;
+      nullLabel.append(check,' NULL');$('dataFields').append(label,input,nullLabel);
+      return {input,check,fixed:mode==='edit'&&i===source.pk,required:col.required||col.primary};
+    });
+  }
+  setDataLocked(false);$('dataDialog').showModal();updateActions();
+}
+$('editRow').onclick=()=>openRowEditor('edit');$('insertRow').onclick=()=>openRowEditor('insert');$('deleteRow').onclick=()=>openRowEditor('delete');
+function openImport(){
+  const c=active;if(!schemaReady(c))return;
+  const schemas=c.schemas.filter(s=>s.tables.length);
+  if(!schemas.length){setStatus(c,'Tạo bảng trước khi import CSV.');return;}
+  dataTarget={c,mode:'csv',statements:[]};
+  $('dataTitle').textContent='Import CSV';$('dataTarget').textContent=profile(c.id)?.name||c.path;
+  $('csvImportFields').hidden=false;$('csvText').value='';$('dataFields').replaceChildren();$('stageData').hidden=true;clearDataPreview();
+  fillOptions('importDb',schemas.map(s=>s.name));if(schemas.some(s=>s.name===tab().db))$('importDb').value=tab().db;
+  fillImportTables();setDataLocked(false);$('dataDialog').showModal();updateActions();
+}
+function fillImportTables(){
+  fillOptions('importTable',schemaFor(dataTarget.c,$('importDb').value)?.tables||[]);resetImport();
+}
+function resetImport(){clearDataPreview();$('dataFields').replaceChildren();$('stageData').hidden=true;if(dataTarget)dataTarget.rows=null;}
+$('toolImport').onclick=()=>window.vdbAction(25);$('importDb').onchange=fillImportTables;$('importTable').onchange=resetImport;$('csvText').oninput=resetImport;
+$('pickCsv').onclick=()=>{
+  if(pendingOpen||pendingSave||!dataTarget||dataTarget.locked)return;
+  // The existing native Open panel accepts any UTF-8 file; use a distinct
+  // request kind so opening CSV never creates or overwrites a SQL tab.
+  const native=window.webkit?.messageHandlers?.vdbOpenSQL;
+  if(native){pendingOpen={c:dataTarget.c,key:newId(),csv:true,target:dataTarget};setDataLocked(true);updateActions();native.postMessage(pendingOpen.key);}
+  else $('csvFile').click();
+};
+$('csvFile').onchange=async e=>{const file=e.target.files[0],target=dataTarget;e.target.value='';if(!file||!target||target.locked)return;
+  setDataLocked(true);
+  try{
+    if(file.size>128000)throw new Error('CSV vượt 128 KB');
+    const value=new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer());
+    if(dataTarget===target){setDataLocked(false);$('csvText').value=value;prepareImport();}
+  }catch(err){if(dataTarget===target)$('dataMessage').textContent=err.message;}
+  finally{if(dataTarget===target)setDataLocked(false);}};
+function prepareImport(){
+  const target=dataTarget;if(!target||target.locked)return;resetImport();
+  try{
+    const text=$('csvText').value;if(new TextEncoder().encode(text).length>128000)throw new Error('CSV vượt giới hạn 128 KB');
+    const rows=parseCSV(text),db=$('importDb').value,name=$('importTable').value,columns=columnsFor(target.c,db,name);
+    if(!columns.length)throw new Error('Chọn bảng có metadata');
+    target.source={db,name,columns:columns.map(c=>({...c}))};target.rows=rows;
+    const headers=rows[0].map(x=>x.value);
+    target.mapping=columns.map(col=>{
+      const label=document.createElement('label'),select=document.createElement('select'),type=document.createElement('span');
+      label.textContent=col.name;type.textContent=columnType(col);const options=['Bỏ qua → NULL',...headers.map((h,i)=>(i+1)+'. '+h)];
+      for(let i=0;i<options.length;i++){const o=document.createElement('option');o.value=String(i-1);o.textContent=options[i];select.append(o);}
+      select.value=String(headers.findIndex(h=>h.trim().toUpperCase()===col.name));select.onchange=clearDataPreview;
+      $('dataFields').append(label,select,type);return select;
+    });
+    $('stageData').hidden=false;$('dataMessage').textContent=(rows.length-1)+' hàng. Kiểm tra ánh xạ và tạo SQL xem trước.';
+  }catch(e){$('dataMessage').textContent=e.message;}
+}
+$('parseCsv').onclick=prepareImport;
+$('stageData').onclick=()=>{
+  const target=dataTarget;if(!target||target.locked)return;
+  try{
+    const statements=target.mode==='csv'?importStatements(target.source,target.rows,target.mapping.map(s=>Number(s.value))):[rowStatement(target.source,target.mode,target.old,target.inputs.map(({input,check})=>check.checked?null:input.value))];
+    setDataPreview(statements);
+  }catch(e){clearDataPreview();$('dataMessage').textContent=e.message;}
+};
+$('revertData').onclick=()=>{if(!dataTarget?.locked)clearDataPreview();};
+$('cancelData').onclick=()=>{if(!dataTarget?.locked&&!dataTarget?.c.busy){$('dataDialog').close();dataTarget=null;updateActions();}};
+$('dataDialog').addEventListener('cancel',e=>{if(dataTarget?.locked||dataTarget?.c.busy||pendingOpen)e.preventDefault();else dataTarget=null;});
+$('applyData').onclick=async()=>{
+  const target=dataTarget;if(!target||target.locked||!target.statements.length)return;
+  const {c,source,t}=target;
+  if(active!==c||!schemaReady(c)||JSON.stringify(columnsFor(c,source.db,source.name))!==JSON.stringify(source.columns)){ $('dataMessage').textContent='Metadata hoặc kết nối đã thay đổi. Đóng và Refresh.';return;}
+  const sql=dataPreview(target.statements),start=performance.now();
+  setDataLocked(true);setBusy(c,true);
+  try{
+    const response=await api('/api/guarded-query',{catalog:c.path,database:source.db,sql});
+    log(c,sql,true,'OK · '+target.statements.length+' câu lệnh',Math.round(performance.now()-start),source.db,response);
+  }catch(e){
+    log(c,sql,false,e.message,Math.round(performance.now()-start),source.db);$('dataMessage').textContent=e.message;setDataLocked(false);setBusy(c,false);return;
+  }
+  // A successful write invalidates the old result before the refresh. If the
+  // refresh fails, no further write can target the obsolete result.
+  for(const other of c.tabs)other.source=null;
+  $('dataDialog').close();dataTarget=null;setStatus(c,'Đã áp dụng dữ liệu.');
+  if(t&&connections.includes(c)&&c.tabs.includes(t)){
+    setBusy(c,true);
+    try{t.results=await query(c,source.sql,source.db);t.selected=0;t.gridSelection=null;t.error='';await refresh(c);const page=t.page&&t.sql===source.sql&&t.db===source.db&&source.sql===browseSql(t.page)?t.page:null;if(page)page.result=t.results[0];t.source=gridSource(c,source.db,source.sql,t.results,page);}
+    catch(e){t.error='Đã ghi dữ liệu; không tải lại được kết quả: '+e.message;setStatus(c,t.error);}
+    finally{setBusy(c,false);if(tab()===t)renderResults();}
+  }else{try{await refresh(c);}catch(e){setStatus(c,'Đã ghi dữ liệu; lỗi Refresh: '+e.message);}finally{setBusy(c,false);}}
+};
+
+// Context Help and reusable SQL snippets share the workspace persistence.
+const builtInSnippets=[
+  {id:'builtin-select',name:'SELECT',sql:'SELECT * FROM san_pham WHERE id = 1;'},
+  {id:'builtin-insert',name:'INSERT',sql:"INSERT INTO san_pham (id, name) VALUES (1, 'Mẫu');"},
+  {id:'builtin-update',name:'UPDATE',sql:"UPDATE san_pham SET name = 'Mới' WHERE id = 1;"},
+  {id:'builtin-delete',name:'DELETE',sql:'DELETE FROM san_pham WHERE id = 1;'},
+  {id:'builtin-create',name:'CREATE TABLE',sql:'CREATE TABLE san_pham (id INT PRIMARY KEY, name TEXT NOT NULL);'},
+  {id:'builtin-transaction',name:'Giao dịch batch',sql:"BEGIN;\nINSERT INTO san_pham (id, name) VALUES (2, 'Mẫu');\nCOMMIT;"}
+];
+const helpTopics=[
+  ['SELECT DISTINCT FROM AS','SELECT','Đọc dữ liệu, chọn cột hoặc *, dùng AS đặt bí danh và DISTINCT loại kết quả trùng.', 'SELECT DISTINCT name AS ten FROM san_pham;'],
+  ['WHERE AND OR NOT IS NULL IN BETWEEN LIKE TRUE FALSE','WHERE','Lọc hàng bằng điều kiện, logic ba trị NULL, NOT/AND/OR, IN, BETWEEN, LIKE và IS NULL. Dùng dấu nháy đơn cho chuỗi.',"SELECT * FROM san_pham WHERE id BETWEEN 1 AND 10 AND name IS NOT NULL;"],
+  ['JOIN INNER LEFT OUTER ON','JOIN','Hỗ trợ INNER JOIN và LEFT [OUTER] JOIN với điều kiện bằng nhau giữa hai cột. Planner chọn HASH_JOIN, NESTED_LOOP_JOIN hoặc INDEX_NESTED_LOOP_JOIN theo số hàng ước lượng; khi chạy các JOIN tiếp theo dùng số hàng trung gian thực tế.', 'SELECT a.id, b.name FROM san_pham AS a LEFT JOIN danh_muc AS b ON a.id = b.id;'],
+  ['GROUP BY COUNT SUM AVG MIN MAX HAVING','GROUP BY / HAVING','Nhóm theo một hoặc nhiều cột. COUNT, SUM, AVG, MIN, MAX; HAVING tham chiếu nhãn hoặc bí danh kết quả.', 'SELECT name, COUNT(*) AS total FROM san_pham GROUP BY name HAVING total > 1;'],
+  ['ORDER ASC DESC LIMIT OFFSET','ORDER BY / LIMIT','Sắp xếp theo nhiều cột ASC/DESC, giới hạn hàng bằng LIMIT và bỏ qua hàng bằng OFFSET.', 'SELECT * FROM san_pham ORDER BY id DESC LIMIT 10 OFFSET 0;'],
+  ['CREATE TABLE PRIMARY KEY UNIQUE INT INTEGER REAL TEXT VARCHAR BOOLEAN','CREATE TABLE','Kiểu INT/INTEGER 32 bit, REAL, TEXT, VARCHAR(n), BOOLEAN. Ràng buộc PRIMARY KEY một cột, NOT NULL, UNIQUE. Tên định danh ASCII.',builtInSnippets[4].sql],
+  ['CREATE DATABASE DATABASE USE','CREATE DATABASE / USE','Tạo database và chọn database làm việc cho câu lệnh tiếp theo.', 'CREATE DATABASE kho;\nUSE kho;'],
+  ['SHOW DATABASES TABLES','SHOW','Liệt kê database hoặc bảng của database đang chọn.', 'SHOW DATABASES;\nSHOW TABLES;'],
+  ['VIEW VIEWS','VIEW','View chỉ đọc lưu định nghĩa SELECT, dữ liệu được đọc lại khi truy vấn. Hỗ trợ CREATE VIEW, DROP VIEW, SHOW VIEWS và DESCRIBE. Dùng AS để đặt tên cột tính toán.', 'CREATE VIEW v_products AS SELECT * FROM san_pham;'],
+  ['DESCRIBE DESC','DESCRIBE','Xem tên, kiểu và ràng buộc của các cột.', 'DESCRIBE san_pham;'],
+  ['EXPLAIN','EXPLAIN SELECT','Hiển thị kế hoạch vật lý, thuật toán scan/JOIN được chọn và số hàng nguồn hoặc ứng viên chỉ mục. Không chạy các toán tử truy vấn.', 'EXPLAIN SELECT * FROM san_pham WHERE id = 1;'],
+  ['ALTER ADD COLUMN RENAME TO','ALTER TABLE','Thêm, xóa, đổi tên cột hoặc đổi tên bảng. Cột mới nhận NULL; NOT NULL cần bảng rỗng.', 'ALTER TABLE san_pham ADD COLUMN note TEXT;'],
+  ['INDEX INDEXES','CREATE INDEX','Tạo chỉ mục B+ tree một hoặc nhiều cột INT, INTEGER, TEXT hoặc VARCHAR. CREATE UNIQUE INDEX bảo đảm khóa đầy đủ không trùng khi mọi thành phần khác NULL. Tối ưu tiền tố liên tiếp, điều kiện AND, so sánh khoảng và BETWEEN khi chi phí phù hợp.', 'CREATE INDEX ix_name ON san_pham (name);'],
+  ['DROP_INDEX','DROP INDEX','Xóa chỉ mục theo tên trên bảng.', 'DROP INDEX ix_name ON san_pham;'],
+  ['SHOW_INDEX','SHOW INDEX','Xem tên chỉ mục, cột, số khóa, số giá trị phân biệt, chiều cao cây và ràng buộc UNIQUE.', 'SHOW INDEX FROM san_pham;'],
+  ['FOREIGN KEYS REFERENCES CONSTRAINT','FOREIGN KEY','Khóa ngoại một hoặc nhiều cột trong cùng database. Kiểm tra ngay sau mỗi câu lệnh; khóa đích phải là PRIMARY KEY hoặc UNIQUE. Thành phần NULL được phép. Xóa hoặc sửa hàng cha có tham chiếu bị từ chối. Có thể ADD CONSTRAINT và DROP FOREIGN KEY qua ALTER TABLE.', 'ALTER TABLE san_pham ADD CONSTRAINT fk_self FOREIGN KEY (id) REFERENCES san_pham (id);'],
+  ['STATISTICS','SHOW STATISTICS','Thống kê chính xác số hàng, byte JSON, NULL, giá trị phân biệt và min/max từng cột bảng.','SHOW STATISTICS FROM san_pham;'],
+  ['SHOW_FOREIGN_KEYS','SHOW FOREIGN KEYS','Xem tên khóa ngoại, các cột nguồn, bảng và các cột đích.', 'SHOW FOREIGN KEYS FROM san_pham;'],
+  ['DROP_DATABASE','DROP DATABASE','Xóa database và toàn bộ bảng. DEFAULT được bảo vệ. Kiểm tra tên trước khi chạy.', 'DROP DATABASE kho;'],
+  ['DROP','DROP TABLE','Xóa bảng và dữ liệu của bảng. Kiểm tra tên bảng trước khi chạy.', 'DROP TABLE san_pham;'],
+  ['INSERT INTO VALUES','INSERT','Thêm một hoặc nhiều hàng; có thể chỉ định danh sách cột.',builtInSnippets[1].sql],
+  ['UPDATE SET','UPDATE','Cập nhật cột của các hàng thỏa WHERE. Thiếu WHERE sẽ cập nhật mọi hàng.',builtInSnippets[2].sql],
+  ['DELETE','DELETE','Xóa hàng thỏa WHERE. Thiếu WHERE sẽ xóa mọi hàng.',builtInSnippets[3].sql],
+  ['BEGIN TRANSACTION COMMIT ROLLBACK','Giao dịch batch','BEGIN [TRANSACTION], COMMIT hoặc ROLLBACK trong cùng một batch SQL.',builtInSnippets[5].sql]
+];
+const helpByKeyword=new Map();
+for(const [words,title,description,example] of helpTopics){
+  const topic={title,description,example};
+  for(const word of words.split(' '))helpByKeyword.set(word,topic);
+}
+function contextTopic(sql,start,end=start){
+  const tokens=sqlTokens(sql);
+  // The lexer preserves literals and comments, including semicolons within them.
+  let index=tokens.findIndex(t=>t.index<=start&&start<t.index+t.text.length);
+  if(index<0)index=tokens.findIndex(t=>t.index+t.text.length===start);
+  const token=tokens[index];
+  if(token&&(token.text.startsWith("'")||token.text.startsWith('--')))return null;
+  const statement=sqlTokens(currentStatement(sql,start)).filter(t=>!t.text.startsWith('--')).map(t=>t.text.toUpperCase());
+  const first=statement[0],second=statement[1];
+  const createKind=second==='UNIQUE'&&statement[2]==='INDEX'?'INDEX':second;
+  if(first==='CREATE'&&createKind&&!['TABLE','DATABASE','INDEX','VIEW'].includes(createKind))return null;
+  if(first==='DROP'&&second&&!['TABLE','DATABASE','INDEX','VIEW'].includes(second))return null;
+  const command=((first==='SHOW'&&second==='VIEWS')||(first==='DROP'&&second==='VIEW'))?helpByKeyword.get('VIEW'):first==='SHOW'&&second==='STATISTICS'?helpByKeyword.get('STATISTICS'):first==='SHOW'&&second==='FOREIGN'?helpByKeyword.get('SHOW_FOREIGN_KEYS'):first==='ALTER'&&statement.includes('FOREIGN')?helpByKeyword.get('FOREIGN'):first==='CREATE'?helpByKeyword.get(createKind||'TABLE'):first==='DESC'?helpByKeyword.get('DESCRIBE'):first==='DROP'&&second==='DATABASE'?helpByKeyword.get('DROP_DATABASE'):first==='DROP'&&second==='INDEX'?helpByKeyword.get('DROP_INDEX'):first==='SHOW'&&['INDEX','INDEXES'].includes(second)?helpByKeyword.get('SHOW_INDEX'):helpByKeyword.get(first);
+  const selected=end>start?sql.slice(start,end).trim().toUpperCase():'';
+  const word=token?.text.toUpperCase();
+  if(first==='CREATE'&&['CREATE','TABLE','DATABASE','INDEX','UNIQUE','NOT','NULL','VIEW'].includes(word))return command;
+  if(first==='DROP'&&['DROP','TABLE','DATABASE','INDEX','VIEW'].includes(word))return command;
+  if(first==='ALTER'&&['ALTER','TABLE','ADD','DROP','COLUMN','RENAME','TO'].includes(word))return command;
+  if(first==='DELETE'&&word==='FROM')return command;
+  if(word==='BY'){
+    const previous=tokens[index-1]?.text.toUpperCase();
+    if(previous==='ORDER'||previous==='GROUP')return helpByKeyword.get(previous);
+  }
+  if(first==='SHOW'&&['SHOW','DATABASES','TABLES','INDEX','INDEXES','FOREIGN','KEYS','FROM','VIEWS'].includes(word))return command;
+  if(word==='DESC'&&first==='SELECT')return helpByKeyword.get('ORDER');
+  if(selected&&selected.includes(' '))return command||null;
+  return helpByKeyword.get(word)||command||null;
+}
+let shownContext=null;
+function renderContextHelp(){
+  const topic=active?contextTopic(editor.value,editor.selectionStart,editor.selectionEnd):null;
+  if(topic===shownContext)return;
+  shownContext=topic;
+  $('contextTitle').textContent=topic?.title||'SQL Context Help';
+  $('contextDescription').textContent=topic?.description||'Đặt con trỏ vào từ khóa hoặc câu lệnh SQL để xem hướng dẫn cú pháp VDB.';
+  $('contextExample').hidden=!topic;
+  $('contextExample').textContent=topic?.example||'';
+}
+let personalSnippets=[],selectedSnippetId='',editingSnippetId=null;
+const snippetLimits={count:40,name:100,sql:4000,bytes:64000};
+function validSnippetFields(name,sql){
+  return typeof name==='string'&&!!name.trim()&&name.trim().length<=snippetLimits.name&&typeof sql==='string'&&!!sql.trim()&&sql.length<=snippetLimits.sql;
+}
+function snippetBytes(items){return new TextEncoder().encode(JSON.stringify(items)).length;}
+function normalizeSnippets(value){
+  const items=[],ids=new Set(builtInSnippets.map(s=>s.id));
+  if(!Array.isArray(value))return items;
+  for(const s of value){
+    if(items.length>=snippetLimits.count)break;
+    if(!s||typeof s.id!=='string'||!s.id||s.id.length>100||ids.has(s.id)||!validSnippetFields(s.name,s.sql))continue;
+    const item={id:s.id,name:s.name.trim(),sql:s.sql};
+    if(snippetBytes([...items,item])>snippetLimits.bytes)continue;
+    items.push(item);ids.add(s.id);
+  }
+  return items;
+}
+function findSnippet(id){return personalSnippets.find(s=>s.id===id)||builtInSnippets.find(s=>s.id===id);}
+function filteredSnippets(scope,search){
+  const items=scope==='personal'?personalSnippets:scope==='builtin'?builtInSnippets:[...builtInSnippets,...personalSnippets];
+  const q=search.trim().toLowerCase();
+  return items.filter(s=>(s.name+' '+s.sql).toLowerCase().includes(q));
+}
+function saveSnippet(id,name,sql){
+  if(!validSnippetFields(name,sql))throw new Error('Nhập tên (tối đa 100 ký tự) và SQL (tối đa 4000 ký tự).');
+  const existing=personalSnippets.find(s=>s.id===id);
+  if(id&&!existing)throw new Error('Chỉ có thể sửa snippet cá nhân.');
+  if(!existing&&personalSnippets.length>=snippetLimits.count)throw new Error('Tối đa 40 snippet cá nhân.');
+  const item={id:existing?.id||newId(),name:name.trim(),sql};
+  const next=existing?personalSnippets.map(s=>s.id===id?item:s):[...personalSnippets,item];
+  if(snippetBytes(next)>snippetLimits.bytes)throw new Error('Tổng dữ liệu snippet vượt quá 64 KB.');
+  personalSnippets=next;selectedSnippetId=item.id;persist(true);return item;
+}
+function removeSnippet(id){
+  if(!personalSnippets.some(s=>s.id===id))return false;
+  personalSnippets=personalSnippets.filter(s=>s.id!==id);
+  if(selectedSnippetId===id)selectedSnippetId='';
+  persist(true);return true;
+}
+function renderSnippets(){
+  const list=filteredSnippets($('snippetScope').value,$('snippetSearch').value);
+  if(!list.some(s=>s.id===selectedSnippetId))selectedSnippetId=list[0]?.id||'';
+  $('snippetList').innerHTML=list.map(s=>'<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>').join('');
+  $('snippetList').value=selectedSnippetId;
+  renderSnippetPreview();
+}
+function renderSnippetPreview(){
+  const item=findSnippet(selectedSnippetId);
+  $('snippetTitle').textContent=item?.name||'SQL xem trước';
+  $('snippetPreview').textContent=item?.sql||'Chưa có snippet phù hợp.';
+  $('snippetStatus').textContent=item?'Chèn SQL rồi chạy thủ công.':'Thêm snippet hoặc thay đổi bộ lọc.';
+  updateActions();
+}
+function updateSnippetActions(editorReady){
+  const item=findSnippet(selectedSnippetId),personal=personalSnippets.some(s=>s.id===selectedSnippetId);
+  $('snippetNew').disabled=!editorReady;
+  $('snippetEdit').disabled=!editorReady||!personal;
+  $('snippetDelete').disabled=!editorReady||!personal;
+  $('snippetInsert').disabled=$('snippetNewTab').disabled=!editorReady||!item;
+}
+function selectAdditionTab(snippets){
+  $('contextHelpTab').setAttribute('aria-selected',String(!snippets));
+  $('snippetsTab').setAttribute('aria-selected',String(snippets));
+  $('contextHelpPanel').hidden=snippets;$('snippetsPanel').hidden=!snippets;
+  if(snippets)renderSnippets();else renderContextHelp();
+}
+function openSnippetEditor(id=null){
+  if(!active||active.busy||quitting||document.querySelector('dialog[open]'))return;
+  const item=personalSnippets.find(s=>s.id===id);
+  if(id&&!item)return;
+  editingSnippetId=item?.id||null;
+  $('snippetHeading').textContent=item?'Sửa snippet':'Thêm snippet';
+  $('snippetName').value=item?.name||'';
+  $('snippetSql').value=item?.sql||'';
+  $('snippetMessage').textContent='';
+  $('snippetDialog').showModal();$('snippetName').focus();
+}
+function insertSnippet(newTab=false){
+  const item=findSnippet(selectedSnippetId);
+  if(!item||!active||active.busy||quitting||document.querySelector('dialog[open]'))return;
+  if(newTab){addTab(item.sql,item.name,tab().db,'');editor.focus();}
+  else replaceEditor(editor.selectionStart,editor.selectionEnd,item.sql);
+  $('snippetStatus').textContent='Đã chèn SQL. Chạy khi sẵn sàng.';
+}
+$('contextHelpTab').onclick=()=>selectAdditionTab(false);
+$('snippetsTab').onclick=()=>selectAdditionTab(true);
+$('snippetScope').onchange=renderSnippets;
+$('snippetSearch').oninput=renderSnippets;
+$('snippetList').onchange=()=>{selectedSnippetId=$('snippetList').value;renderSnippetPreview();};
+$('snippetNew').onclick=()=>openSnippetEditor();
+$('snippetEdit').onclick=()=>openSnippetEditor(selectedSnippetId);
+$('snippetDelete').onclick=()=>{
+  const item=personalSnippets.find(s=>s.id===selectedSnippetId);
+  if(!item||$('snippetDelete').disabled)return;
+  confirmAction('Xóa snippet','Xóa snippet '+item.name+'?',()=>{removeSnippet(item.id);renderSnippets();});
+};
+$('snippetCancel').onclick=()=>$('snippetDialog').close();
+$('snippetForm').onsubmit=e=>{
+  e.preventDefault();
+  try{
+    saveSnippet(editingSnippetId,$('snippetName').value,$('snippetSql').value);
+    $('snippetScope').value='personal';$('snippetSearch').value='';
+    $('snippetDialog').close();renderSnippets();
+  }catch(error){$('snippetMessage').textContent=error.message;}
+};
+$('snippetInsert').onclick=()=>insertSnippet();
+$('snippetNewTab').onclick=()=>insertSnippet(true);
+
+initialize();
+</script>
+</body>
+</html>

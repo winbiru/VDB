@@ -1,0 +1,20 @@
+nhập constants.*;
+nhập algorithm.hash.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân biệt băm(hàng) {
+    ds = [];
+    chỉMục = bảng băm(độ dài(hàng));
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        dòng = hàng[i][KEY_ROW()];
+        trùng = sai;
+        ứngViên = ứng viên băm(chỉMục, dòng);
+        lặp(j = 0; j < độ dài(ứngViên); j++) {
+            nếu (bằng hàng(ds[ứngViên[j]][KEY_ROW()], dòng)) { trùng = đúng; thoát; };
+        };
+        nếu (trùng) { bỏ qua; };
+        thêm băm(chỉMục, dòng, độ dài(ds));
+        thêm(ds, hàng[i]);
+    };
+    trả về ds;
+};

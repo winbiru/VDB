@@ -1,0 +1,43 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân tích update(bộ) {
+    tênBảng = bộ.tên định danh();
+    bộ.cần(SQL_SET());
+    ds = [];
+    tiếp = đúng;
+    khi (tiếp) {
+        c = bộ.tên định danh(); bộ.cần(TEXT_EQUAL()); thêm(ds, [c, bộ.giá trị()]);
+        tiếp = bộ.nhận(TEXT_COMMA());
+    };
+    trả về bản ghi lệnh cập nhật(SQL_UPDATE(), tênBảng, ds, bộ.điều kiện());
+};
+
+hàm công khai thực thi update(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]);
+    cột = bảng[KEY_COLUMNS()];
+    hàng = bảng[KEY_ROWS()];
+    điềuKiện = biên dịch điều kiện(cột, cmd[KEY_WHERE()]);
+    thay = cmd[KEY_SET()];
+    chỉSố = [];
+    lặp(i = 0; i < độ dài(thay); i++) {
+        j = cần tên(cột, thay[i][0]);
+        kiểm kiểu(cột[j], thay[i][1]);
+        thêm(chỉSố, j);
+    };
+    n = 0;
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        nếu (khớp(hàng[i], điềuKiện)) {
+            lặp(j = 0; j < độ dài(chỉSố); j++) { hàng[i][chỉSố[j]] = thay[j][1]; };
+            n++;
+        };
+    };
+    kiểm bảng(bảng);
+    cập nhật index(bảng);
+    máy.dirty = đúng;
+    trả về thay đổi(n);
+};
+

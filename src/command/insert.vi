@@ -1,0 +1,39 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân tích insert(bộ) {
+    bộ.cần(SQL_INTO());
+    tênBảng = bộ.tên định danh();
+    cột = [];
+    nếu (bộ.nhận(TEXT_OPEN_PAREN())) { cột = bộ.danh sách tên(); bộ.cần(TEXT_CLOSE_PAREN()); };
+    bộ.cần(SQL_VALUES());
+    ds = [bộ.danh sách giá trị()];
+    khi (bộ.nhận(TEXT_COMMA())) { thêm(ds, bộ.danh sách giá trị()); };
+    trả về bản ghi lệnh chèn(SQL_INSERT(), tênBảng, cột, ds);
+};
+
+hàm công khai thực thi insert(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]);
+    cột = bảng[KEY_COLUMNS()];
+    hàng = bảng[KEY_ROWS()]; đầu = độ dài(hàng);
+    chỉSố = chỉ số cột(cột, cmd[KEY_COLUMNS()]);
+    lặp(i = 0; i < độ dài(chỉSố); i++) {
+        lặp(j = 0; j < i; j++) { nếu (chỉSố[i] == chỉSố[j]) { ném ERR_DUPLICATE_INSERT_COLUMN(); }; };
+    };
+    ds = cmd[KEY_ROWS()];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        nếu (độ dài(ds[i]) != độ dài(chỉSố)) { ném ERR_INSERT_VALUE_COUNT(); };
+        dòng = [];
+        lặp(j = 0; j < độ dài(cột); j++) { thêm(dòng, rỗng); };
+        lặp(j = 0; j < độ dài(chỉSố); j++) { dòng[chỉSố[j]] = ds[i][j]; };
+        thêm(hàng, dòng);
+    };
+    kiểm bảng(bảng);
+    chèn các index(bảng, đầu);
+    máy.dirty = đúng;
+    trả về thay đổi(độ dài(ds));
+};
+

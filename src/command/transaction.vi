@@ -1,0 +1,39 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.dữ liệu.json.json.json tạo;
+nhập gói.dữ liệu.json.json.json phân tích;
+
+hàm công khai phân tích begin(bộ) {
+    bộ.nhận(SQL_TRANSACTION()); trả về bản ghi lệnh đơn(SQL_BEGIN());
+};
+
+hàm công khai phân tích commit(bộ) {
+    trả về bản ghi lệnh đơn(SQL_COMMIT());
+};
+
+hàm công khai phân tích rollback(bộ) {
+    trả về bản ghi lệnh đơn(SQL_ROLLBACK());
+};
+
+hàm công khai thực thi begin(máy, cmd) {
+    nếu (máy.snapshot != rỗng) { ném ERR_TRANSACTION_OPEN(); };
+    máy.snapshot = json tạo(máy.catalog);
+    máy.savedSelection = máy.selected;
+    máy.savedDirty = máy.dirty;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi commit(máy, cmd) {
+    op = cmd[KEY_OP()];
+    nếu (máy.snapshot == rỗng) { ném ERR_TRANSACTION_NOT_OPEN(); };
+    nếu (op == SQL_ROLLBACK()) {
+        máy.catalog = json phân tích(máy.snapshot);
+        máy.selected = máy.savedSelection;
+        máy.dirty = máy.savedDirty;
+    };
+    máy.snapshot = rỗng;
+    trả về thay đổi(0);
+};
+

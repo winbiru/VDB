@@ -1,0 +1,281 @@
+nhập constants.*;
+nhập records.*;
+nhập algorithm.sort.merge_sort.*;
+nhập command.common.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.lõi.chuyển kiểu.thành số nguyên;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+hàm công khai cột index(cây) {
+    trả về lấy từ điển(cây, KEY_INDEX_COLUMNS(), [cây[KEY_COLUMNS()]]);
+};
+
+hàm so tiền tố(khóa, tiềnTố) {
+    lặp(i = 0; i < độ dài(tiềnTố); i++) {
+        nếu (khóa[i] != tiềnTố[i]) {
+            nếu (đứng trước(khóa[i], tiềnTố[i], sai)) { trả về -1; };
+            trả về 1;
+        };
+    };
+    trả về 0;
+};
+
+hàm lưu cây(tên, tênCột, nút, gốc, cao, n, thốngKê, duyNhất) {
+    hiểnThị = tênCột[0];
+    lặp(i = 1; i < độ dài(tênCột); i++) { hiểnThị = hiểnThị + TEXT_COMMA() + tênCột[i]; };
+    m = bản ghi index(tên, hiểnThị, nút, gốc, cao, n, thốngKê[độ dài(thốngKê) - 1]);
+    m[KEY_INDEX_COLUMNS()] = tênCột;
+    m[KEY_UNIQUE()] = duyNhất;
+    m[KEY_PREFIX_CARDINALITY()] = thốngKê;
+    trả về m;
+};
+
+// Each logical page records its subtree size for rank-based access.
+hàm trang index(lá, khóa, con, tiếp, nút) {
+    m = bản ghi nút index(lá, khóa, con, tiếp);
+    n = độ dài(khóa);
+    nếu (!lá) {
+        n = 0;
+        lặp(i = 0; i < độ dài(con); i++) { n = n + nút[con[i]][KEY_COUNT()]; };
+    };
+    m[KEY_COUNT()] = n;
+    trả về m;
+};
+
+hàm công khai có rank trang(cây) {
+    trả về lấy từ điển(cây[KEY_NODES()][cây[KEY_ROOT()]], KEY_COUNT(), -1) >= 0;
+};
+
+// Composite keys retain NULL components so a leading prefix remains complete.
+hàm công khai xây cây index(tên, tênCột, hàng, vịTrí, duyNhất) {
+    ds = []; sắp = []; thốngKê = [];
+    đơn = độ dài(vịTrí) == 1;
+    lặp(j = 0; j < độ dài(vịTrí); j++) { thêm(sắp, [đúng, sai]); thêm(thốngKê, 0); };
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        khóa = [];
+        lặp(j = 0; j < độ dài(vịTrí); j++) { thêm(khóa, hàng[i][vịTrí[j]]); };
+        nếu (đơn && khóa[0] == rỗng) { bỏ qua; };
+        thêm(ds, bản ghi hàng kết quả(i, khóa));
+    };
+    ds = sắp hợp nhất(ds, sắp);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        khác = i == 0;
+        lặp(j = 0; j < độ dài(vịTrí); j++) {
+            nếu (!khác) { khác = ds[i][KEY_SORT()][j] != ds[i - 1][KEY_SORT()][j]; };
+            nếu (khác) { thốngKê[j] = thốngKê[j] + 1; };
+        };
+        nếu (duyNhất && !khác) {
+            cóNull = sai;
+            lặp(j = 0; j < độ dài(vịTrí); j++) {
+                nếu (ds[i][KEY_SORT()][j] == rỗng) { cóNull = đúng; };
+            };
+            nếu (!cóNull) { ném ERR_DUPLICATE_KEY() + tên; };
+        };
+    };
+    nút = []; tầng = [];
+    đầu = 0; n = độ dài(ds);
+    khi (đầu < n) {
+        khóa = []; con = []; cuối = đầu + 16;
+        nếu (cuối > n) { cuối = n; };
+        lặp(i = đầu; i < cuối; i++) {
+            v = ds[i][KEY_SORT()];
+            nếu (đơn) { v = v[0]; };
+            thêm(khóa, v); thêm(con, ds[i][KEY_ROW()]);
+        };
+        chỉ = độ dài(nút); tiếp = -1;
+        nếu (cuối < n) { tiếp = chỉ + 1; };
+        thêm(nút, trang index(đúng, khóa, con, tiếp, nút));
+        thêm(tầng, [khóa[độ dài(khóa) - 1], chỉ]);
+        đầu = cuối;
+    };
+    nếu (n == 0) {
+        thêm(nút, trang index(đúng, [], [], -1, nút));
+        trả về lưu cây(tên, tênCột, nút, 0, 1, 0, thốngKê, duyNhất);
+    };
+    cao = 1;
+    khi (độ dài(tầng) > 1) {
+        mới = []; đầu = 0;
+        khi (đầu < độ dài(tầng)) {
+            khóa = []; con = []; cuối = đầu + 16;
+            nếu (cuối > độ dài(tầng)) { cuối = độ dài(tầng); };
+            lặp(i = đầu; i < cuối; i++) {
+                thêm(khóa, tầng[i][0]); thêm(con, tầng[i][1]);
+            };
+            chỉ = độ dài(nút);
+            thêm(nút, trang index(sai, khóa, con, -1, nút));
+            thêm(mới, [khóa[độ dài(khóa) - 1], chỉ]);
+            đầu = cuối;
+        };
+        tầng = mới; cao++;
+    };
+    trả về lưu cây(tên, tênCột, nút, tầng[0][1], cao, n, thốngKê, duyNhất);
+};
+
+// Binary search on the maximum key in a page or its children.
+hàm biên trang(khóa, tiềnTố, bỏBằng, đơn) {
+    thấp = 0; cao = độ dài(khóa);
+    khi (thấp < cao) {
+        giữa = thấp + thành số nguyên((cao - thấp) / 2);
+        v = khóa[giữa];
+        nếu (đơn) { v = [v]; };
+        cmp = so tiền tố(v, tiềnTố);
+        nếu (cmp < 0 || (bỏBằng && cmp == 0)) { thấp = giữa + 1; }
+        hoặc { cao = giữa; };
+    };
+    trả về thấp;
+};
+
+hàm công khai hạng index(cây, giáTrị, bỏBằng) {
+    trả về hạng tiền tố index(cây, [giáTrị], bỏBằng);
+};
+
+hàm công khai hạng tiền tố index(cây, tiềnTố, bỏBằng) {
+    đơn = độ dài(cột index(cây)) == 1;
+    nút = cây[KEY_NODES()]; chỉ = cây[KEY_ROOT()];
+    cóRank = có rank trang(cây); hạng = 0;
+    khi (đúng) {
+        m = nút[chỉ]; khóa = m[KEY_KEY()];
+        thấp = biên trang(khóa, tiềnTố, bỏBằng, đơn);
+        nếu (thấp >= độ dài(khóa)) { trả về cây[KEY_COUNT()]; };
+        nếu (m[KEY_LEAF()]) {
+            nếu (cóRank) { trả về hạng + thấp; };
+            trả về chỉ * 16 + thấp;
+        };
+        con = m[KEY_CHILDREN()];
+        nếu (cóRank) {
+            lặp(i = 0; i < thấp; i++) { hạng = hạng + nút[con[i]][KEY_COUNT()]; };
+        };
+        chỉ = con[thấp];
+    };
+};
+
+// Locate a leaf by rank, then follow the leaf chain across variable-size pages.
+hàm vị trí rank(cây, hạng) {
+    nếu (!có rank trang(cây)) { trả về [thành số nguyên(hạng / 16), hạng % 16]; };
+    nút = cây[KEY_NODES()]; chỉ = cây[KEY_ROOT()];
+    khi (!nút[chỉ][KEY_LEAF()]) {
+        con = nút[chỉ][KEY_CHILDREN()]; i = 0;
+        khi (hạng >= nút[con[i]][KEY_COUNT()]) {
+            hạng = hạng - nút[con[i]][KEY_COUNT()]; i++;
+        };
+        chỉ = con[i];
+    };
+    trả về [chỉ, hạng];
+};
+
+// Half-open rank range; preserve physical row order for SELECT/LIMIT.
+hàm công khai tìm khoảng index(cây, khoảng, hàng) {
+    đầu = khoảng[0]; cuối = khoảng[1]; ds = [];
+    nếu (đầu >= cuối) { trả về ds; };
+    nút = cây[KEY_NODES()];
+    vị = vị trí rank(cây, đầu); lá = vị[0]; i = vị[1];
+    khi (đầu < cuối) {
+        m = nút[lá]; con = m[KEY_CHILDREN()];
+        khi (i < độ dài(con) && đầu < cuối) {
+            vịTrí = con[i]; thêm(ds, bản ghi hàng kết quả(vịTrí, [vịTrí]));
+            i++; đầu++;
+        };
+        lá = m[KEY_NEXT()]; i = 0;
+    };
+    ds = sắp hợp nhất(ds, [[đúng, sai]]);
+    kq = [];
+    lặp(i = 0; i < độ dài(ds); i++) { thêm(kq, hàng[ds[i][KEY_ROW()]]); };
+    trả về kq;
+};
+
+// Insert at the upper bound so duplicate keys retain physical row order.
+// Return the new right page on split, or -1 when the page fits.
+hàm chèn trang(nút, chỉ, tiềnTố, dòng, đơn) {
+    m = nút[chỉ]; lá = m[KEY_LEAF()]; tiếp = m[KEY_NEXT()];
+    khóa = m[KEY_KEY()]; con = m[KEY_CHILDREN()];
+    vị = biên trang(khóa, tiềnTố, đúng, đơn);
+    k = []; c = [];
+    nếu (lá) {
+        v = tiềnTố; nếu (đơn) { v = tiềnTố[0]; };
+        lặp(i = 0; i <= độ dài(khóa); i++) {
+            nếu (i == vị) { thêm(k, v); thêm(c, dòng); };
+            nếu (i < độ dài(khóa)) { thêm(k, khóa[i]); thêm(c, con[i]); };
+        };
+    } hoặc {
+        nếu (vị == độ dài(con)) { vị--; };
+        phải = chèn trang(nút, con[vị], tiềnTố, dòng, đơn);
+        lặp(i = 0; i < độ dài(con); i++) {
+            id = con[i]; ds = nút[id][KEY_KEY()];
+            thêm(k, ds[độ dài(ds) - 1]); thêm(c, id);
+            nếu (i == vị && phải >= 0) {
+                ds = nút[phải][KEY_KEY()];
+                thêm(k, ds[độ dài(ds) - 1]); thêm(c, phải);
+            };
+        };
+    };
+    nếu (độ dài(k) <= 16) {
+        nút[chỉ] = trang index(lá, k, c, tiếp, nút);
+        trả về -1;
+    };
+    tráiK = []; tráiC = []; phảiK = []; phảiC = [];
+    lặp(i = 0; i < độ dài(k); i++) {
+        nếu (i < 8) { thêm(tráiK, k[i]); thêm(tráiC, c[i]); }
+        hoặc { thêm(phảiK, k[i]); thêm(phảiC, c[i]); };
+    };
+    mới = độ dài(nút);
+    thêm(nút, trang index(lá, phảiK, phảiC, tiếp, nút));
+    nếu (lá) { tiếp = mới; };
+    nút[chỉ] = trang index(lá, tráiK, tráiC, tiếp, nút);
+    trả về mới;
+};
+
+hàm công khai chèn index(cây, hàng, vịTrí, đầu) {
+    nút = cây[KEY_NODES()]; đơn = độ dài(vịTrí) == 1;
+    duyNhất = lấy từ điển(cây, KEY_UNIQUE(), sai);
+    thốngKê = lấy từ điển(cây, KEY_PREFIX_CARDINALITY(), [cây[KEY_CARDINALITY()]]);
+    lặp(i = đầu; i < độ dài(hàng); i++) {
+        khóa = []; cóNull = sai;
+        lặp(j = 0; j < độ dài(vịTrí); j++) {
+            v = hàng[i][vịTrí[j]]; thêm(khóa, v);
+            nếu (v == rỗng) { cóNull = đúng; };
+        };
+        nếu (đơn && cóNull) { bỏ qua; };
+        tiềnTố = [];
+        lặp(j = 0; j < độ dài(khóa); j++) {
+            thêm(tiềnTố, khóa[j]);
+            thấp = hạng tiền tố index(cây, tiềnTố, sai);
+            cao = hạng tiền tố index(cây, tiềnTố, đúng);
+            nếu (thấp == cao) { thốngKê[j] = thốngKê[j] + 1; }
+            hoặc nếu (duyNhất && !cóNull && j == độ dài(khóa) - 1) {
+                ném ERR_DUPLICATE_KEY() + cây[KEY_NAME()];
+            };
+        };
+        gốc = cây[KEY_ROOT()];
+        phải = chèn trang(nút, gốc, khóa, i, đơn);
+        nếu (phải >= 0) {
+            a = nút[gốc][KEY_KEY()]; b = nút[phải][KEY_KEY()];
+            mới = độ dài(nút);
+            thêm(nút, trang index(sai, [a[độ dài(a) - 1], b[độ dài(b) - 1]], [gốc, phải], -1, nút));
+            cây[KEY_ROOT()] = mới; cây[KEY_HEIGHT()] = cây[KEY_HEIGHT()] + 1;
+        };
+        cây[KEY_COUNT()] = cây[KEY_COUNT()] + 1;
+    };
+    cây[KEY_PREFIX_CARDINALITY()] = thốngKê;
+    cây[KEY_CARDINALITY()] = thốngKê[độ dài(thốngKê) - 1];
+};
+
+// Lower bound trên khóa tối đa của từng nhánh; tiếp tục qua lá nếu trùng khóa.
+hàm công khai tìm bằng index(cây, giáTrị, hàng) {
+    nút = cây[KEY_NODES()]; chỉ = cây[KEY_ROOT()]; ds = [];
+    khi (chỉ >= 0) {
+        m = nút[chỉ]; khóa = m[KEY_KEY()]; con = m[KEY_CHILDREN()];
+        thấp = 0; cao = độ dài(khóa);
+        khi (thấp < cao) {
+            giữa = thấp + thành số nguyên((cao - thấp) / 2);
+            nếu (khóa[giữa] < giáTrị) { thấp = giữa + 1; } hoặc { cao = giữa; };
+        };
+        nếu (thấp >= độ dài(khóa)) { trả về ds; };
+        nếu (!m[KEY_LEAF()]) { chỉ = con[thấp]; bỏ qua; };
+        lặp(i = thấp; i < độ dài(khóa); i++) {
+            nếu (khóa[i] != giáTrị) { trả về ds; };
+            thêm(ds, hàng[con[i]]);
+        };
+        chỉ = m[KEY_NEXT()];
+    };
+    trả về ds;
+};

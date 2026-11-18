@@ -1,0 +1,8 @@
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai ghép(ds, khác) {
+    kq = [];
+    lặp(i = 0; i < độ dài(ds); i++) { thêm(kq, ds[i]); };
+    lặp(i = 0; i < độ dài(khác); i++) { thêm(kq, khác[i]); };
+    trả về kq;
+};

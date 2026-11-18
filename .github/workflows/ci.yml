@@ -1,0 +1,144 @@
+name: VDB CI / Release
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vdb-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: macos-arm64
+            arch: arm64
+          - os: ubuntu-24.04
+            platform: linux-x64
+            arch: x86_64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check target and release version
+        shell: bash
+        run: |
+          test "$(uname -m)" = "${{ matrix.arch }}"
+          version=$(cat VERSION)
+          [[ "$version" =~ ^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$ ]]
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            test "$GITHUB_REF_NAME" = "v$version"
+          fi
+          for script in vdb studio/serve studio/launch-macos distribution/install.sh distribution/vdb-setup distribution/package.sh tests/distribution.sh; do
+            sh -n "$script"
+          done
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld binutils cmake make python3 openssl coreutils util-linux
+      - name: Fetch pinned V++ sources
+        shell: bash
+        run: |
+          revision=$(cat distribution/VPP_REVISION)
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          git clone --no-checkout https://github.com/winbiru/VXX.git "$RUNNER_TEMP/VXX"
+          git -C "$RUNNER_TEMP/VXX" checkout --detach "$revision"
+          test "$(git -C "$RUNNER_TEMP/VXX" rev-parse HEAD)" = "$revision"
+      - name: Bootstrap V++ on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        working-directory: ${{ runner.temp }}/VXX
+        run: |
+          cmake -S . -B build-pure-vpp
+          cmake --build build-pure-vpp --parallel
+          printf 'VPP=%s/VXX/VPP\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Bootstrap V++ on Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        working-directory: ${{ runner.temp }}/VXX
+        run: |
+          out="$RUNNER_TEMP/vpp-linux-full"
+          bash scripts/quality/check_linux_full_bootstrap.sh "$out"
+          mkdir -p "$out/linux-objects"
+          for part in start syscalls runtime_core directory sha256 process socket aot_runtime_bridge f64; do
+            clang -target x86_64-unknown-linux-gnu -I scripts/ASM -I scripts/ASM/common \
+              -c "scripts/ASM/linux/vpp_linux_${part}_x86_64.S" -o "$out/linux-objects/$part.o"
+          done
+          {
+            printf 'VPP=%s/vpp-native-stage3\n' "$out"
+            printf 'VPP_HOME=%s/VXX\n' "$RUNNER_TEMP"
+            printf 'VPP_AOT_VPP_OBJECT=%s/runtime.o\n' "$out"
+            printf 'VPP_AOT_LINUX_OBJECT_DIR=%s/linux-objects\n' "$out"
+            printf 'VPP_AOT_ASSEMBLER=%s\n' "$(command -v clang)"
+            printf 'VPP_NATIVE_ELF_LINK=1\nVPP_AOT_NATIVE_MACHO_LINK=0\nVPP_AOT_NATIVE_ARM64_OBJECT=0\n'
+          } >> "$GITHUB_ENV"
+      - name: Build VDB and run regression tests
+        shell: bash
+        run: |
+          "$VPP" --version
+          make VPP="$VPP" all build/vdb-studio
+          make VPP="$VPP" test
+          make test-studio-state
+          make VPP="$VPP" test-studio
+      - name: Package and test installation and update
+        run: make VPP="$VPP" test-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vdb-${{ matrix.platform }}
+          path: |
+            dist/vdb-${{ matrix.platform }}.tar.gz
+            dist/vdb-${{ matrix.platform }}.tar.gz.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish stable release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vdb-*
+          merge-multiple: true
+          path: dist
+      - name: Verify release candidates
+        shell: bash
+        run: |
+          test "$GITHUB_REF_NAME" = "v$(cat VERSION)"
+          cd dist
+          for platform in macos-arm64 linux-x64; do
+            asset="vdb-$platform.tar.gz"
+            sha256sum --check "$asset.sha256"
+            test "$(tar -xOzf "$asset" "vdb-$platform/payload/VERSION")" = "${GITHUB_REF_NAME#v}"
+          done
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/vdb-macos-arm64.tar.gz dist/vdb-macos-arm64.tar.gz.sha256 \
+            dist/vdb-linux-x64.tar.gz dist/vdb-linux-x64.tar.gz.sha256 \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "VDB ${GITHUB_REF_NAME#v}"

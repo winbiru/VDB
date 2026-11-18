@@ -1,0 +1,53 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập algorithm.hash.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm tìm nhóm(ds, chỉMục, khóa) {
+    ứngViên = ứng viên băm(chỉMục, khóa);
+    lặp(i = 0; i < độ dài(ứngViên); i++) {
+        j = ứngViên[i];
+        nếu (bằng hàng(ds[j][KEY_KEY()], khóa)) { trả về j; };
+    };
+    trả về -1;
+};
+
+hàm công khai tổng hợp(hàng, mục) {
+    op = mục[KEY_AGGREGATE()]; vịTrí = mục[KEY_INDEX()];
+    n = 0; tổng = 0.0; cực = rỗng;
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        nếu (vịTrí < 0) { n++; bỏ qua; };
+        v = hàng[i][vịTrí]; nếu (v == rỗng) { bỏ qua; };
+        n++;
+        nếu (op == SQL_SUM() || op == SQL_AVG()) { tổng = tổng + v; }
+        hoặc nếu (op == SQL_MIN() || op == SQL_MAX()) {
+            nếu (cực == rỗng) { cực = v; }
+            hoặc nếu (đứng trước(v, cực, op == SQL_MAX())) { cực = v; };
+        };
+    };
+    nếu (op == SQL_COUNT()) { trả về n; };
+    nếu (n == 0) { trả về rỗng; };
+    nếu (op == SQL_SUM()) { trả về tổng; };
+    nếu (op == SQL_AVG()) { trả về tổng / n; };
+    trả về cực;
+};
+
+hàm công khai nhóm băm(lọc, nhóm) {
+    nhómHàng = [];
+    nếu (độ dài(nhóm) == 0) { thêm(nhómHàng, bản ghi nhóm hàng([], lọc)); }
+    hoặc {
+        chỉMục = bảng băm(độ dài(lọc));
+        lặp(i = 0; i < độ dài(lọc); i++) {
+            khóa = [];
+            lặp(j = 0; j < độ dài(nhóm); j++) { thêm(khóa, lọc[i][nhóm[j]]); };
+            vịTrí = tìm nhóm(nhómHàng, chỉMục, khóa);
+            nếu (vịTrí < 0) {
+                thêm băm(chỉMục, khóa, độ dài(nhómHàng));
+                thêm(nhómHàng, bản ghi nhóm hàng(khóa, [lọc[i]]));
+            }
+            hoặc { thêm(nhómHàng[vịTrí][KEY_ROWS()], lọc[i]); };
+        };
+    };
+    trả về nhómHàng;
+};

@@ -1,0 +1,283 @@
+// Tạo bản ghi bằng khóa dùng chung. V++ chưa hỗ trợ biểu thức làm khóa trong map literal.
+nhập constants.*;
+
+hàm công khai bản ghi bảng(tên, cột, hàng) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_COLUMNS()] = cột;
+    bảnGhi[KEY_ROWS()] = hàng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi catalog(phiênBản, databases) {
+    bảnGhi = {};
+    bảnGhi[KEY_VERSION()] = phiênBản;
+    bảnGhi[KEY_DATABASES()] = databases;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi cột nguồn(tên, tênĐầyĐủ, kiểuDữLiệu) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_QUALIFIED()] = tênĐầyĐủ;
+    bảnGhi[KEY_TYPE()] = kiểuDữLiệu;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi database(tên, bảng) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_TABLES()] = bảng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi dữ liệu nhóm(thaoTác, hàng, nhóm) {
+    bảnGhi = {};
+    bảnGhi[KEY_OPERATION()] = thaoTác;
+    bảnGhi[KEY_ROWS()] = hàng;
+    bảnGhi[KEY_GROUP()] = nhóm;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi dữ liệu nối(hàng, phải) {
+    bảnGhi = {};
+    bảnGhi[KEY_ROWS()] = hàng;
+    bảnGhi[KEY_RIGHT()] = phải;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi dữ liệu sắp xếp(hàng, thứTự) {
+    bảnGhi = {};
+    bảnGhi[KEY_ROWS()] = hàng;
+    bảnGhi[KEY_ORDER()] = thứTự;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi dữ liệu tổng hợp(thaoTác, hàng, mục) {
+    bảnGhi = {};
+    bảnGhi[KEY_OPERATION()] = thaoTác;
+    bảnGhi[KEY_ROWS()] = hàng;
+    bảnGhi[KEY_ITEM()] = mục;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi hàng(hàng) {
+    bảnGhi = {};
+    bảnGhi[KEY_ROWS()] = hàng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi hàng kết quả(dòng, sắp) {
+    bảnGhi = {};
+    bảnGhi[KEY_ROW()] = dòng;
+    bảnGhi[KEY_SORT()] = sắp;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi kế hoạch nối(thuậtToán, kiểu, chỉTrái, chỉPhải, rộngPhải) {
+    bảnGhi = {};
+    bảnGhi[KEY_ALGORITHM()] = thuậtToán;
+    bảnGhi[KEY_KIND()] = kiểu;
+    bảnGhi[KEY_LEFT_INDEX()] = chỉTrái;
+    bảnGhi[KEY_RIGHT_INDEX()] = chỉPhải;
+    bảnGhi[KEY_RIGHT_WIDTH()] = rộngPhải;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi kế hoạch truy vấn(tổngHợp, phânBiệt, sắp) {
+    bảnGhi = {};
+    bảnGhi[KEY_AGGREGATE()] = tổngHợp;
+    bảnGhi[KEY_DISTINCT()] = phânBiệt;
+    bảnGhi[KEY_SORT()] = sắp;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi kết quả(cột, hàng) {
+    bảnGhi = {};
+    bảnGhi[KEY_COLUMNS()] = cột;
+    bảnGhi[KEY_ROWS()] = hàng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh chèn(lệnh, tên, cột, hàng) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_COLUMNS()] = cột;
+    bảnGhi[KEY_ROWS()] = hàng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh có tên(lệnh, tên) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    bảnGhi[KEY_NAME()] = tên;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh cập nhật(lệnh, tên, gán, điềuKiện) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_SET()] = gán;
+    bảnGhi[KEY_WHERE()] = điềuKiện;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh select(lệnh, tên, bíDanh, nối, cácMục, điềuKiện, nhóm, cóNhóm, thứTự, phânBiệt, giớiHạn, bỏQua) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_ALIAS()] = bíDanh;
+    bảnGhi[KEY_JOINS()] = nối;
+    bảnGhi[KEY_ITEMS()] = cácMục;
+    bảnGhi[KEY_WHERE()] = điềuKiện;
+    bảnGhi[KEY_GROUP()] = nhóm;
+    bảnGhi[KEY_HAVING()] = cóNhóm;
+    bảnGhi[KEY_ORDER()] = thứTự;
+    bảnGhi[KEY_DISTINCT()] = phânBiệt;
+    bảnGhi[KEY_LIMIT()] = giớiHạn;
+    bảnGhi[KEY_OFFSET()] = bỏQua;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh tạo bảng(lệnh, tên, cột) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_COLUMNS()] = cột;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh xóa(lệnh, tên, điềuKiện) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_WHERE()] = điềuKiện;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh đơn(lệnh) {
+    bảnGhi = {};
+    bảnGhi[KEY_OP()] = lệnh;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi mệnh đề nối(tên, bíDanh, kiểu, trái, phải) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_ALIAS()] = bíDanh;
+    bảnGhi[KEY_KIND()] = kiểu;
+    bảnGhi[KEY_LEFT()] = trái;
+    bảnGhi[KEY_RIGHT()] = phải;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi mục select(tên, tổngHợp, nhãn) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_AGGREGATE()] = tổngHợp;
+    bảnGhi[KEY_LABEL()] = nhãn;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi nhóm hàng(khóa, hàng) {
+    bảnGhi = {};
+    bảnGhi[KEY_KEY()] = khóa;
+    bảnGhi[KEY_ROWS()] = hàng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi thay đổi(sốHàng) {
+    bảnGhi = {};
+    bảnGhi[KEY_AFFECTED_ROWS()] = sốHàng;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi thuật toán(thuậtToán) {
+    bảnGhi = {};
+    bảnGhi[KEY_ALGORITHM()] = thuậtToán;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi token(kiểu, giáTrị) {
+    bảnGhi = {};
+    bảnGhi[KEY_KIND()] = kiểu;
+    bảnGhi[KEY_VALUE()] = giáTrị;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi tên(tên) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi xác thực(hợpLệ) {
+    bảnGhi = {};
+    bảnGhi[KEY_VALID()] = hợpLệ;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi định nghĩa cột(tên, kiểuDữLiệu, giớiHạn, bắtBuộc, duyNhất, khóaChính) {
+    bảnGhi = {};
+    bảnGhi[KEY_NAME()] = tên;
+    bảnGhi[KEY_TYPE()] = kiểuDữLiệu;
+    bảnGhi[KEY_LIMIT()] = giớiHạn;
+    bảnGhi[KEY_REQUIRED()] = bắtBuộc;
+    bảnGhi[KEY_UNIQUE()] = duyNhất;
+    bảnGhi[KEY_PRIMARY()] = khóaChính;
+    trả về bảnGhi;
+};
+
+hàm công khai bản ghi lệnh alter(tên, thaoTác, mục, tênMới) {
+    m = bản ghi lệnh có tên(SQL_ALTER_TABLE(), tên);
+    m[KEY_OPERATION()] = thaoTác;
+    m[KEY_ITEM()] = mục;
+    m[KEY_NEW_NAME()] = tênMới;
+    trả về m;
+};
+
+hàm công khai bản ghi lệnh index(lệnh, bảng, tên, cột) {
+    m = bản ghi lệnh có tên(lệnh, bảng);
+    m[KEY_ITEM()] = tên;
+    m[KEY_COLUMNS()] = cột;
+    trả về m;
+};
+
+hàm công khai bản ghi nút index(lá, khóa, con, tiếp) {
+    m = {};
+    m[KEY_LEAF()] = lá;
+    m[KEY_KEY()] = khóa;
+    m[KEY_CHILDREN()] = con;
+    m[KEY_NEXT()] = tiếp;
+    trả về m;
+};
+
+hàm công khai bản ghi index(tên, cột, nút, gốc, cao, sốKhóa, phânBiệt) {
+    m = bản ghi tên(tên);
+    m[KEY_COLUMNS()] = cột;
+    m[KEY_NODES()] = nút;
+    m[KEY_ROOT()] = gốc;
+    m[KEY_HEIGHT()] = cao;
+    m[KEY_COUNT()] = sốKhóa;
+    m[KEY_CARDINALITY()] = phânBiệt;
+    trả về m;
+};
+
+hàm công khai bản ghi kế hoạch scan(thuậtToán, mục, giáTrị, ướcLượng) {
+    m = bản ghi thuật toán(thuậtToán);
+    m[KEY_ITEM()] = mục;
+    m[KEY_VALUE()] = giáTrị;
+    m[KEY_ESTIMATE()] = ướcLượng;
+    trả về m;
+};
+
+hàm công khai bản ghi thời lượng(thựcThi, xuấtKếtQuả) {
+    m = {};
+    m[KEY_EXECUTION_MS()] = thựcThi;
+    m[KEY_SERIALIZATION_MS()] = xuấtKếtQuả;
+    bảnGhi = {};
+    bảnGhi[KEY_TIMING()] = m;
+    trả về bảnGhi;
+};

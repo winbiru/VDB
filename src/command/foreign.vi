@@ -1,0 +1,144 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập algorithm.index.bplus_tree.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+hàm công khai danh sách khóa ngoại(bảng) {
+    trả về lấy từ điển(bảng, KEY_FOREIGN_KEYS(), []);
+};
+
+hàm ghép tên(cột) {
+    tên = cột[0];
+    lặp(i = 1; i < độ dài(cột); i++) { tên = tên + TEXT_COMMA() + cột[i]; };
+    trả về tên;
+};
+
+// REFERENCES has already been consumed by the caller.
+hàm công khai phân tích tham chiếu(bộ, tênBảng, tên, cột) {
+    nếu (tên == TEXT_EMPTY()) {
+        tên = TEXT_FK_PREFIX() + tênBảng;
+        lặp(i = 0; i < độ dài(cột); i++) { tên = tên + TEXT_UNDERSCORE() + cột[i]; };
+    };
+    đích = bộ.tên định danh();
+    bộ.cần(TEXT_OPEN_PAREN());
+    cộtĐích = bộ.danh sách tên();
+    bộ.cần(TEXT_CLOSE_PAREN());
+    fk = bản ghi tên(tên);
+    fk[KEY_COLUMNS()] = cột;
+    fk[KEY_REFERENCED_TABLE()] = đích;
+    fk[KEY_REFERENCED_COLUMNS()] = cộtĐích;
+    trả về fk;
+};
+
+hàm công khai phân tích khóa ngoại(bộ, tênBảng, tên) {
+    bộ.cần(SQL_KEY());
+    bộ.cần(TEXT_OPEN_PAREN());
+    cột = bộ.danh sách tên();
+    bộ.cần(TEXT_CLOSE_PAREN());
+    bộ.cần(SQL_REFERENCES());
+    trả về phân tích tham chiếu(bộ, tênBảng, tên, cột);
+};
+
+hàm công khai thêm khóa ngoại(bảng, fk) {
+    ds = danh sách khóa ngoại(bảng);
+    nếu (tìm tên(ds, fk[KEY_NAME()]) >= 0) { ném ERR_FOREIGN_EXISTS() + fk[KEY_NAME()]; };
+    thêm(ds, fk);
+    bảng[KEY_FOREIGN_KEYS()] = ds;
+};
+
+hàm chỉ số khóa(cột, tên) {
+    ds = chỉ số cột(cột, tên);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        lặp(j = 0; j < i; j++) { nếu (ds[i] == ds[j]) { ném ERR_DUPLICATE_COLUMN(); }; };
+    };
+    trả về ds;
+};
+
+hàm kiểu khóa tương thích(a, b) {
+    nếu (a == b) { trả về đúng; };
+    nếu ((a == SQL_INT() || a == SQL_INTEGER()) && (b == SQL_INT() || b == SQL_INTEGER())) { trả về đúng; };
+    trả về (a == SQL_TEXT() || a == SQL_VARCHAR()) && (b == SQL_TEXT() || b == SQL_VARCHAR());
+};
+
+hàm khóa đích duy nhất(bảng, tên, vịTrí) {
+    nếu (độ dài(vịTrí) == 1 && bảng[KEY_COLUMNS()][vịTrí[0]][KEY_UNIQUE()]) { trả về đúng; };
+    ds = danh sách index(bảng);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        nếu (!lấy từ điển(ds[i], KEY_UNIQUE(), sai)) { bỏ qua; };
+        c = cột index(ds[i]);
+        nếu (độ dài(c) != độ dài(tên)) { bỏ qua; };
+        trùng = đúng;
+        lặp(j = 0; j < độ dài(c); j++) { nếu (c[j] != tên[j]) { trùng = sai; }; };
+        nếu (trùng) { trả về đúng; };
+    };
+    trả về sai;
+};
+
+// Immediate MATCH SIMPLE / RESTRICT semantics, including self references.
+// All schema and row mutations are validated before the CLI commits its snapshot.
+hàm công khai kiểm khóa ngoại(db) {
+    bảng = db[KEY_TABLES()];
+    lặp(i = 0; i < độ dài(bảng); i++) {
+        con = bảng[i]; ds = danh sách khóa ngoại(con);
+        lặp(j = 0; j < độ dài(ds); j++) {
+            fk = ds[j]; tên = fk[KEY_NAME()];
+            cột = fk[KEY_COLUMNS()]; cộtĐích = fk[KEY_REFERENCED_COLUMNS()];
+            nếu (độ dài(cột) == 0 || độ dài(cột) != độ dài(cộtĐích)) { ném ERR_FOREIGN_WIDTH() + tên; };
+            vịTrí = chỉ số khóa(con[KEY_COLUMNS()], cột);
+            cha = bảng[cần tên(bảng, fk[KEY_REFERENCED_TABLE()])];
+            đích = chỉ số khóa(cha[KEY_COLUMNS()], cộtĐích);
+            nếu (!khóa đích duy nhất(cha, cộtĐích, đích)) { ném ERR_FOREIGN_TARGET() + tên; };
+            lặp(k = 0; k < độ dài(vịTrí); k++) {
+                nếu (!kiểu khóa tương thích(con[KEY_COLUMNS()][vịTrí[k]][KEY_TYPE()], cha[KEY_COLUMNS()][đích[k]][KEY_TYPE()])) { ném ERR_FOREIGN_TYPE() + tên; };
+            };
+            hàng = con[KEY_ROWS()]; hàngCha = cha[KEY_ROWS()];
+            lặp(k = 0; k < độ dài(hàng); k++) {
+                cóNull = sai;
+                lặp(m = 0; m < độ dài(vịTrí); m++) { nếu (hàng[k][vịTrí[m]] == rỗng) { cóNull = đúng; }; };
+                nếu (cóNull) { bỏ qua; };
+                tìmThấy = sai;
+                lặp(n = 0; n < độ dài(hàngCha); n++) {
+                    trùng = đúng;
+                    lặp(m = 0; m < độ dài(vịTrí); m++) {
+                        nếu (hàngCha[n][đích[m]] == rỗng || hàng[k][vịTrí[m]] != hàngCha[n][đích[m]]) { trùng = sai; thoát; };
+                    };
+                    nếu (trùng) { tìmThấy = đúng; thoát; };
+                };
+                nếu (!tìmThấy) { ném ERR_FOREIGN_KEY() + tên; };
+            };
+        };
+    };
+};
+
+hàm công khai đổi tên khóa ngoại(db, bảngCũ, cộtCũ, tênMới) {
+    bảng = db[KEY_TABLES()];
+    lặp(i = 0; i < độ dài(bảng); i++) {
+        ds = danh sách khóa ngoại(bảng[i]);
+        lặp(j = 0; j < độ dài(ds); j++) {
+            fk = ds[j];
+            nếu (cộtCũ == TEXT_EMPTY()) {
+                nếu (fk[KEY_REFERENCED_TABLE()] == bảngCũ) { fk[KEY_REFERENCED_TABLE()] = tênMới; };
+            } hoặc {
+                nếu (bảng[i][KEY_NAME()] == bảngCũ) {
+                    c = fk[KEY_COLUMNS()];
+                    lặp(k = 0; k < độ dài(c); k++) { nếu (c[k] == cộtCũ) { c[k] = tênMới; }; };
+                };
+                nếu (fk[KEY_REFERENCED_TABLE()] == bảngCũ) {
+                    c = fk[KEY_REFERENCED_COLUMNS()];
+                    lặp(k = 0; k < độ dài(c); k++) { nếu (c[k] == cộtCũ) { c[k] = tênMới; }; };
+                };
+            };
+        };
+    };
+};
+
+hàm công khai thực thi show khóa ngoại(máy, cmd) {
+    ds = danh sách khóa ngoại(tìm bảng(máy, cmd[KEY_NAME()])); hàng = [];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        fk = ds[i]; thêm(hàng, [fk[KEY_NAME()], ghép tên(fk[KEY_COLUMNS()]), fk[KEY_REFERENCED_TABLE()], ghép tên(fk[KEY_REFERENCED_COLUMNS()])]);
+    };
+    trả về kết quả([LABEL_FOREIGN_KEY(), LABEL_COLUMN(), LABEL_REFERENCED_TABLE(), LABEL_REFERENCED_COLUMN()], hàng);
+};

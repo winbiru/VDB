@@ -1,0 +1,103 @@
+nhập constants.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập command.foreign.*;
+nhập command.select.*;
+nhập algorithm.index.bplus_tree.cột index;
+nhập gói.lõi.chuyển kiểu.loại của;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+nhập gói.dữ liệu.json.json.json tạo;
+
+hàm kiểm danh sách(ds) {
+    nếu (loại của(ds) != TYPE_LIST()) { ném ERR_INVALID_CATALOG(); };
+};
+
+hàm kiểm tên(tên) {
+    nếu (loại của(tên) != TYPE_STRING()) { ném ERR_INVALID_CATALOG(); };
+    n = độ dài(tên);
+    nếu (n == 0) { ném ERR_INVALID_CATALOG(); };
+    lặp(i = 0; i < n; i++) {
+        c = tên[i];
+        chữ = (c >= TEXT_UPPER_A() && c <= TEXT_UPPER_Z()) || c == TEXT_UNDERSCORE();
+        nếu (!chữ && !(i > 0 && c >= TEXT_ZERO() && c <= TEXT_NINE())) { ném ERR_INVALID_CATALOG(); };
+    };
+};
+
+hàm kiểm tên riêng(ds) {
+    kiểm danh sách(ds);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        nếu (loại của(ds[i]) != TYPE_DICTIONARY()) { ném ERR_INVALID_CATALOG(); };
+        kiểm tên(ds[i][KEY_NAME()]);
+        nếu (tìm tên(ds, ds[i][KEY_NAME()]) != i) { ném ERR_INVALID_CATALOG(); };
+    };
+};
+
+hàm kiểm cờ(v) {
+    nếu (loại của(v) != TYPE_BOOLEAN() && !(loại của(v) == TYPE_INTEGER() && (v == 0 || v == 1))) { ném ERR_INVALID_CATALOG(); };
+};
+
+hàm kiểm catalog bảng(bảng) {
+    nếu (lấy từ điển(bảng, KEY_QUERY(), rỗng) != rỗng) { ném ERR_INVALID_CATALOG(); };
+    cột = bảng[KEY_COLUMNS()]; hàng = bảng[KEY_ROWS()];
+    kiểm tên riêng(cột); kiểm danh sách(hàng);
+    nếu (độ dài(cột) == 0) { ném ERR_INVALID_CATALOG(); };
+    khóa = 0;
+    lặp(i = 0; i < độ dài(cột); i++) {
+        c = cột[i]; kiểu = c[KEY_TYPE()]; giớiHạn = c[KEY_LIMIT()];
+        nếu (!(kiểu == SQL_INT() || kiểu == SQL_INTEGER() || kiểu == SQL_REAL() || kiểu == SQL_TEXT() || kiểu == SQL_VARCHAR() || kiểu == SQL_BOOLEAN())) { ném ERR_INVALID_CATALOG(); };
+        nếu (loại của(giớiHạn) != TYPE_INTEGER() || (kiểu == SQL_VARCHAR() && giớiHạn < 1) || (kiểu != SQL_VARCHAR() && giớiHạn != 0)) { ném ERR_INVALID_CATALOG(); };
+        kiểm cờ(c[KEY_PRIMARY()]); kiểm cờ(c[KEY_REQUIRED()]); kiểm cờ(c[KEY_UNIQUE()]);
+        nếu (c[KEY_PRIMARY()]) {
+            khóa++;
+            nếu (!c[KEY_REQUIRED()] || !c[KEY_UNIQUE()]) { ném ERR_INVALID_CATALOG(); };
+        };
+    };
+    nếu (khóa > 1) { ném ERR_MULTIPLE_PRIMARY_KEYS(); };
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        kiểm danh sách(hàng[i]);
+        nếu (độ dài(hàng[i]) != độ dài(cột)) { ném ERR_INVALID_CATALOG(); };
+    };
+    kiểm bảng(bảng);
+    ds = danh sách index(bảng); kiểm tên riêng(ds);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        tênCột = cột index(ds[i]); kiểm danh sách(tênCột);
+        nếu (độ dài(tênCột) == 0) { ném ERR_INVALID_CATALOG(); };
+        kiểm cờ(lấy từ điển(ds[i], KEY_UNIQUE(), sai));
+    };
+    cập nhật index(bảng);
+    fks = danh sách khóa ngoại(bảng); kiểm tên riêng(fks);
+    lặp(i = 0; i < độ dài(fks); i++) {
+        fk = fks[i]; kiểm tên(fk[KEY_REFERENCED_TABLE()]);
+        kiểm danh sách(fk[KEY_COLUMNS()]); kiểm danh sách(fk[KEY_REFERENCED_COLUMNS()]);
+    };
+};
+
+// View definitions can only reference existing tables or previously created views.
+hàm kiểm nguồn view(bảng, trước, tên) {
+    nếu (tìm tên(bảng, tên) < 0 && tìm tên(trước, tên) < 0) { ném ERR_INVALID_CATALOG(); };
+};
+
+hàm công khai kiểm catalog(máy) {
+    nếu (loại của(máy.catalog) != TYPE_DICTIONARY() || loại của(máy.catalog[KEY_VERSION()]) != TYPE_INTEGER()) { ném ERR_INVALID_CATALOG(); };
+    dbs = máy.catalog[KEY_DATABASES()]; kiểm tên riêng(dbs);
+    cần tên(dbs, DEFAULT_DATABASE());
+    lặp(i = 0; i < độ dài(dbs); i++) {
+        db = dbs[i]; máy.selected = db[KEY_NAME()];
+        bảng = db[KEY_TABLES()]; kiểm tên riêng(bảng);
+        lặp(j = 0; j < độ dài(bảng); j++) { kiểm catalog bảng(bảng[j]); };
+        kiểm khóa ngoại(db);
+        views = danh sách view(db); kiểm tên riêng(views); trước = [];
+        lặp(j = 0; j < độ dài(views); j++) {
+            v = views[j]; q = v[KEY_QUERY()];
+            nếu (tìm tên(bảng, v[KEY_NAME()]) >= 0 || q[KEY_OP()] != SQL_SELECT()) { ném ERR_INVALID_CATALOG(); };
+            kiểm nguồn view(bảng, trước, q[KEY_NAME()]);
+            nối = q[KEY_JOINS()]; kiểm danh sách(nối);
+            lặp(k = 0; k < độ dài(nối); k++) { kiểm nguồn view(bảng, trước, nối[k][KEY_NAME()]); };
+            nếu (json tạo(schema select(máy, q)) != json tạo(v[KEY_COLUMNS()])) { ném ERR_INVALID_CATALOG(); };
+            kiểm tên riêng(v[KEY_COLUMNS()]);
+            thêm(trước, v);
+        };
+    };
+    máy.selected = DEFAULT_DATABASE();
+};

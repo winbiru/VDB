@@ -1,0 +1,47 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân tích use(bộ) {
+    trả về bản ghi lệnh có tên(SQL_USE(), bộ.tên định danh());
+};
+
+hàm công khai catalog mới() {
+    trả về bản ghi catalog(1, [bản ghi database(DEFAULT_DATABASE(), [])]);
+};
+
+hàm công khai thực thi create database(máy, cmd) {
+    dbs = máy.catalog[KEY_DATABASES()];
+    tên = cmd[KEY_NAME()];
+    nếu (tìm tên(dbs, tên) >= 0) { ném ERR_DATABASE_EXISTS() + tên; };
+    thêm(dbs, bản ghi database(tên, []));
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi use(máy, cmd) {
+    dbs = máy.catalog[KEY_DATABASES()];
+    cần tên(dbs, cmd[KEY_NAME()]);
+    máy.selected = cmd[KEY_NAME()];
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi show databases(máy, cmd) {
+    dbs = máy.catalog[KEY_DATABASES()];
+    hàng = [];
+    lặp(i = 0; i < độ dài(dbs); i++) { thêm(hàng, [dbs[i][KEY_NAME()]]); };
+    trả về kết quả([SQL_DATABASE()], hàng);
+};
+
+
+hàm công khai thực thi drop database(máy, cmd) {
+    tên = cmd[KEY_NAME()];
+    nếu (tên == DEFAULT_DATABASE()) { ném ERR_DROP_DEFAULT(); };
+    dbs = máy.catalog[KEY_DATABASES()];
+    vịTrí = cần tên(dbs, tên);
+    máy.catalog[KEY_DATABASES()] = bỏ phần tử(dbs, vịTrí);
+    nếu (máy.selected == tên) { máy.selected = DEFAULT_DATABASE(); };
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};

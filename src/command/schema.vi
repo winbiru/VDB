@@ -1,0 +1,168 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập command.foreign.*;
+nhập command.select.*;
+nhập algorithm.hash.*;
+nhập gói.dữ liệu.json.json.json tạo;
+nhập gói.văn bản.chuỗi.chứa chuỗi;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân tích create(bộ) {
+    nếu (bộ.nhận(SQL_UNIQUE())) { bộ.cần(SQL_INDEX()); trả về phân tích create index(bộ, đúng); };
+    nếu (bộ.nhận(SQL_INDEX())) { trả về phân tích create index(bộ, sai); };
+    nếu (bộ.nhận(SQL_DATABASE())) { trả về bản ghi lệnh có tên(SQL_CREATE_DATABASE(), bộ.tên định danh()); };
+    nếu (bộ.nhận(SQL_VIEW())) {
+        cmd = bản ghi lệnh có tên(SQL_CREATE_VIEW(), bộ.tên định danh());
+        bộ.cần(SQL_AS()); bộ.cần(SQL_SELECT());
+        cmd[KEY_QUERY()] = phân tích select(bộ);
+        trả về cmd;
+    };
+    bộ.cần(SQL_TABLE());
+    tênBảng = bộ.tên định danh();
+    bộ.cần(TEXT_OPEN_PAREN());
+    ds = []; fks = []; tiếp = đúng;
+    khi (tiếp) {
+        tên = TEXT_EMPTY();
+        nếu (bộ.nhận(SQL_CONSTRAINT())) { tên = bộ.tên định danh(); bộ.cần(SQL_FOREIGN()); thêm(fks, phân tích khóa ngoại(bộ, tênBảng, tên)); }
+        hoặc nếu (bộ.nhận(SQL_FOREIGN())) { thêm(fks, phân tích khóa ngoại(bộ, tênBảng, tên)); }
+        hoặc {
+            c = bộ.cột(); thêm(ds, c);
+            nếu (bộ.nhận(SQL_REFERENCES())) { thêm(fks, phân tích tham chiếu(bộ, tênBảng, tên, [c[KEY_NAME()]])); };
+        };
+        tiếp = bộ.nhận(TEXT_COMMA());
+    };
+    bộ.cần(TEXT_CLOSE_PAREN());
+    nếu (độ dài(ds) == 0) { ném ERR_EXPECTED_IDENTIFIER(); };
+    cmd = bản ghi lệnh tạo bảng(SQL_CREATE_TABLE(), tênBảng, ds);
+    cmd[KEY_FOREIGN_KEYS()] = fks;
+    trả về cmd;
+};
+
+hàm công khai phân tích show(bộ) {
+    nếu (bộ.nhận(SQL_STATISTICS())) { bộ.cần(SQL_FROM()); trả về bản ghi lệnh có tên(SQL_SHOW_STATISTICS(), bộ.tên định danh()); };
+    nếu (bộ.nhận(SQL_VIEWS())) { trả về bản ghi lệnh đơn(SQL_SHOW_VIEWS()); };
+    nếu (bộ.nhận(SQL_FOREIGN())) { bộ.cần(SQL_KEYS()); bộ.cần(SQL_FROM()); trả về bản ghi lệnh có tên(SQL_SHOW_FOREIGN_KEYS(), bộ.tên định danh()); };
+    nếu (bộ.nhận(SQL_INDEX()) || bộ.nhận(SQL_INDEXES())) { trả về phân tích show index(bộ); };
+    nếu (bộ.nhận(SQL_DATABASES())) { trả về bản ghi lệnh đơn(SQL_SHOW_DATABASES()); };
+    bộ.cần(SQL_TABLES());
+    trả về bản ghi lệnh đơn(SQL_SHOW_TABLES());
+};
+
+hàm công khai phân tích describe(bộ) {
+    trả về bản ghi lệnh có tên(SQL_DESCRIBE(), bộ.tên định danh());
+};
+
+hàm công khai phân tích drop(bộ) {
+    nếu (bộ.nhận(SQL_VIEW())) { trả về bản ghi lệnh có tên(SQL_DROP_VIEW(), bộ.tên định danh()); };
+    nếu (bộ.nhận(SQL_INDEX())) { trả về phân tích drop index(bộ); };
+    nếu (bộ.nhận(SQL_DATABASE())) { trả về bản ghi lệnh có tên(SQL_DROP_DATABASE(), bộ.tên định danh()); };
+    bộ.cần(SQL_TABLE());
+    trả về bản ghi lệnh có tên(SQL_DROP_TABLE(), bộ.tên định danh());
+};
+
+hàm công khai thực thi show tables(máy, cmd) {
+    db = máy.bảng hiện tại();
+    bảngDanhSách = db[KEY_TABLES()];
+    hàng = [];
+    lặp(i = 0; i < độ dài(bảngDanhSách); i++) { thêm(hàng, [bảngDanhSách[i][KEY_NAME()]]); };
+    trả về kết quả([SQL_TABLE()], hàng);
+};
+
+hàm công khai thực thi create table(máy, cmd) {
+    db = máy.bảng hiện tại();
+    bảngDanhSách = db[KEY_TABLES()];
+    tên = cmd[KEY_NAME()];
+    nếu (có quan hệ(db, tên)) { ném ERR_TABLE_EXISTS() + tên; };
+    cột = cmd[KEY_COLUMNS()];
+    khóa = 0;
+    lặp(i = 0; i < độ dài(cột); i++) {
+        nếu (tìm tên(cột, cột[i][KEY_NAME()]) != i) { ném ERR_DUPLICATE_COLUMN(); };
+        nếu (cột[i][KEY_PRIMARY()]) { khóa++; };
+    };
+    nếu (khóa > 1) { ném ERR_MULTIPLE_PRIMARY_KEYS(); };
+    bảng = bản ghi bảng(tên, cột, []);
+    fks = cmd[KEY_FOREIGN_KEYS()];
+    lặp(i = 0; i < độ dài(fks); i++) { thêm khóa ngoại(bảng, fks[i]); };
+    thêm(bảngDanhSách, bảng);
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi drop table(máy, cmd) {
+    db = máy.bảng hiện tại();
+    bảngDanhSách = db[KEY_TABLES()];
+    tên = cmd[KEY_NAME()];
+    vịTrí = cần tên(bảngDanhSách, tên);
+    kiểm view phụ thuộc(db, tên);
+    db[KEY_TABLES()] = bỏ phần tử(bảngDanhSách, vịTrí);
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi describe(máy, cmd) {
+    bảng = metadata quan hệ(máy, cmd[KEY_NAME()]);
+    cột = bảng[KEY_COLUMNS()];
+    ds = [];
+    lặp(i = 0; i < độ dài(cột); i++) {
+        c = cột[i];
+        thêm(ds, [c[KEY_NAME()], c[KEY_TYPE()], c[KEY_LIMIT()], c[KEY_REQUIRED()], c[KEY_UNIQUE()], c[KEY_PRIMARY()]]);
+    };
+    trả về kết quả([LABEL_NAME(), LABEL_TYPE(), SQL_LIMIT(), LABEL_NOT_NULL(), SQL_UNIQUE(), LABEL_PRIMARY_KEY()], ds);
+};
+
+
+hàm công khai thực thi create view(máy, cmd) {
+    db = máy.bảng hiện tại(); tên = cmd[KEY_NAME()];
+    nếu (có quan hệ(db, tên)) { ném ERR_TABLE_EXISTS() + tên; };
+    q = cmd[KEY_QUERY()]; cột = schema select(máy, q);
+    lặp(i = 0; i < độ dài(cột); i++) {
+        nhãn = cột[i][KEY_NAME()];
+        nếu (chứa chuỗi(nhãn, TEXT_DOT()) || chứa chuỗi(nhãn, TEXT_OPEN_PAREN())) { ném ERR_VIEW_LABEL() + nhãn; };
+        nếu (tìm tên(cột, nhãn) != i) { ném ERR_DUPLICATE_COLUMN(); };
+    };
+    view = bản ghi tên(tên); view[KEY_COLUMNS()] = cột; view[KEY_QUERY()] = q;
+    ds = danh sách view(db); thêm(ds, view); db[KEY_VIEWS()] = ds;
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi drop view(máy, cmd) {
+    db = máy.bảng hiện tại(); tên = cmd[KEY_NAME()]; ds = danh sách view(db);
+    i = cần tên(ds, tên); kiểm view phụ thuộc(db, tên);
+    db[KEY_VIEWS()] = bỏ phần tử(ds, i); máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi show views(máy, cmd) {
+    ds = danh sách view(máy.bảng hiện tại()); hàng = [];
+    lặp(i = 0; i < độ dài(ds); i++) { thêm(hàng, [ds[i][KEY_NAME()]]); };
+    trả về kết quả([SQL_VIEW()], hàng);
+};
+
+hàm công khai thực thi show statistics(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]);
+    cột = bảng[KEY_COLUMNS()]; hàng = bảng[KEY_ROWS()];
+    n = độ dài(hàng); bytes = độ dài(chuỗi thành byte máy ảo(json tạo(bảng)));
+    kq = [];
+    lặp(j = 0; j < độ dài(cột); j++) {
+        băm = bảng băm(n); phânBiệt = []; sốNull = 0; nhỏ = rỗng; lớn = rỗng;
+        lặp(i = 0; i < n; i++) {
+            v = hàng[i][j];
+            nếu (v == rỗng) { sốNull++; bỏ qua; };
+            nếu (nhỏ == rỗng || đứng trước(v, nhỏ, sai)) { nhỏ = v; };
+            nếu (lớn == rỗng || đứng trước(v, lớn, đúng)) { lớn = v; };
+            khóa = [v]; ứngViên = ứng viên băm(băm, khóa); đãCó = sai;
+            lặp(k = 0; k < độ dài(ứngViên); k++) {
+                nếu (bằng hàng(phânBiệt[ứngViên[k]], khóa)) { đãCó = đúng; thoát; };
+            };
+            nếu (!đãCó) {
+                thêm băm(băm, khóa, độ dài(phânBiệt));
+                thêm(phânBiệt, khóa);
+            };
+        };
+        thêm(kq, [cột[j][KEY_NAME()], n, bytes, sốNull, n - sốNull, độ dài(phânBiệt), nhỏ, lớn]);
+    };
+    trả về kết quả([LABEL_COLUMN(), LABEL_ROWS(), LABEL_JSON_BYTES(), LABEL_NULL_COUNT(), LABEL_NON_NULL_COUNT(), LABEL_DISTINCT_COUNT(), SQL_MIN(), SQL_MAX()], kq);
+};

@@ -1,0 +1,192 @@
+nhập constants.*;
+nhập records.*;
+nhập command.instance.*;
+nhập command.schema.*;
+nhập command.alter.*;
+nhập command.insert.*;
+nhập command.select.*;
+nhập command.update.*;
+nhập command.delete.*;
+nhập command.transaction.*;
+nhập lexer.*;
+nhập gói.lõi.chuyển kiểu.thành số nguyên;
+nhập gói.lõi.chuyển kiểu.thành số thực;
+nhập gói.lõi.chuyển kiểu.loại của;
+nhập gói.văn bản.chuỗi.chứa chuỗi;
+
+lớp công khai Phân Tích SQL {
+    hàm công khai khởi tạo(sql) {
+        mình.tokens = tách SQL(sql);
+        mình.pos = 0;
+    };
+    hàm công khai hiện tại() { trả về mình.tokens[mình.pos]; };
+    hàm công khai hết() { trả về mình.hiện tại()[KEY_KIND()] == TOKEN_END(); };
+    hàm công khai nhận(s) {
+        t = mình.hiện tại();
+        nếu ((t[KEY_KIND()] == TOKEN_WORD() || t[KEY_KIND()] == TOKEN_SYMBOL()) && t[KEY_VALUE()] == s) {
+            mình.pos = mình.pos + 1;
+            trả về đúng;
+        };
+        trả về sai;
+    };
+    hàm công khai cần(s) {
+        nếu (!mình.nhận(s)) { ném ERR_EXPECTED() + s + ERR_GOT() + mình.hiện tại()[KEY_VALUE()]; };
+    };
+    hàm công khai tên định danh() {
+        t = mình.hiện tại();
+        nếu (t[KEY_KIND()] != TOKEN_WORD()) { ném ERR_EXPECTED_IDENTIFIER(); };
+        mình.pos = mình.pos + 1;
+        trả về t[KEY_VALUE()];
+    };
+    hàm công khai tên cột SQL() {
+        tên = mình.tên định danh();
+        nếu (mình.nhận(TEXT_DOT())) { tên = tên + TEXT_DOT() + mình.tên định danh(); };
+        trả về tên;
+    };
+    hàm công khai giá trị() {
+        t = mình.hiện tại();
+        nếu (mình.nhận(SQL_NULL())) { trả về rỗng; };
+        nếu (mình.nhận(SQL_TRUE())) { trả về đúng; };
+        nếu (mình.nhận(SQL_FALSE())) { trả về sai; };
+        nếu (t[KEY_KIND()] == TOKEN_STRING()) {
+            mình.pos = mình.pos + 1;
+            trả về t[KEY_VALUE()];
+        };
+        nếu (t[KEY_KIND()] == TOKEN_NUMBER()) {
+            mình.pos = mình.pos + 1;
+            s = t[KEY_VALUE()];
+            nếu (chứa chuỗi(s, TEXT_DOT())) { trả về thành số thực(s); };
+            // Giới hạn INT 32 bit theo runtime V++.
+            số = thành số thực(s);
+            nếu (số < -2147483648 || số > 2147483647) { ném ERR_INTEGER_RANGE(); };
+            trả về thành số nguyên(s);
+        };
+        ném ERR_EXPECTED_LITERAL();
+    };
+    hàm công khai danh sách tên() {
+        ds = [mình.tên định danh()];
+        khi (mình.nhận(TEXT_COMMA())) { thêm(ds, mình.tên định danh()); };
+        trả về ds;
+    };
+    hàm công khai danh sách giá trị() {
+        mình.cần(TEXT_OPEN_PAREN());
+        ds = [mình.giá trị()];
+        khi (mình.nhận(TEXT_COMMA())) { thêm(ds, mình.giá trị()); };
+        mình.cần(TEXT_CLOSE_PAREN());
+        trả về ds;
+    };
+    hàm công khai toán hạng() {
+        t = mình.hiện tại();
+        nếu (t[KEY_KIND()] == TOKEN_WORD() && !(t[KEY_VALUE()] == SQL_NULL() || t[KEY_VALUE()] == SQL_TRUE() || t[KEY_VALUE()] == SQL_FALSE())) {
+            trả về [OPERAND_COLUMN(), mình.tên cột SQL()];
+        };
+        trả về [OPERAND_LITERAL(), mình.giá trị()];
+    };
+    hàm công khai vị từ() {
+        a = mình.toán hạng();
+        nếu (mình.nhận(SQL_IS())) {
+            op = SQL_IS();
+            nếu (mình.nhận(SQL_NOT())) { op = SQL_IS_NOT(); };
+            mình.cần(SQL_NULL());
+            trả về [op, a];
+        };
+        phủ = mình.nhận(SQL_NOT());
+        nếu (mình.nhận(SQL_IN())) {
+            mình.cần(TEXT_OPEN_PAREN());
+            ds = [mình.toán hạng()];
+            khi (mình.nhận(TEXT_COMMA())) { thêm(ds, mình.toán hạng()); };
+            mình.cần(TEXT_CLOSE_PAREN());
+            nút = [SQL_IN(), a, ds];
+        } hoặc nếu (mình.nhận(SQL_BETWEEN())) {
+            thấp = mình.toán hạng(); mình.cần(SQL_AND());
+            nút = [SQL_BETWEEN(), a, thấp, mình.toán hạng()];
+        } hoặc nếu (mình.nhận(SQL_LIKE())) {
+            nút = [SQL_LIKE(), a, mình.toán hạng()];
+        } hoặc {
+            nếu (phủ) { ném ERR_EXPECTED_NOT_PREDICATE(); };
+            op = mình.hiện tại()[KEY_VALUE()];
+            nếu (!(op == TEXT_EQUAL() || op == TEXT_NOT_EQUAL() || op == TEXT_NOT_EQUAL_SQL() || op == TEXT_LESS() || op == TEXT_GREATER() || op == TEXT_LESS_EQUAL() || op == TEXT_GREATER_EQUAL())) { ném ERR_EXPECTED_COMPARISON(); };
+            mình.cần(op);
+            nút = [op, a, mình.toán hạng()];
+        };
+        nếu (phủ) { trả về [SQL_NOT(), nút]; };
+        trả về nút;
+    };
+    hàm công khai biểu thức not() {
+        nếu (mình.nhận(SQL_NOT())) { trả về [SQL_NOT(), mình.biểu thức not()]; };
+        nếu (mình.nhận(TEXT_OPEN_PAREN())) {
+            nút = mình.biểu thức or();
+            mình.cần(TEXT_CLOSE_PAREN());
+            trả về nút;
+        };
+        trả về mình.vị từ();
+    };
+    hàm công khai biểu thức and() {
+        nút = mình.biểu thức not();
+        khi (mình.nhận(SQL_AND())) { nút = [SQL_AND(), nút, mình.biểu thức not()]; };
+        trả về nút;
+    };
+    hàm công khai biểu thức or() {
+        nút = mình.biểu thức and();
+        khi (mình.nhận(SQL_OR())) { nút = [SQL_OR(), nút, mình.biểu thức and()]; };
+        trả về nút;
+    };
+    hàm công khai điều kiện() {
+        nếu (!mình.nhận(SQL_WHERE())) { trả về []; };
+        trả về mình.biểu thức or();
+    };
+    hàm công khai cột() {
+        tênCột = mình.tên định danh();
+        kiểu = mình.tên định danh();
+        giớiHạn = 0;
+        nếu (kiểu == SQL_VARCHAR()) {
+            mình.cần(TEXT_OPEN_PAREN());
+            giớiHạn = mình.giá trị();
+            mình.cần(TEXT_CLOSE_PAREN());
+            nếu (loại của(giớiHạn) != TYPE_INTEGER() || giớiHạn < 1) { ném ERR_VARCHAR_LENGTH(); };
+        };
+        nếu (!(kiểu == SQL_INT() || kiểu == SQL_INTEGER() || kiểu == SQL_REAL() || kiểu == SQL_TEXT() || kiểu == SQL_VARCHAR() || kiểu == SQL_BOOLEAN())) { ném ERR_UNSUPPORTED_TYPE() + kiểu; };
+        khóa = sai;
+        bắtBuộc = sai;
+        duyNhất = sai;
+        tiếp = đúng;
+        khi (tiếp) {
+            nếu (mình.nhận(SQL_PRIMARY())) { mình.cần(SQL_KEY()); khóa = đúng; bắtBuộc = đúng; duyNhất = đúng; }
+            hoặc nếu (mình.nhận(SQL_NOT())) { mình.cần(SQL_NULL()); bắtBuộc = đúng; }
+            hoặc nếu (mình.nhận(SQL_UNIQUE())) { duyNhất = đúng; }
+            hoặc { tiếp = sai; };
+        };
+        trả về bản ghi định nghĩa cột(tênCột, kiểu, giớiHạn, bắtBuộc, duyNhất, khóa);
+    };
+    hàm công khai câu lệnh() {
+        nếu (mình.nhận(SQL_CREATE())) { trả về phân tích create(mình); };
+        nếu (mình.nhận(SQL_USE())) { trả về phân tích use(mình); };
+        nếu (mình.nhận(SQL_SHOW())) { trả về phân tích show(mình); };
+        nếu (mình.nhận(SQL_DESCRIBE()) || mình.nhận(SQL_DESC())) { trả về phân tích describe(mình); };
+        nếu (mình.nhận(SQL_DROP())) { trả về phân tích drop(mình); };
+        nếu (mình.nhận(SQL_INSERT())) { trả về phân tích insert(mình); };
+        nếu (mình.nhận(SQL_ALTER())) { trả về phân tích alter(mình); };
+        nếu (mình.nhận(SQL_EXPLAIN())) {
+            mình.cần(SQL_SELECT());
+            cmd = phân tích select(mình);
+            cmd[KEY_OP()] = SQL_EXPLAIN();
+            trả về cmd;
+        };
+        nếu (mình.nhận(SQL_SELECT())) { trả về phân tích select(mình); };
+        nếu (mình.nhận(SQL_UPDATE())) { trả về phân tích update(mình); };
+        nếu (mình.nhận(SQL_DELETE())) { trả về phân tích delete(mình); };
+        nếu (mình.nhận(SQL_BEGIN())) { trả về phân tích begin(mình); };
+        nếu (mình.nhận(SQL_COMMIT())) { trả về phân tích commit(mình); };
+        nếu (mình.nhận(SQL_ROLLBACK())) { trả về phân tích rollback(mình); };
+        ném ERR_UNSUPPORTED_STATEMENT() + mình.hiện tại()[KEY_VALUE()];
+    };
+    hàm công khai phân tích() {
+        ds = [];
+        khi (!mình.hết()) {
+            nếu (mình.nhận(TEXT_SEMICOLON())) { bỏ qua; };
+            thêm(ds, mình.câu lệnh());
+            nếu (!mình.hết()) { mình.cần(TEXT_SEMICOLON()); };
+        };
+        trả về ds;
+    };
+};

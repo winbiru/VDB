@@ -1,0 +1,94 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập algorithm.index.bplus_tree.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+hàm công khai danh sách index(bảng) {
+    trả về lấy từ điển(bảng, KEY_INDEXES(), []);
+};
+
+hàm công khai vị trí index(bảng, cột) {
+    ds = [];
+    lặp(i = 0; i < độ dài(cột); i++) {
+        vịTrí = cần tên(bảng[KEY_COLUMNS()], cột[i]);
+        kiểu = bảng[KEY_COLUMNS()][vịTrí][KEY_TYPE()];
+        nếu (!(kiểu == SQL_INT() || kiểu == SQL_INTEGER() || kiểu == SQL_TEXT() || kiểu == SQL_VARCHAR())) { ném ERR_INDEX_TYPE(); };
+        lặp(j = 0; j < độ dài(ds); j++) { nếu (ds[j] == vịTrí) { ném ERR_DUPLICATE_COLUMN(); }; };
+        thêm(ds, vịTrí);
+    };
+    trả về ds;
+};
+
+hàm công khai cập nhật index(bảng) {
+    ds = danh sách index(bảng);
+    nếu (độ dài(ds) == 0) { trả về; };
+    mới = [];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        c = cột index(ds[i]);
+        thêm(mới, xây cây index(ds[i][KEY_NAME()], c, bảng[KEY_ROWS()], vị trí index(bảng, c), lấy từ điển(ds[i], KEY_UNIQUE(), sai)));
+    };
+    bảng[KEY_INDEXES()] = mới;
+};
+
+// Existing dense trees are migrated on first insert; new trees update only the path.
+hàm công khai chèn các index(bảng, đầu) {
+    ds = danh sách index(bảng);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        m = ds[i]; c = cột index(m); vịTrí = vị trí index(bảng, c);
+        nếu (có rank trang(m)) { chèn index(m, bảng[KEY_ROWS()], vịTrí, đầu); }
+        hoặc {
+            ds[i] = xây cây index(m[KEY_NAME()], c, bảng[KEY_ROWS()], vịTrí, lấy từ điển(m, KEY_UNIQUE(), sai));
+        };
+    };
+};
+
+hàm công khai phân tích create index(bộ, duyNhất) {
+    tên = bộ.tên định danh(); bộ.cần(SQL_ON());
+    bảng = bộ.tên định danh(); bộ.cần(TEXT_OPEN_PAREN());
+    cột = [bộ.tên định danh()];
+    khi (bộ.nhận(TEXT_COMMA())) { thêm(cột, bộ.tên định danh()); };
+    bộ.cần(TEXT_CLOSE_PAREN());
+    cmd = bản ghi lệnh index(SQL_CREATE_INDEX(), bảng, tên, cột);
+    cmd[KEY_UNIQUE()] = duyNhất;
+    trả về cmd;
+};
+
+hàm công khai phân tích drop index(bộ) {
+    tên = bộ.tên định danh(); bộ.cần(SQL_ON());
+    trả về bản ghi lệnh index(SQL_DROP_INDEX(), bộ.tên định danh(), tên, TEXT_EMPTY());
+};
+
+hàm công khai phân tích show index(bộ) {
+    bộ.cần(SQL_FROM());
+    trả về bản ghi lệnh có tên(SQL_SHOW_INDEX(), bộ.tên định danh());
+};
+
+hàm công khai thực thi create index(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]); ds = danh sách index(bảng);
+    tên = cmd[KEY_ITEM()]; c = cmd[KEY_COLUMNS()];
+    nếu (tìm tên(ds, tên) >= 0) { ném ERR_INDEX_EXISTS() + tên; };
+    vịTrí = vị trí index(bảng, c);
+    mới = [];
+    lặp(i = 0; i < độ dài(ds); i++) { thêm(mới, ds[i]); };
+    thêm(mới, xây cây index(tên, c, bảng[KEY_ROWS()], vịTrí, cmd[KEY_UNIQUE()]));
+    bảng[KEY_INDEXES()] = mới;
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi drop index(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]); ds = danh sách index(bảng);
+    bảng[KEY_INDEXES()] = bỏ phần tử(ds, cần tên(ds, cmd[KEY_ITEM()]));
+    máy.dirty = đúng;
+    trả về thay đổi(0);
+};
+
+hàm công khai thực thi show index(máy, cmd) {
+    ds = danh sách index(tìm bảng(máy, cmd[KEY_NAME()])); hàng = [];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        m = ds[i]; thêm(hàng, [m[KEY_NAME()], m[KEY_COLUMNS()], m[KEY_COUNT()], m[KEY_CARDINALITY()], m[KEY_HEIGHT()], lấy từ điển(m, KEY_UNIQUE(), sai)]);
+    };
+    trả về kết quả([SQL_INDEX(), LABEL_COLUMN(), LABEL_ENTRIES(), LABEL_CARDINALITY(), LABEL_HEIGHT(), SQL_UNIQUE()], hàng);
+};

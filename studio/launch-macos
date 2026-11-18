@@ -1,0 +1,20 @@
+#!/bin/sh
+# Finder starts this executable; the bundled CLI owns the server lifecycle.
+set -eu
+contents=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+resources="$contents/Resources"
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+if [ "${1:-}" = --check ]; then
+    "$contents/MacOS/vdb-studio-macos" --check
+    "$resources/vdb" --version
+    test -x "$resources/build/vdb-engine"
+    test -x "$resources/build/vdb-studio"
+    test -r "$resources/studio/index.html"
+    test -r "$resources/studio/serve"
+    test -r "$resources/VDB.icns"
+    test -r "$resources/LICENSE-VPP"
+    exit 0
+fi
+case "${1:-}" in -psn_*) shift ;; esac
+exec "$resources/vdb" studio --desktop "$@"

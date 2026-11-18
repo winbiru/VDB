@@ -1,0 +1,29 @@
+nhập constants.*;
+nhập command.common.*;
+nhập algorithm.hash.*;
+nhập algorithm.row.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai nối băm(kếHoạch, hàng, hàngPhải) {
+    a = kếHoạch[KEY_LEFT_INDEX()]; b = kếHoạch[KEY_RIGHT_INDEX()];
+    ds = []; trống = [];
+    lặp(i = 0; i < kếHoạch[KEY_RIGHT_WIDTH()]; i++) { thêm(trống, rỗng); };
+    chỉMục = bảng băm(độ dài(hàngPhải));
+    lặp(j = 0; j < độ dài(hàngPhải); j++) {
+        v = hàngPhải[j][b];
+        nếu (v != rỗng) { thêm băm(chỉMục, [v], j); };
+    };
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        có = sai;
+        v = hàng[i][a];
+        nếu (v != rỗng) {
+            ứngViên = ứng viên băm(chỉMục, [v]);
+            lặp(j = 0; j < độ dài(ứngViên); j++) {
+                dòng = hàngPhải[ứngViên[j]];
+                nếu (so sánh(v, TEXT_EQUAL(), dòng[b])) { thêm(ds, ghép(hàng[i], dòng)); có = đúng; };
+            };
+        };
+        nếu (!có && kếHoạch[KEY_KIND()] == SQL_LEFT()) { thêm(ds, ghép(hàng[i], trống)); };
+    };
+    trả về ds;
+};

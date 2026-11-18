@@ -1,0 +1,246 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập algorithm.row.*;
+nhập algorithm.dispatch.*;
+nhập optimizer.planner.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.lõi.chuyển kiểu.loại của;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+hàm công khai phân tích select(bộ) {
+    riêng = bộ.nhận(SQL_DISTINCT());
+    mục = [];
+    nếu (!bộ.nhận(TEXT_STAR())) {
+        tiếp = đúng;
+        khi (tiếp) {
+            tên = bộ.tên cột SQL();
+            hàmGộp = TEXT_EMPTY();
+            nếu (bộ.nhận(TEXT_OPEN_PAREN())) {
+                hàmGộp = tên;
+                nếu (!(tên == SQL_COUNT() || tên == SQL_SUM() || tên == SQL_AVG() || tên == SQL_MIN() || tên == SQL_MAX())) { ném ERR_UNSUPPORTED_AGG_FUNCTION() + tên; };
+                nếu (bộ.nhận(TEXT_STAR())) { tên = TEXT_STAR(); } hoặc { tên = bộ.tên cột SQL(); };
+                nếu (tên == TEXT_STAR() && hàmGộp != SQL_COUNT()) { ném ERR_COUNT_STAR(); };
+                bộ.cần(TEXT_CLOSE_PAREN());
+            };
+            nhãn = tên;
+            nếu (hàmGộp != TEXT_EMPTY()) { nhãn = hàmGộp + TEXT_OPEN_PAREN() + tên + TEXT_CLOSE_PAREN(); };
+            nếu (bộ.nhận(SQL_AS())) { nhãn = bộ.tên định danh(); };
+            thêm(mục, bản ghi mục select(tên, hàmGộp, nhãn));
+            tiếp = bộ.nhận(TEXT_COMMA());
+        };
+    };
+    bộ.cần(SQL_FROM());
+    tênBảng = bộ.tên định danh();
+    bíDanh = tênBảng;
+    nếu (bộ.nhận(SQL_AS())) { bíDanh = bộ.tên định danh(); };
+    nối = [];
+    khi (đúng) {
+        kiểu = SQL_INNER();
+        nếu (bộ.nhận(SQL_LEFT())) { kiểu = SQL_LEFT(); bộ.nhận(SQL_OUTER()); bộ.cần(SQL_JOIN()); }
+        hoặc nếu (bộ.nhận(SQL_INNER())) { bộ.cần(SQL_JOIN()); }
+        hoặc nếu (!bộ.nhận(SQL_JOIN())) { thoát; };
+        tên = bộ.tên định danh(); bíDanhNối = tên;
+        nếu (bộ.nhận(SQL_AS())) { bíDanhNối = bộ.tên định danh(); };
+        bộ.cần(SQL_ON()); trái = bộ.tên cột SQL(); bộ.cần(TEXT_EQUAL()); phải = bộ.tên cột SQL();
+        thêm(nối, bản ghi mệnh đề nối(tên, bíDanhNối, kiểu, trái, phải));
+    };
+    điềuKiện = bộ.điều kiện();
+    nhóm = [];
+    nếu (bộ.nhận(SQL_GROUP())) {
+        bộ.cần(SQL_BY()); thêm(nhóm, bộ.tên cột SQL());
+        khi (bộ.nhận(TEXT_COMMA())) { thêm(nhóm, bộ.tên cột SQL()); };
+    };
+    cóNhóm = [];
+    nếu (bộ.nhận(SQL_HAVING())) { cóNhóm = bộ.biểu thức or(); };
+    sắp = [];
+    nếu (bộ.nhận(SQL_ORDER())) {
+        bộ.cần(SQL_BY()); tiếp = đúng;
+        khi (tiếp) {
+            tên = bộ.tên cột SQL(); giảm = bộ.nhận(SQL_DESC()); nếu (!giảm) { bộ.nhận(SQL_ASC()); };
+            thêm(sắp, [tên, giảm]); tiếp = bộ.nhận(TEXT_COMMA());
+        };
+    };
+    giớiHạn = -1; bỏQua = 0;
+    nếu (bộ.nhận(SQL_LIMIT())) {
+        giớiHạn = bộ.giá trị();
+        nếu (loại của(giớiHạn) != TYPE_INTEGER() || giớiHạn < 0) { ném ERR_INVALID_LIMIT(); };
+        nếu (bộ.nhận(SQL_OFFSET())) {
+            bỏQua = bộ.giá trị();
+            nếu (loại của(bỏQua) != TYPE_INTEGER() || bỏQua < 0) { ném ERR_INVALID_OFFSET(); };
+        };
+    };
+    trả về bản ghi lệnh select(SQL_SELECT(), tênBảng, bíDanh, nối, mục, điềuKiện, nhóm, cóNhóm, sắp, riêng, giớiHạn, bỏQua);
+};
+
+hàm cột nguồn(bảng, bíDanh) {
+    ds = [];
+    lặp(i = 0; i < độ dài(bảng[KEY_COLUMNS()]); i++) {
+        c = bảng[KEY_COLUMNS()][i];
+        nguồn = bản ghi cột nguồn(c[KEY_NAME()], bíDanh + TEXT_DOT() + c[KEY_NAME()], c[KEY_TYPE()]);
+        nguồn[KEY_LIMIT()] = c[KEY_LIMIT()];
+        thêm(ds, nguồn);
+    };
+    trả về ds;
+};
+
+hàm nguồn select(máy, tên, chỉMetadata, sâu) {
+    quanHệ = metadata quan hệ(máy, tên);
+    q = lấy từ điển(quanHệ, KEY_QUERY(), rỗng);
+    nếu (q == rỗng) { trả về quanHệ; };
+    bảng = bản ghi bảng(tên, quanHệ[KEY_COLUMNS()], []);
+    bảng[KEY_QUERY()] = q;
+    nếu (!chỉMetadata) {
+        nếu (sâu >= 64) { ném ERR_VIEW_DEPTH(); };
+        kq = chạy select(máy, q, sai, sâu + 1);
+        bảng[KEY_ROWS()] = kq[KEY_ROWS()];
+    };
+    trả về bảng;
+};
+
+hàm công khai thực thi select(máy, cmd) {
+    trả về chạy select(máy, cmd, sai, 0);
+};
+
+hàm công khai schema select(máy, cmd) {
+    trả về chạy select(máy, cmd, đúng, 0);
+};
+
+hàm chạy select(máy, cmd, chỉSchema, sâu) {
+    chỉMetadata = chỉSchema || cmd[KEY_OP()] == SQL_EXPLAIN();
+    bảng = nguồn select(máy, cmd[KEY_NAME()], chỉMetadata, sâu);
+    cột = cột nguồn(bảng, cmd[KEY_ALIAS()]); hàng = bảng[KEY_ROWS()];
+    bíDanh = [cmd[KEY_ALIAS()]];
+    kếHoạchNốiDanhSách = []; bảngNối = [];
+    sốTrái = độ dài(hàng);
+    nếu (chỉMetadata && lấy từ điển(bảng, KEY_QUERY(), rỗng) != rỗng) { sốTrái = -1; };
+    lặp(k = 0; k < độ dài(cmd[KEY_JOINS()]); k++) {
+        nối = cmd[KEY_JOINS()][k];
+        lặp(i = 0; i < độ dài(bíDanh); i++) { nếu (bíDanh[i] == nối[KEY_ALIAS()]) { ném ERR_DUPLICATE_ALIAS(); }; };
+        thêm(bíDanh, nối[KEY_ALIAS()]);
+        phải = nguồn select(máy, nối[KEY_NAME()], chỉMetadata, sâu); cộtPhải = cột nguồn(phải, nối[KEY_ALIAS()]);
+        n = độ dài(cột); cột = ghép(cột, cộtPhải);
+        a = cần cột SQL(cột, nối[KEY_LEFT()]); b = cần cột SQL(cột, nối[KEY_RIGHT()]);
+        nếu (a >= n && b < n) { tạm = a; a = b; b = tạm; };
+        nếu (a >= n || b < n) { ném ERR_JOIN_COLUMNS(); };
+        nếu (chỉMetadata && lấy từ điển(phải, KEY_QUERY(), rỗng) != rỗng) { sốTrái = -1; };
+        kếHoạchNối = kế hoạch join(nối[KEY_KIND()], a, b - n, độ dài(cộtPhải), sốTrái, phải, cột[a][KEY_TYPE()]);
+        sốTrái = ước lượng nối(nối[KEY_KIND()], sốTrái, phải, b - n);
+        kếHoạchNối[KEY_OUTPUT_ESTIMATE()] = rỗng;
+        nếu (sốTrái >= 0) { kếHoạchNối[KEY_OUTPUT_ESTIMATE()] = sốTrái; };
+        thêm(kếHoạchNốiDanhSách, kếHoạchNối);
+        thêm(bảngNối, phải);
+    };
+    điềuKiện = biên dịch điều kiện(cột, cmd[KEY_WHERE()]);
+    mục = []; nguồnMục = cmd[KEY_ITEMS()]; nhóm = [];
+    lặp(i = 0; i < độ dài(nguồnMục); i++) {
+        m = nguồnMục[i]; thêm(mục, bản ghi mục select(m[KEY_NAME()], m[KEY_AGGREGATE()], m[KEY_LABEL()]));
+    };
+    lặp(i = 0; i < độ dài(cmd[KEY_GROUP()]); i++) { thêm(nhóm, cần cột SQL(cột, cmd[KEY_GROUP()][i])); };
+    nếu (độ dài(mục) == 0) {
+        lặp(i = 0; i < độ dài(cột); i++) { thêm(mục, bản ghi mục select(cột[i][KEY_QUALIFIED()], TEXT_EMPTY(), cột[i][KEY_NAME()])); };
+    };
+    cóGộp = sai; nhãn = [];
+    lặp(i = 0; i < độ dài(mục); i++) {
+        m = mục[i]; op = m[KEY_AGGREGATE()]; vịTrí = -1;
+        nếu (m[KEY_NAME()] != TEXT_STAR()) { vịTrí = cần cột SQL(cột, m[KEY_NAME()]); };
+        m[KEY_INDEX()] = vịTrí;
+        nếu (op != TEXT_EMPTY()) { cóGộp = đúng; };
+        nếu (op == SQL_SUM() || op == SQL_AVG()) {
+            kiểu = cột[vịTrí][KEY_TYPE()];
+            nếu (!(kiểu == SQL_INT() || kiểu == SQL_INTEGER() || kiểu == SQL_REAL())) { ném ERR_AGG_NUMERIC(); };
+        };
+        thêm(nhãn, m[KEY_LABEL()]);
+    };
+    gộp = cóGộp || độ dài(nhóm) > 0;
+    cộtKếtQuả = [];
+    lặp(i = 0; i < độ dài(nhãn); i++) { thêm(cộtKếtQuả, bản ghi tên(nhãn[i])); };
+    nếu (!gộp && độ dài(cmd[KEY_HAVING()]) > 0) { ném ERR_HAVING_GROUP(); };
+    lọcNhóm = biên dịch điều kiện(cộtKếtQuả, cmd[KEY_HAVING()]);
+    nếu (gộp) {
+        lặp(i = 0; i < độ dài(mục); i++) {
+            nếu (mục[i][KEY_AGGREGATE()] != TEXT_EMPTY()) { bỏ qua; };
+            có = sai;
+            lặp(j = 0; j < độ dài(nhóm); j++) { nếu (nhóm[j] == mục[i][KEY_INDEX()]) { có = đúng; }; };
+            nếu (!có) { ném ERR_SELECT_GROUP(); };
+        };
+    };
+    sắp = cmd[KEY_ORDER()]; chỉSắp = [];
+    lặp(i = 0; i < độ dài(sắp); i++) {
+        tên = sắp[i][0]; vịTrí = -1;
+        lặp(j = 0; j < độ dài(nhãn); j++) { nếu (nhãn[j] == tên) { nếu (vịTrí >= 0) { ném ERR_AMBIGUOUS_ORDER() + tên; }; vịTrí = j; }; };
+        nếu (vịTrí >= 0) { thêm(chỉSắp, [đúng, vịTrí]); }
+        hoặc {
+            nếu (gộp || cmd[KEY_DISTINCT()]) { ném ERR_ORDER_RESULT(); };
+            thêm(chỉSắp, [sai, cần cột SQL(cột, tên)]);
+        };
+    };
+    nếu (chỉSchema) {
+        schema = [];
+        lặp(i = 0; i < độ dài(mục); i++) {
+            m = mục[i]; op = m[KEY_AGGREGATE()]; kiểu = SQL_INT(); giớiHạn = 0;
+            nếu (op == SQL_SUM() || op == SQL_AVG()) { kiểu = SQL_REAL(); }
+            hoặc nếu (op != SQL_COUNT()) {
+                nguồn = cột[m[KEY_INDEX()]]; kiểu = nguồn[KEY_TYPE()]; giớiHạn = nguồn[KEY_LIMIT()];
+            };
+            thêm(schema, bản ghi định nghĩa cột(nhãn[i], kiểu, giớiHạn, sai, sai, sai));
+        };
+        trả về schema;
+    };
+    kếHoạch = kế hoạch select();
+    kếHoạch[KEY_SCAN()] = kế hoạch scan(bảng, điềuKiện, độ dài(bảngNối) > 0);
+    nếu (cmd[KEY_OP()] == SQL_EXPLAIN()) {
+        trả về giải thích kế hoạch(cmd, bảng, bảngNối, kếHoạchNốiDanhSách, kếHoạch, gộp);
+    };
+    nếu (kếHoạch[KEY_SCAN()][KEY_ALGORITHM()] != ALGO_TABLE_SCAN()) {
+        hàng = thực thi thuật toán(kếHoạch[KEY_SCAN()], bản ghi hàng(hàng));
+    };
+    lặp(k = 0; k < độ dài(bảngNối); k++) {
+        kếHoạchNối = kếHoạchNốiDanhSách[k];
+        nếu (k > 0) {
+            a = kếHoạchNối[KEY_LEFT_INDEX()];
+            kếHoạchNối = kế hoạch join(kếHoạchNối[KEY_KIND()], a, kếHoạchNối[KEY_RIGHT_INDEX()], kếHoạchNối[KEY_RIGHT_WIDTH()], độ dài(hàng), bảngNối[k], cột[a][KEY_TYPE()]);
+        };
+        hàng = thực thi thuật toán(kếHoạchNối, bản ghi dữ liệu nối(hàng, bảngNối[k][KEY_ROWS()]));
+    };
+    // Giới hạn bộ nhớ kết quả; WHERE vẫn được kiểm tra để giữ ngữ nghĩa lỗi.
+    n = cmd[KEY_LIMIT()];
+    nếu (n >= 0 && !gộp && !cmd[KEY_DISTINCT()] && độ dài(sắp) == 0) {
+        kq = []; đãKhớp = 0;
+        lặp(i = 0; i < độ dài(hàng); i++) {
+            nếu (độ dài(kq) >= n && độ dài(điềuKiện) == 0) { thoát; };
+            nếu (!khớp(hàng[i], điềuKiện) || độ dài(kq) >= n) { bỏ qua; };
+            nếu (đãKhớp < cmd[KEY_OFFSET()]) { đãKhớp++; bỏ qua; };
+            dòng = [];
+            lặp(j = 0; j < độ dài(mục); j++) { thêm(dòng, hàng[i][mục[j][KEY_INDEX()]]); };
+            thêm(kq, dòng);
+        };
+        trả về kết quả(nhãn, kq);
+    };
+    lọc = [];
+    lặp(i = 0; i < độ dài(hàng); i++) { nếu (khớp(hàng[i], điềuKiện)) { thêm(lọc, hàng[i]); }; };
+    nhómHàng = [];
+    nếu (gộp) { nhómHàng = thực thi thuật toán(kếHoạch[KEY_AGGREGATE()], bản ghi dữ liệu nhóm(SQL_GROUP(), lọc, nhóm)); }
+    hoặc { lặp(i = 0; i < độ dài(lọc); i++) { thêm(nhómHàng, bản ghi hàng([lọc[i]])); }; };
+    ds = [];
+    lặp(i = 0; i < độ dài(nhómHàng); i++) {
+        h = nhómHàng[i][KEY_ROWS()]; dòng = [];
+        lặp(j = 0; j < độ dài(mục); j++) {
+            m = mục[j];
+            nếu (m[KEY_AGGREGATE()] != TEXT_EMPTY()) { thêm(dòng, thực thi thuật toán(kếHoạch[KEY_AGGREGATE()], bản ghi dữ liệu tổng hợp(AGG_REDUCE(), h, m))); }
+            hoặc { thêm(dòng, h[0][m[KEY_INDEX()]]); };
+        };
+        nếu (!khớp(dòng, lọcNhóm)) { bỏ qua; };
+        khóa = [];
+        lặp(j = 0; j < độ dài(chỉSắp); j++) {
+            s = chỉSắp[j];
+            nếu (s[0]) { thêm(khóa, dòng[s[1]]); } hoặc { thêm(khóa, h[0][s[1]]); };
+        };
+        thêm(ds, bản ghi hàng kết quả(dòng, khóa));
+    };
+    nếu (cmd[KEY_DISTINCT()]) { ds = thực thi thuật toán(kếHoạch[KEY_DISTINCT()], bản ghi hàng(ds)); };
+    nếu (độ dài(sắp) > 0) { ds = thực thi thuật toán(kếHoạch[KEY_SORT()], bản ghi dữ liệu sắp xếp(ds, sắp)); };
+    kq = []; n = cmd[KEY_LIMIT()];
+    lặp(i = cmd[KEY_OFFSET()]; i < độ dài(ds) && (n < 0 || độ dài(kq) < n); i++) { thêm(kq, ds[i][KEY_ROW()]); };
+    trả về kết quả(nhãn, kq);
+};

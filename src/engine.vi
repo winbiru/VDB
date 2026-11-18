@@ -1,0 +1,63 @@
+nhập constants.*;
+nhập command.common.*;
+nhập command.instance.*;
+nhập command.schema.*;
+nhập command.index.*;
+nhập command.foreign.*;
+nhập command.alter.*;
+nhập command.insert.*;
+nhập command.select.*;
+nhập command.update.*;
+nhập command.delete.*;
+nhập command.transaction.*;
+
+lớp công khai Bộ Máy VDB {
+    hàm công khai khởi tạo(catalog) {
+        nếu (catalog[KEY_VERSION()] != 1) { ném ERR_UNSUPPORTED_CATALOG_VERSION(); };
+        mình.catalog = catalog;
+        mình.selected = DEFAULT_DATABASE();
+        mình.snapshot = rỗng;
+        mình.savedSelection = TEXT_EMPTY();
+        mình.dirty = sai;
+        mình.savedDirty = sai;
+    };
+    hàm công khai bảng hiện tại() {
+        dbs = mình.catalog[KEY_DATABASES()];
+        trả về dbs[cần tên(dbs, mình.selected)];
+    };
+    hàm công khai thực thi(cmd) {
+        op = cmd[KEY_OP()];
+        kq = mình.thực thi nội bộ(cmd);
+        nếu (op == SQL_CREATE_TABLE() || op == SQL_DROP_TABLE() || op == SQL_ALTER_TABLE() || op == SQL_DROP_INDEX() || op == SQL_INSERT() || op == SQL_UPDATE() || op == SQL_DELETE()) {
+            kiểm khóa ngoại(mình.bảng hiện tại());
+        };
+        trả về kq;
+    };
+    hàm công khai thực thi nội bộ(cmd) {
+        op = cmd[KEY_OP()];
+        nếu (op == SQL_CREATE_DATABASE()) { trả về thực thi create database(mình, cmd); };
+        nếu (op == SQL_USE()) { trả về thực thi use(mình, cmd); };
+        nếu (op == SQL_SHOW_DATABASES()) { trả về thực thi show databases(mình, cmd); };
+        nếu (op == SQL_CREATE_VIEW()) { trả về thực thi create view(mình, cmd); };
+        nếu (op == SQL_DROP_VIEW()) { trả về thực thi drop view(mình, cmd); };
+        nếu (op == SQL_SHOW_VIEWS()) { trả về thực thi show views(mình, cmd); };
+        nếu (op == SQL_SHOW_STATISTICS()) { trả về thực thi show statistics(mình, cmd); };
+        nếu (op == SQL_SHOW_TABLES()) { trả về thực thi show tables(mình, cmd); };
+        nếu (op == SQL_CREATE_INDEX()) { trả về thực thi create index(mình, cmd); };
+        nếu (op == SQL_DROP_INDEX()) { trả về thực thi drop index(mình, cmd); };
+        nếu (op == SQL_SHOW_INDEX()) { trả về thực thi show index(mình, cmd); };
+        nếu (op == SQL_SHOW_FOREIGN_KEYS()) { trả về thực thi show khóa ngoại(mình, cmd); };
+        nếu (op == SQL_CREATE_TABLE()) { trả về thực thi create table(mình, cmd); };
+        nếu (op == SQL_DROP_TABLE()) { trả về thực thi drop table(mình, cmd); };
+        nếu (op == SQL_DESCRIBE()) { trả về thực thi describe(mình, cmd); };
+        nếu (op == SQL_INSERT()) { trả về thực thi insert(mình, cmd); };
+        nếu (op == SQL_ALTER_TABLE()) { trả về thực thi alter(mình, cmd); };
+        nếu (op == SQL_DROP_DATABASE()) { trả về thực thi drop database(mình, cmd); };
+        nếu (op == SQL_SELECT() || op == SQL_EXPLAIN()) { trả về thực thi select(mình, cmd); };
+        nếu (op == SQL_UPDATE()) { trả về thực thi update(mình, cmd); };
+        nếu (op == SQL_DELETE()) { trả về thực thi delete(mình, cmd); };
+        nếu (op == SQL_BEGIN()) { trả về thực thi begin(mình, cmd); };
+        nếu (op == SQL_COMMIT() || op == SQL_ROLLBACK()) { trả về thực thi commit(mình, cmd); };
+        ném ERR_UNSUPPORTED_COMMAND();
+    };
+};

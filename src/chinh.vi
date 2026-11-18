@@ -1,0 +1,62 @@
+nhập constants.*;
+nhập records.*;
+nhập parser.*;
+nhập engine.*;
+nhập command.instance.catalog mới;
+nhập command.catalog.kiểm catalog;
+nhập gói.dữ liệu.json.json.json tạo;
+nhập gói.dữ liệu.json.json.json phân tích;
+nhập gói.nhập xuất.tệp.ghi tệp;
+nhập gói.nhập xuất.tệp.đọc tệp;
+nhập gói.hệ thống.môi trường.đọc biến môi trường;
+
+nhập gói.thời gian.đơn điệu.thời gian đơn điệu mili giây;
+
+hàm chính() {
+    thử {
+        nguồn = đọc biến môi trường(ENV_VDB_SQL(), TEXT_EMPTY());
+        dữLiệu = đọc biến môi trường(ENV_VDB_DATA(), TEXT_EMPTY());
+        đích = đọc biến môi trường(ENV_VDB_STAGE(), TEXT_EMPTY());
+        trạngThái = đọc biến môi trường(ENV_VDB_STATUS(), TEXT_EMPTY());
+        nếu (nguồn == TEXT_EMPTY() || đích == TEXT_EMPTY() || trạngThái == TEXT_EMPTY()) { ném ERR_CLI_REQUIRED(); };
+        catalog = catalog mới();
+        nếu (dữLiệu != TEXT_EMPTY()) { catalog = json phân tích(đọc tệp(dữLiệu)); };
+        máy = Bộ Máy VDB(catalog);
+        nếu (đọc biến môi trường(ENV_VDB_CHECK_CATALOG(), TEXT_EMPTY()) == TEXT_ONE()) {
+            kiểm catalog(máy);
+            ghi tệp(đích, json tạo(máy.catalog));
+            in json tạo(bản ghi xác thực(đúng));
+            ghi tệp(trạngThái, STATUS_OK());
+            trả về;
+        };
+        parser = Phân Tích SQL(đọc tệp(nguồn));
+        ds = parser.phân tích();
+        nếu (đọc biến môi trường(ENV_VDB_VALIDATE(), TEXT_EMPTY()) == TEXT_ONE()) {
+            in json tạo(bản ghi xác thực(đúng));
+            ghi tệp(trạngThái, STATUS_OK());
+            trả về;
+        };
+        bảoVệ = đọc biến môi trường(ENV_VDB_GUARD_WRITES(), TEXT_EMPTY()) == TEXT_ONE();
+        đo = đọc biến môi trường(ENV_VDB_TIMING(), TEXT_EMPTY()) == TEXT_ONE();
+        mốc = 0.0;
+        thựcThi = 0.0;
+        nếu (đo) { mốc = thời gian đơn điệu mili giây(); };
+        kếtQuả = [];
+        lặp(i = 0; i < máy ảo lấy độ dài(ds); i++) {
+            lệnh = ds[i];
+            kq = máy.thực thi(lệnh);
+            nếu (bảoVệ && (lệnh[KEY_OP()] == SQL_UPDATE() || lệnh[KEY_OP()] == SQL_DELETE())) {
+                nếu (kq[KEY_AFFECTED_ROWS()] != 1) { ném ERR_GUARD_CONFLICT(); };
+            };
+            thêm(kếtQuả, kq);
+        };
+        nếu (máy.snapshot != rỗng) { ném ERR_UNFINISHED_TRANSACTION(); };
+        nếu (máy.dirty || dữLiệu == TEXT_EMPTY()) { ghi tệp(đích, json tạo(máy.catalog)); };
+        nếu (đo) { thựcThi = thời gian đơn điệu mili giây() - mốc; mốc = thời gian đơn điệu mili giây(); };
+        lặp(i = 0; i < máy ảo lấy độ dài(kếtQuả); i++) { in json tạo(kếtQuả[i]); };
+        nếu (đo) { in json tạo(bản ghi thời lượng(thựcThi, thời gian đơn điệu mili giây() - mốc)); };
+        ghi tệp(trạngThái, STATUS_OK());
+    } bắt lỗi(e) {
+        in ERR_ERROR_PREFIX() + e;
+    };
+};

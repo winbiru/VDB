@@ -1,0 +1,340 @@
+// Chuỗi cố định của VDB Engine. Hàm module không tham số chỉ trả về giá trị bất biến.
+// Giữ nguyên giá trị giao thức SQL, JSON và catalog khi đổi tên hàm hoặc refactor.
+
+// Khóa bản ghi và JSON
+hàm công khai KEY_AFFECTED_ROWS() { trả về "affected_rows"; };
+hàm công khai KEY_AGGREGATE() { trả về "aggregate"; };
+hàm công khai KEY_ALGORITHM() { trả về "algorithm"; };
+hàm công khai KEY_ALIAS() { trả về "alias"; };
+hàm công khai KEY_COLUMNS() { trả về "columns"; };
+hàm công khai KEY_DATABASES() { trả về "databases"; };
+hàm công khai KEY_DISTINCT() { trả về "distinct"; };
+hàm công khai KEY_GROUP() { trả về "group"; };
+hàm công khai KEY_HAVING() { trả về "having"; };
+hàm công khai KEY_INDEX() { trả về "index"; };
+hàm công khai KEY_ITEM() { trả về "item"; };
+hàm công khai KEY_ITEMS() { trả về "items"; };
+hàm công khai KEY_JOINS() { trả về "joins"; };
+hàm công khai KEY_KEY() { trả về "key"; };
+hàm công khai KEY_KIND() { trả về "kind"; };
+hàm công khai KEY_LABEL() { trả về "label"; };
+hàm công khai KEY_LEFT() { trả về "left"; };
+hàm công khai KEY_LEFT_INDEX() { trả về "left_index"; };
+hàm công khai KEY_LIMIT() { trả về "limit"; };
+hàm công khai KEY_NAME() { trả về "name"; };
+hàm công khai KEY_OFFSET() { trả về "offset"; };
+hàm công khai KEY_OP() { trả về "op"; };
+hàm công khai KEY_OPERATION() { trả về "operation"; };
+hàm công khai KEY_ORDER() { trả về "order"; };
+hàm công khai KEY_PRIMARY() { trả về "primary"; };
+hàm công khai KEY_QUALIFIED() { trả về "qualified"; };
+hàm công khai KEY_REQUIRED() { trả về "required"; };
+hàm công khai KEY_RIGHT() { trả về "right"; };
+hàm công khai KEY_RIGHT_INDEX() { trả về "right_index"; };
+hàm công khai KEY_RIGHT_WIDTH() { trả về "right_width"; };
+hàm công khai KEY_ROW() { trả về "row"; };
+hàm công khai KEY_ROWS() { trả về "rows"; };
+hàm công khai KEY_SET() { trả về "set"; };
+hàm công khai KEY_SORT() { trả về "sort"; };
+hàm công khai KEY_TABLES() { trả về "tables"; };
+hàm công khai KEY_TYPE() { trả về "type"; };
+hàm công khai KEY_UNIQUE() { trả về "unique"; };
+hàm công khai KEY_VALID() { trả về "valid"; };
+hàm công khai KEY_VALUE() { trả về "value"; };
+hàm công khai KEY_VERSION() { trả về "version"; };
+hàm công khai KEY_WHERE() { trả về "where"; };
+
+// Từ khóa và kiểu SQL
+hàm công khai SQL_CREATE() { trả về "CREATE"; };
+hàm công khai SQL_USE() { trả về "USE"; };
+hàm công khai SQL_SHOW() { trả về "SHOW"; };
+hàm công khai SQL_DESCRIBE() { trả về "DESCRIBE"; };
+hàm công khai SQL_DESC() { trả về "DESC"; };
+hàm công khai SQL_DROP() { trả về "DROP"; };
+hàm công khai SQL_INSERT() { trả về "INSERT"; };
+hàm công khai SQL_SELECT() { trả về "SELECT"; };
+hàm công khai SQL_UPDATE() { trả về "UPDATE"; };
+hàm công khai SQL_DELETE() { trả về "DELETE"; };
+hàm công khai SQL_BEGIN() { trả về "BEGIN"; };
+hàm công khai SQL_COMMIT() { trả về "COMMIT"; };
+hàm công khai SQL_ROLLBACK() { trả về "ROLLBACK"; };
+hàm công khai SQL_DATABASE() { trả về "DATABASE"; };
+hàm công khai SQL_DATABASES() { trả về "DATABASES"; };
+hàm công khai SQL_TABLE() { trả về "TABLE"; };
+hàm công khai SQL_TABLES() { trả về "TABLES"; };
+hàm công khai SQL_FROM() { trả về "FROM"; };
+hàm công khai SQL_WHERE() { trả về "WHERE"; };
+hàm công khai SQL_INTO() { trả về "INTO"; };
+hàm công khai SQL_VALUES() { trả về "VALUES"; };
+hàm công khai SQL_SET() { trả về "SET"; };
+hàm công khai SQL_TRANSACTION() { trả về "TRANSACTION"; };
+hàm công khai SQL_DISTINCT() { trả về "DISTINCT"; };
+hàm công khai SQL_AS() { trả về "AS"; };
+hàm công khai SQL_LEFT() { trả về "LEFT"; };
+hàm công khai SQL_OUTER() { trả về "OUTER"; };
+hàm công khai SQL_INNER() { trả về "INNER"; };
+hàm công khai SQL_JOIN() { trả về "JOIN"; };
+hàm công khai SQL_ON() { trả về "ON"; };
+hàm công khai SQL_GROUP() { trả về "GROUP"; };
+hàm công khai SQL_BY() { trả về "BY"; };
+hàm công khai SQL_HAVING() { trả về "HAVING"; };
+hàm công khai SQL_ORDER() { trả về "ORDER"; };
+hàm công khai SQL_ASC() { trả về "ASC"; };
+hàm công khai SQL_LIMIT() { trả về "LIMIT"; };
+hàm công khai SQL_OFFSET() { trả về "OFFSET"; };
+hàm công khai SQL_NULL() { trả về "NULL"; };
+hàm công khai SQL_TRUE() { trả về "TRUE"; };
+hàm công khai SQL_FALSE() { trả về "FALSE"; };
+hàm công khai SQL_NOT() { trả về "NOT"; };
+hàm công khai SQL_IS() { trả về "IS"; };
+hàm công khai SQL_IN() { trả về "IN"; };
+hàm công khai SQL_BETWEEN() { trả về "BETWEEN"; };
+hàm công khai SQL_LIKE() { trả về "LIKE"; };
+hàm công khai SQL_AND() { trả về "AND"; };
+hàm công khai SQL_OR() { trả về "OR"; };
+hàm công khai SQL_PRIMARY() { trả về "PRIMARY"; };
+hàm công khai SQL_KEY() { trả về "KEY"; };
+hàm công khai SQL_UNIQUE() { trả về "UNIQUE"; };
+hàm công khai SQL_VARCHAR() { trả về "VARCHAR"; };
+hàm công khai SQL_INT() { trả về "INT"; };
+hàm công khai SQL_INTEGER() { trả về "INTEGER"; };
+hàm công khai SQL_REAL() { trả về "REAL"; };
+hàm công khai SQL_TEXT() { trả về "TEXT"; };
+hàm công khai SQL_BOOLEAN() { trả về "BOOLEAN"; };
+hàm công khai SQL_COUNT() { trả về "COUNT"; };
+hàm công khai SQL_SUM() { trả về "SUM"; };
+hàm công khai SQL_AVG() { trả về "AVG"; };
+hàm công khai SQL_MIN() { trả về "MIN"; };
+hàm công khai SQL_MAX() { trả về "MAX"; };
+
+// Mã lệnh và toán tử SQL
+hàm công khai SQL_CREATE_DATABASE() { trả về "CREATE DATABASE"; };
+hàm công khai SQL_SHOW_DATABASES() { trả về "SHOW DATABASES"; };
+hàm công khai SQL_SHOW_TABLES() { trả về "SHOW TABLES"; };
+hàm công khai SQL_CREATE_TABLE() { trả về "CREATE TABLE"; };
+hàm công khai SQL_DROP_TABLE() { trả về "DROP TABLE"; };
+hàm công khai SQL_IS_NOT() { trả về "IS NOT"; };
+
+// Thuật toán vật lý
+hàm công khai ALGO_HASH_JOIN() { trả về "HASH_JOIN"; };
+hàm công khai ALGO_HASH_AGGREGATE() { trả về "HASH_AGGREGATE"; };
+hàm công khai ALGO_HASH_DISTINCT() { trả về "HASH_DISTINCT"; };
+hàm công khai ALGO_MERGE_SORT() { trả về "MERGE_SORT"; };
+hàm công khai AGG_REDUCE() { trả về "REDUCE"; };
+
+// Token và toán hạng
+hàm công khai TOKEN_WORD() { trả về "word"; };
+hàm công khai TOKEN_SYMBOL() { trả về "symbol"; };
+hàm công khai TOKEN_STRING() { trả về "string"; };
+hàm công khai TOKEN_NUMBER() { trả về "number"; };
+hàm công khai TOKEN_END() { trả về "end"; };
+hàm công khai OPERAND_COLUMN() { trả về "column"; };
+hàm công khai OPERAND_LITERAL() { trả về "literal"; };
+
+// Kiểu runtime V++
+hàm công khai TYPE_INTEGER() { trả về "số nguyên"; };
+hàm công khai TYPE_REAL() { trả về "số thực"; };
+hàm công khai TYPE_STRING() { trả về "chuỗi"; };
+hàm công khai TYPE_BOOLEAN() { trả về "luận lý"; };
+
+// Ký tự và chuỗi cơ sở
+hàm công khai TEXT_EMPTY() { trả về ""; };
+hàm công khai TEXT_SPACE() { trả về " "; };
+hàm công khai TEXT_NEWLINE() { trả về "\n"; };
+hàm công khai TEXT_CARRIAGE_RETURN() { trả về "\r"; };
+hàm công khai TEXT_TAB() { trả về "\t"; };
+hàm công khai TEXT_ZERO() { trả về "0"; };
+hàm công khai TEXT_ONE() { trả về "1"; };
+hàm công khai TEXT_NINE() { trả về "9"; };
+hàm công khai TEXT_LOWER_A() { trả về "a"; };
+hàm công khai TEXT_LOWER_Z() { trả về "z"; };
+hàm công khai TEXT_UPPER_A() { trả về "A"; };
+hàm công khai TEXT_UPPER_Z() { trả về "Z"; };
+hàm công khai TEXT_UNDERSCORE() { trả về "_"; };
+hàm công khai TEXT_MINUS() { trả về "-"; };
+hàm công khai TEXT_QUOTE() { trả về "'"; };
+hàm công khai TEXT_DOT() { trả về "."; };
+hàm công khai TEXT_OPEN_PAREN() { trả về "("; };
+hàm công khai TEXT_CLOSE_PAREN() { trả về ")"; };
+hàm công khai TEXT_COMMA() { trả về ","; };
+hàm công khai TEXT_SEMICOLON() { trả về ";"; };
+hàm công khai TEXT_STAR() { trả về "*"; };
+hàm công khai TEXT_EQUAL() { trả về "="; };
+hàm công khai TEXT_LESS() { trả về "<"; };
+hàm công khai TEXT_GREATER() { trả về ">"; };
+hàm công khai TEXT_BANG() { trả về "!"; };
+hàm công khai TEXT_NOT_EQUAL() { trả về "!="; };
+hàm công khai TEXT_NOT_EQUAL_SQL() { trả về "<>"; };
+hàm công khai TEXT_LESS_EQUAL() { trả về "<="; };
+hàm công khai TEXT_GREATER_EQUAL() { trả về ">="; };
+hàm công khai TEXT_PERCENT() { trả về "%"; };
+hàm công khai TEXT_SPACE_OPEN_PAREN() { trả về " ("; };
+
+// Môi trường và giao thức CLI
+hàm công khai ENV_VDB_SQL() { trả về "VDB_SQL"; };
+hàm công khai ENV_VDB_DATA() { trả về "VDB_DATA"; };
+hàm công khai ENV_VDB_STAGE() { trả về "VDB_STAGE"; };
+hàm công khai ENV_VDB_STATUS() { trả về "VDB_STATUS"; };
+hàm công khai ENV_VDB_VALIDATE() { trả về "VDB_VALIDATE"; };
+hàm công khai ENV_VDB_GUARD_WRITES() { trả về "VDB_GUARD_WRITES"; };
+hàm công khai STATUS_OK() { trả về "OK"; };
+hàm công khai DEFAULT_DATABASE() { trả về "DEFAULT"; };
+hàm công khai LABEL_NAME() { trả về "NAME"; };
+hàm công khai LABEL_TYPE() { trả về "TYPE"; };
+hàm công khai LABEL_NOT_NULL() { trả về "NOT_NULL"; };
+hàm công khai LABEL_PRIMARY_KEY() { trả về "PRIMARY_KEY"; };
+
+// Thông báo lỗi
+hàm công khai ERR_CLI_REQUIRED() { trả về "VDB: chạy qua lệnh ./vdb"; };
+hàm công khai ERR_GUARD_CONFLICT() { trả về "VDB: hàng đã thay đổi hoặc bị xóa; batch đã hủy"; };
+hàm công khai ERR_UNFINISHED_TRANSACTION() { trả về "VDB: giao dịch chưa COMMIT hoặc ROLLBACK"; };
+hàm công khai ERR_ERROR_PREFIX() { trả về "ERROR: "; };
+hàm công khai ERR_EXPECTED() { trả về "SQL: cần "; };
+hàm công khai ERR_EXPECTED_IDENTIFIER() { trả về "SQL: cần tên định danh"; };
+hàm công khai ERR_INTEGER_RANGE() { trả về "SQL: INT vượt giới hạn"; };
+hàm công khai ERR_EXPECTED_LITERAL() { trả về "SQL: cần giá trị literal"; };
+hàm công khai ERR_EXPECTED_NOT_PREDICATE() { trả về "SQL: NOT cần IN, BETWEEN hoặc LIKE"; };
+hàm công khai ERR_EXPECTED_COMPARISON() { trả về "SQL: cần toán tử so sánh"; };
+hàm công khai ERR_VARCHAR_LENGTH() { trả về "SQL: VARCHAR cần độ dài nguyên dương"; };
+hàm công khai ERR_UNSUPPORTED_TYPE() { trả về "SQL: kiểu chưa hỗ trợ: "; };
+hàm công khai ERR_UNSUPPORTED_STATEMENT() { trả về "SQL: câu lệnh chưa hỗ trợ: "; };
+hàm công khai ERR_UNSUPPORTED_CATALOG_VERSION() { trả về "VDB: phiên bản dữ liệu không hỗ trợ"; };
+hàm công khai ERR_UNSUPPORTED_COMMAND() { trả về "VDB: thao tác chưa hỗ trợ"; };
+hàm công khai ERR_UNCLOSED_STRING() { trả về "SQL: chuỗi chưa đóng"; };
+hàm công khai ERR_INVALID_REAL() { trả về "SQL: số thực không hợp lệ"; };
+hàm công khai ERR_INVALID_BANG() { trả về "SQL: toán tử ! không hợp lệ"; };
+hàm công khai ERR_INVALID_CHARACTER() { trả về "SQL: ký tự không hợp lệ: "; };
+hàm công khai ERR_UNSUPPORTED_AGG_OPERATION() { trả về "VDB: thao tác tổng hợp chưa hỗ trợ: "; };
+hàm công khai ERR_UNSUPPORTED_ALGORITHM() { trả về "VDB: thuật toán chưa hỗ trợ: "; };
+hàm công khai ERR_DATABASE_EXISTS() { trả về "VDB: database đã tồn tại: "; };
+hàm công khai ERR_TRANSACTION_OPEN() { trả về "VDB: giao dịch đang mở"; };
+hàm công khai ERR_TRANSACTION_NOT_OPEN() { trả về "VDB: chưa BEGIN"; };
+hàm công khai ERR_NOT_NULL() { trả về "VDB: NOT NULL "; };
+hàm công khai ERR_COLUMN_TYPE() { trả về "VDB: sai kiểu dữ liệu cột "; };
+hàm công khai ERR_VARCHAR_TOO_LONG() { trả về "VDB: VARCHAR quá dài: "; };
+hàm công khai ERR_DUPLICATE_KEY() { trả về "VDB: trùng UNIQUE/PRIMARY KEY "; };
+hàm công khai ERR_AMBIGUOUS_COLUMN() { trả về "VDB: cột mơ hồ: "; };
+hàm công khai ERR_LIKE_TYPE() { trả về "VDB: LIKE cần chuỗi"; };
+hàm công khai ERR_NOT_FOUND() { trả về "VDB: không tìm thấy "; };
+hàm công khai ERR_DUPLICATE_INSERT_COLUMN() { trả về "VDB: trùng cột INSERT"; };
+hàm công khai ERR_INSERT_VALUE_COUNT() { trả về "VDB: sai số giá trị INSERT"; };
+hàm công khai ERR_UNSUPPORTED_AGG_FUNCTION() { trả về "SQL: hàm tổng hợp chưa hỗ trợ: "; };
+hàm công khai ERR_COUNT_STAR() { trả về "SQL: chỉ COUNT nhận *"; };
+hàm công khai ERR_INVALID_LIMIT() { trả về "SQL: LIMIT cần số nguyên không âm"; };
+hàm công khai ERR_INVALID_OFFSET() { trả về "SQL: OFFSET cần số nguyên không âm"; };
+hàm công khai ERR_DUPLICATE_ALIAS() { trả về "VDB: trùng bí danh bảng"; };
+hàm công khai ERR_JOIN_COLUMNS() { trả về "VDB: JOIN ON cần một cột mỗi phía"; };
+hàm công khai ERR_AGG_NUMERIC() { trả về "VDB: SUM/AVG cần cột số"; };
+hàm công khai ERR_HAVING_GROUP() { trả về "VDB: HAVING cần GROUP BY hoặc hàm tổng hợp"; };
+hàm công khai ERR_SELECT_GROUP() { trả về "VDB: cột SELECT phải thuộc GROUP BY"; };
+hàm công khai ERR_AMBIGUOUS_ORDER() { trả về "VDB: ORDER BY mơ hồ: "; };
+hàm công khai ERR_ORDER_RESULT() { trả về "VDB: ORDER BY cần cột kết quả hoặc bí danh"; };
+hàm công khai ERR_TABLE_EXISTS() { trả về "VDB: bảng đã tồn tại: "; };
+hàm công khai ERR_DUPLICATE_COLUMN() { trả về "VDB: trùng tên cột"; };
+hàm công khai ERR_MULTIPLE_PRIMARY_KEYS() { trả về "VDB: chỉ hỗ trợ một cột PRIMARY KEY"; };
+hàm công khai ERR_GOT() { trả về ", gặp "; };
+
+hàm công khai SQL_EXPLAIN() { trả về "EXPLAIN"; };
+hàm công khai SQL_ALTER() { trả về "ALTER"; };
+hàm công khai SQL_ADD() { trả về "ADD"; };
+hàm công khai SQL_COLUMN() { trả về "COLUMN"; };
+hàm công khai SQL_RENAME() { trả về "RENAME"; };
+hàm công khai SQL_TO() { trả về "TO"; };
+hàm công khai SQL_DROP_DATABASE() { trả về "DROP_DATABASE"; };
+hàm công khai SQL_ALTER_TABLE() { trả về "ALTER_TABLE"; };
+hàm công khai ALGO_TABLE_SCAN() { trả về "TABLE_SCAN"; };
+hàm công khai ALGO_FILTER() { trả về "FILTER"; };
+hàm công khai ALGO_PROJECT() { trả về "PROJECT"; };
+hàm công khai ALGO_HAVING_FILTER() { trả về "HAVING_FILTER"; };
+hàm công khai LABEL_STEP() { trả về "STEP"; };
+hàm công khai LABEL_OPERATOR() { trả về "OPERATOR"; };
+hàm công khai LABEL_OBJECT() { trả về "OBJECT"; };
+hàm công khai LABEL_ROWS() { trả về "ROWS"; };
+hàm công khai ERR_DROP_DEFAULT() { trả về "VDB: không thể xóa database DEFAULT"; };
+hàm công khai ERR_DROP_LAST_COLUMN() { trả về "VDB: không thể xóa cột cuối cùng"; };
+hàm công khai KEY_NEW_NAME() { trả về "new_name"; };
+
+hàm công khai SQL_INDEX() { trả về "INDEX"; };
+hàm công khai SQL_INDEXES() { trả về "INDEXES"; };
+hàm công khai SQL_CREATE_INDEX() { trả về "CREATE_INDEX"; };
+hàm công khai SQL_DROP_INDEX() { trả về "DROP_INDEX"; };
+hàm công khai SQL_SHOW_INDEX() { trả về "SHOW_INDEX"; };
+hàm công khai KEY_INDEXES() { trả về "indexes"; };
+hàm công khai KEY_NODES() { trả về "nodes"; };
+hàm công khai KEY_ROOT() { trả về "root"; };
+hàm công khai KEY_LEAF() { trả về "leaf"; };
+hàm công khai KEY_CHILDREN() { trả về "children"; };
+hàm công khai KEY_NEXT() { trả về "next"; };
+hàm công khai KEY_HEIGHT() { trả về "height"; };
+hàm công khai KEY_CARDINALITY() { trả về "cardinality"; };
+hàm công khai KEY_COUNT() { trả về "count"; };
+hàm công khai KEY_ESTIMATE() { trả về "estimate"; };
+hàm công khai KEY_OUTPUT_ESTIMATE() { trả về "output_estimate"; };
+hàm công khai KEY_SCAN() { trả về "scan"; };
+hàm công khai ALGO_INDEX_SCAN() { trả về "INDEX_SCAN"; };
+hàm công khai ALGO_NESTED_LOOP_JOIN() { trả về "NESTED_LOOP_JOIN"; };
+hàm công khai LABEL_CARDINALITY() { trả về "CARDINALITY"; };
+hàm công khai LABEL_ENTRIES() { trả về "ENTRIES"; };
+hàm công khai LABEL_HEIGHT() { trả về "HEIGHT"; };
+hàm công khai LABEL_COLUMN() { trả về "COLUMN"; };
+hàm công khai ERR_INDEX_EXISTS() { trả về "VDB: index đã tồn tại: "; };
+hàm công khai ERR_INDEX_TYPE() { trả về "VDB: index hỗ trợ INT, INTEGER, TEXT, VARCHAR"; };
+hàm công khai ERR_INDEXED_COLUMN() { trả về "VDB: cần DROP INDEX trước khi xóa cột: "; };
+
+hàm công khai ALGO_INDEX_RANGE_SCAN() { trả về "INDEX_RANGE_SCAN"; };
+
+hàm công khai KEY_INDEX_COLUMNS() { trả về "index_columns"; };
+hàm công khai KEY_PREFIX_CARDINALITY() { trả về "prefix_cardinality"; };
+
+hàm công khai ALGO_INDEX_NESTED_LOOP_JOIN() { trả về "INDEX_NESTED_LOOP_JOIN"; };
+hàm công khai ALGO_INDEX_LOOKUP() { trả về "INDEX_LOOKUP"; };
+
+hàm công khai SQL_FOREIGN() { trả về "FOREIGN"; };
+hàm công khai SQL_KEYS() { trả về "KEYS"; };
+hàm công khai SQL_REFERENCES() { trả về "REFERENCES"; };
+hàm công khai SQL_CONSTRAINT() { trả về "CONSTRAINT"; };
+hàm công khai SQL_SHOW_FOREIGN_KEYS() { trả về "SHOW_FOREIGN_KEYS"; };
+hàm công khai KEY_FOREIGN_KEYS() { trả về "foreign_keys"; };
+hàm công khai KEY_REFERENCED_TABLE() { trả về "referenced_table"; };
+hàm công khai KEY_REFERENCED_COLUMNS() { trả về "referenced_columns"; };
+hàm công khai LABEL_FOREIGN_KEY() { trả về "FOREIGN_KEY"; };
+hàm công khai LABEL_REFERENCED_TABLE() { trả về "REFERENCED_TABLE"; };
+hàm công khai LABEL_REFERENCED_COLUMN() { trả về "REFERENCED_COLUMN"; };
+hàm công khai TEXT_FK_PREFIX() { trả về "FK_"; };
+hàm công khai ERR_FOREIGN_KEY() { trả về "VDB: vi phạm khóa ngoại: "; };
+hàm công khai ERR_FOREIGN_TARGET() { trả về "VDB: khóa ngoại cần khóa đích PRIMARY KEY hoặc UNIQUE: "; };
+hàm công khai ERR_FOREIGN_TYPE() { trả về "VDB: kiểu dữ liệu khóa ngoại không tương thích: "; };
+hàm công khai ERR_FOREIGN_WIDTH() { trả về "VDB: số cột khóa ngoại không khớp: "; };
+hàm công khai ERR_FOREIGN_EXISTS() { trả về "VDB: khóa ngoại đã tồn tại: "; };
+
+// Views
+hàm công khai KEY_VIEWS() { trả về "views"; };
+hàm công khai KEY_QUERY() { trả về "query"; };
+hàm công khai SQL_VIEW() { trả về "VIEW"; };
+hàm công khai SQL_VIEWS() { trả về "VIEWS"; };
+hàm công khai SQL_CREATE_VIEW() { trả về "CREATE VIEW"; };
+hàm công khai SQL_DROP_VIEW() { trả về "DROP VIEW"; };
+hàm công khai SQL_SHOW_VIEWS() { trả về "SHOW VIEWS"; };
+hàm công khai ALGO_VIEW_SCAN() { trả về "VIEW_SCAN"; };
+hàm công khai ERR_VIEW_DEPENDENCY() { trả về "Đối tượng có view phụ thuộc: "; };
+hàm công khai ERR_VIEW_LABEL() { trả về "Cột view cần tên định danh hoặc bí danh AS: "; };
+hàm công khai ERR_VIEW_DEPTH() { trả về "View lồng quá sâu hoặc có vòng lặp"; };
+
+// Optional CLI timing metadata
+hàm công khai ENV_VDB_TIMING() { trả về "VDB_TIMING"; };
+hàm công khai KEY_EXECUTION_MS() { trả về "execution_ms"; };
+hàm công khai KEY_SERIALIZATION_MS() { trả về "serialization_ms"; };
+hàm công khai KEY_TIMING() { trả về "timing"; };
+
+// Table statistics
+hàm công khai SQL_STATISTICS() { trả về "STATISTICS"; };
+hàm công khai SQL_SHOW_STATISTICS() { trả về "SHOW STATISTICS"; };
+hàm công khai LABEL_JSON_BYTES() { trả về "JSON_BYTES"; };
+hàm công khai LABEL_NULL_COUNT() { trả về "NULL_COUNT"; };
+hàm công khai LABEL_NON_NULL_COUNT() { trả về "NON_NULL_COUNT"; };
+hàm công khai LABEL_DISTINCT_COUNT() { trả về "DISTINCT_COUNT"; };
+hàm công khai TYPE_LIST() { trả về "danh sách"; };
+hàm công khai ERR_INVALID_CATALOG() { trả về "Catalog không hợp lệ"; };
+hàm công khai ENV_VDB_CHECK_CATALOG() { trả về "VDB_CHECK_CATALOG"; };
+
+hàm công khai TYPE_DICTIONARY() { trả về "từ điển"; };

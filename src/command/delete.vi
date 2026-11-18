@@ -1,0 +1,28 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập command.index.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai phân tích delete(bộ) {
+    bộ.cần(SQL_FROM());
+    tênBảng = bộ.tên định danh();
+    trả về bản ghi lệnh xóa(SQL_DELETE(), tênBảng, bộ.điều kiện());
+};
+
+hàm công khai thực thi delete(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]);
+    cột = bảng[KEY_COLUMNS()];
+    hàng = bảng[KEY_ROWS()];
+    điềuKiện = biên dịch điều kiện(cột, cmd[KEY_WHERE()]);
+    ds = [];
+    n = 0;
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        nếu (khớp(hàng[i], điềuKiện)) { n++; } hoặc { thêm(ds, hàng[i]); };
+    };
+    bảng[KEY_ROWS()] = ds;
+    cập nhật index(bảng);
+    máy.dirty = đúng;
+    trả về thay đổi(n);
+};
+

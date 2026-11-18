@@ -1,0 +1,87 @@
+nhập constants.*;
+nhập records.*;
+// Bộ phân tích từ vựng SQL.
+nhập gói.văn bản.chuỗi.chuỗi hoa;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm chữ số(c) {
+    trả về c >= TEXT_ZERO() && c <= TEXT_NINE();
+};
+
+hàm chữ cái(c) {
+    trả về (c >= TEXT_LOWER_A() && c <= TEXT_LOWER_Z()) || (c >= TEXT_UPPER_A() && c <= TEXT_UPPER_Z()) || c == TEXT_UNDERSCORE();
+};
+
+hàm công khai tách SQL(sql) {
+    tokens = [];
+    n = độ dài(sql);
+    i = 0;
+    khi (i < n) {
+        c = sql[i];
+        nếu (c == TEXT_SPACE() || c == TEXT_NEWLINE() || c == TEXT_CARRIAGE_RETURN() || c == TEXT_TAB()) {
+            i++;
+            bỏ qua;
+        };
+        nếu (c == TEXT_MINUS() && i + 1 < n && sql[i + 1] == TEXT_MINUS()) {
+            khi (i < n && sql[i] != TEXT_NEWLINE()) { i++; };
+            bỏ qua;
+        };
+        nếu (c == TEXT_QUOTE()) {
+            i++;
+            s = TEXT_EMPTY();
+            đóng = sai;
+            khi (i < n) {
+                c = sql[i];
+                i++;
+                nếu (c == TEXT_QUOTE()) {
+                    nếu (i < n && sql[i] == TEXT_QUOTE()) {
+                        s += TEXT_QUOTE();
+                        i++;
+                    } hoặc {
+                        đóng = đúng;
+                        thoát;
+                    };
+                } hoặc { s += c; };
+            };
+            nếu (!đóng) { ném ERR_UNCLOSED_STRING(); };
+            thêm(tokens, bản ghi token(TOKEN_STRING(), s));
+            bỏ qua;
+        };
+        nếu (chữ cái(c)) {
+            s = c;
+            i++;
+            khi (i < n && (chữ cái(sql[i]) || chữ số(sql[i]))) {
+                s += sql[i];
+                i++;
+            };
+            thêm(tokens, bản ghi token(TOKEN_WORD(), chuỗi hoa(s)));
+            bỏ qua;
+        };
+        nếu (chữ số(c) || (c == TEXT_MINUS() && i + 1 < n && chữ số(sql[i + 1]))) {
+            s = c;
+            i++;
+            khi (i < n && chữ số(sql[i])) { s += sql[i]; i++; };
+            nếu (i < n && sql[i] == TEXT_DOT()) {
+                s += TEXT_DOT();
+                i++;
+                nếu (i >= n || !chữ số(sql[i])) { ném ERR_INVALID_REAL(); };
+                khi (i < n && chữ số(sql[i])) { s += sql[i]; i++; };
+            };
+            thêm(tokens, bản ghi token(TOKEN_NUMBER(), s));
+            bỏ qua;
+        };
+        nếu (c == TEXT_OPEN_PAREN() || c == TEXT_CLOSE_PAREN() || c == TEXT_COMMA() || c == TEXT_SEMICOLON() || c == TEXT_STAR() || c == TEXT_DOT() || c == TEXT_EQUAL() || c == TEXT_LESS() || c == TEXT_GREATER() || c == TEXT_BANG()) {
+            i++;
+            nếu (i < n && ((c == TEXT_LESS() && sql[i] == TEXT_GREATER()) || ((c == TEXT_LESS() || c == TEXT_GREATER() || c == TEXT_BANG()) && sql[i] == TEXT_EQUAL()))) {
+                c += sql[i];
+                i++;
+            };
+            nếu (c == TEXT_BANG()) { ném ERR_INVALID_BANG(); };
+            thêm(tokens, bản ghi token(TOKEN_SYMBOL(), c));
+            bỏ qua;
+        };
+        ném ERR_INVALID_CHARACTER() + c;
+    };
+    thêm(tokens, bản ghi token(TOKEN_END(), TEXT_EMPTY()));
+    trả về tokens;
+};

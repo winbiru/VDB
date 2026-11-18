@@ -1,0 +1,223 @@
+nhập gói.mạng.http.máy chủ.*;
+nhập gói.hệ thống.môi trường.đọc biến môi trường;
+nhập gói.hệ thống.tiến trình.chạy tiến trình;
+nhập gói.nhập xuất.tệp.đọc tệp;
+nhập gói.nhập xuất.tệp.ghi tệp;
+nhập gói.nhập xuất.tệp.đổi tên tệp;
+nhập gói.nhập xuất.đường dẫn.*;
+nhập gói.dữ liệu.json.json.json tạo;
+nhập gói.dữ liệu.json.json.json phân tích;
+nhập gói.lõi.chuyển kiểu.*;
+nhập gói.văn bản.chuỗi.*;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+hàm lỗi http(yêu cầu, mã, lỗi) {
+    máy chủ http trả lời(yêu cầu, mã, json tạo({"error": lỗi}));
+};
+
+hàm chạy sql tùy chọn(cli, catalog, sql, chế độ, tùy chọn, đo) {
+    args = ["--db", catalog, chế độ, "-e", sql];
+    nếu (tùy chọn != "") { thêm(args, tùy chọn); };
+    nếu (đo) { thêm(args, "--timing"); };
+    kết quả = chạy tiến trình(cli, args);
+    nếu (kết quả["mã thoát"] != 0) {
+        ném kết quả["lỗi"];
+    };
+    ds = [];
+    dòng = tách hằng văn bản(kết quả["đầu ra"], "\n");
+    lặp(i = 0; i < độ dài(dòng); i++) {
+        nếu (dòng[i] != "") { thêm(ds, json phân tích(dòng[i])); };
+    };
+    trả về ds;
+};
+
+hàm chạy sql(cli, catalog, sql, chế độ) {
+    trả về chạy sql tùy chọn(cli, catalog, sql, chế độ, "", sai);
+};
+
+hàm tên hợp lệ(tên) {
+    nếu (loại của(tên) != "chuỗi" || độ dài(tên) == 0) { trả về sai; };
+    lặp(i = 0; i < độ dài(tên); i++) {
+        c = tên[i];
+        chữ = (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c == "_";
+        nếu (!chữ && !(i > 0 && c >= "0" && c <= "9")) { trả về sai; };
+    };
+    trả về đúng;
+};
+
+// Canonicalize existing files and new filenames relative to a real parent.
+hàm catalog chuẩn(đường, mới, state) {
+    nếu (loại của(đường) != "chuỗi" || !đường dẫn là tuyệt đối(đường)) {
+        ném "Hãy chọn đường dẫn catalog tuyệt đối";
+    };
+    nếu (mới) {
+        đường = đường dẫn nối(đường dẫn chuẩn(đường dẫn cha(đường)), đường dẫn tên(đường));
+    } hoặc {
+        đường = đường dẫn chuẩn(đường);
+        nếu (!là tệp(đường)) { ném "Catalog phải là tệp thường"; };
+    };
+    nếu (đường == state || bắt đầu bằng(đường, state + ".")) { ném "Đây là tệp cấu hình Studio"; };
+    // Canonical path comparisons also catch symbolic aliases. The CLI rejects
+    // hard-linked catalogs before running SQL. Avoid the unsupported native
+    // file-equivalence intrinsic and never canonicalize a missing state file.
+    nếu (đường dẫn tồn tại(state)) {
+        nếu (đường == đường dẫn chuẩn(state)) { ném "Đây là tệp cấu hình Studio"; };
+    };
+    trả về đường;
+};
+
+hàm cấu hình hợp lệ(cấu hình) {
+    nếu (loại của(cấu hình) != "từ điển") { trả về sai; };
+    nếu (lấy từ điển(cấu hình, "version", 0) != 1) { trả về sai; };
+    nếu (loại của(lấy từ điển(cấu hình, "profiles", rỗng)) != "danh sách") { trả về sai; };
+    nếu (loại của(lấy từ điển(cấu hình, "sessions", rỗng)) != "danh sách") { trả về sai; };
+    trả về đúng;
+};
+
+hàm xử lý(yêu cầu, cli, catalog, html, token, host, state) {
+    nếu (yêu cầu http phần đầu(yêu cầu, "host") != host) {
+        lỗi http(yêu cầu, 403, "Host không hợp lệ");
+        trả về;
+    };
+    đường = yêu cầu http đường dẫn(yêu cầu);
+    phương thức = yêu cầu http phương thức(yêu cầu);
+    nếu (đường == "/" && phương thức == "GET") {
+        máy chủ http trả lời(yêu cầu, 200, html, "text/html");
+        trả về;
+    };
+    nếu (phương thức != "POST") {
+        lỗi http(yêu cầu, 405, "Chỉ hỗ trợ POST");
+        trả về;
+    };
+    nếu (yêu cầu http phần đầu(yêu cầu, "x-vdb-token") != token) {
+        lỗi http(yêu cầu, 403, "Phiên VDB Studio không hợp lệ");
+        trả về;
+    };
+    thử {
+        body = json phân tích(yêu cầu http nội dung(yêu cầu));
+        nếu (đường == "/api/workspace") {
+            cấu hình = rỗng;
+            cảnh báo = "";
+            nếu (đường dẫn tồn tại(state)) {
+                thử {
+                    cấu hình = json phân tích(đọc tệp(state));
+                    nếu (!cấu hình hợp lệ(cấu hình)) { ném "Cấu hình không hợp lệ"; };
+                } bắt lỗi(e) {
+                    sao lưu = state + ".corrupt." + token;
+                    đổi tên tệp(state, sao lưu);
+                    cấu hình = rỗng;
+                    cảnh báo = "Cấu hình lỗi đã được lưu lại tại " + sao lưu;
+                };
+            };
+            máy chủ http trả lời(yêu cầu, 200, json tạo({"catalog": catalog, "workspace": cấu hình, "workspaceError": cảnh báo}));
+            trả về;
+        };
+        nếu (đường == "/api/workspace/save") {
+            cấu hình = lấy từ điển(body, "workspace", rỗng);
+            nếu (!cấu hình hợp lệ(cấu hình)) { ném "Cấu hình Studio không hợp lệ"; };
+            tạm = state + "." + token + ".tmp";
+            ghi tệp(tạm, json tạo(cấu hình));
+            đổi tên tệp(tạm, state);
+            máy chủ http trả lời(yêu cầu, 200, json tạo({"ok": đúng}));
+            trả về;
+        };
+        nếu (đường == "/api/catalog") {
+            mới = lấy từ điển(body, "create", sai);
+            đích = catalog chuẩn(lấy từ điển(body, "catalog", ""), mới, state);
+            chế độ = "--existing";
+            nếu (mới) { chế độ = "--new"; };
+            chạy sql(cli, đích, "SHOW DATABASES; USE DEFAULT; SHOW TABLES;", chế độ);
+            máy chủ http trả lời(yêu cầu, 200, json tạo({"catalog": đích}));
+            trả về;
+        };
+        nếu (đường == "/api/backup" || đường == "/api/restore") {
+            phụcHồi = đường == "/api/restore";
+            đích = catalog chuẩn(lấy từ điển(body, "catalog", ""), phụcHồi, state);
+            tệp = catalog chuẩn(lấy từ điển(body, "backup", ""), !phụcHồi, state);
+            tùyChọn = "--backup";
+            nếu (phụcHồi) { tùyChọn = "--restore"; };
+            kếtQuả = chạy tiến trình(cli, ["--db", đích, tùyChọn, tệp]);
+            nếu (kếtQuả["mã thoát"] != 0) { ném kếtQuả["lỗi"]; };
+            máy chủ http trả lời(yêu cầu, 200, json tạo({"catalog": đích, "backup": tệp}));
+            trả về;
+        };
+        nếu (đường != "/api/query" && đường != "/api/validate" && đường != "/api/guarded-query") {
+            lỗi http(yêu cầu, 404, "Không tìm thấy");
+            trả về;
+        };
+        đích = catalog chuẩn(lấy từ điển(body, "catalog", catalog), sai, state);
+        sql = lấy từ điển(body, "sql", "");
+        db = lấy từ điển(body, "database", "");
+        nếu (loại của(sql) != "chuỗi" || độ dài(sql) == 0) { ném "SQL trống"; };
+        nếu (db != "") {
+            nếu (!tên hợp lệ(db)) { ném "Tên database không hợp lệ"; };
+            sql = "USE " + db + ";\n" + sql;
+        };
+        tùy chọn = "";
+        nếu (đường == "/api/validate") { tùy chọn = "--validate"; };
+        nếu (đường == "/api/guarded-query") { tùy chọn = "--guard-writes"; };
+        ds = chạy sql tùy chọn(cli, đích, sql, "--existing", tùy chọn, đường != "/api/validate");
+        nếu (đường == "/api/validate") {
+            máy chủ http trả lời(yêu cầu, 200, json tạo({"valid": đúng}));
+            trả về;
+        };
+        kết quả = [];
+        bắt đầu = 0;
+        nếu (db != "") { bắt đầu = 1; };
+        thời lượng = ds[độ dài(ds) - 1]["timing"];
+        lặp(i = bắt đầu; i < độ dài(ds) - 1; i++) { thêm(kết quả, ds[i]); };
+        máy chủ http trả lời(yêu cầu, 200, json tạo({"results": kết quả, "timing": thời lượng}));
+    } bắt lỗi(e) {
+        lỗi http(yêu cầu, 400, e);
+    };
+};
+
+hàm chính() {
+    cli = đọc biến môi trường("VDB_STUDIO_CLI", "");
+    catalog = đọc biến môi trường("VDB_STUDIO_DB", "");
+    html = đọc tệp(đọc biến môi trường("VDB_STUDIO_HTML", ""));
+    token = đọc biến môi trường("VDB_STUDIO_TOKEN", "");
+    port = đọc biến môi trường("VDB_STUDIO_PORT", "8765");
+    nếu (cli == "" || catalog == "" || token == "") { ném "Chạy qua ./vdb studio"; };
+    state = đọc biến môi trường("VDB_STUDIO_STATE", "");
+    nếu (state == "") { ném "Thiếu đường dẫn cấu hình Studio"; };
+    state = đường dẫn nối(đường dẫn chuẩn(đường dẫn cha(state)), đường dẫn tên(state));
+    // studio/serve holds the OS workspace lock for the server process lifetime.
+    // Preserve launcher behavior: the explicitly requested initial catalog may be new.
+    nếu (!đường dẫn tồn tại(catalog)) {
+        catalog = catalog chuẩn(catalog, đúng, state);
+        chạy sql(cli, catalog, "SHOW DATABASES;", "--new");
+    };
+    catalog = catalog chuẩn(catalog, sai, state);
+    // Validate the requested catalog before reporting readiness.
+    chạy sql(cli, catalog, "SHOW DATABASES;", "--existing");
+    host = "127.0.0.1:" + port;
+    server = máy chủ http mở(thành số nguyên(port));
+    url = "http://" + host + "/#" + token;
+    sẵn sàng = đọc biến môi trường("VDB_STUDIO_READY", "");
+    nếu (sẵn sàng != "") {
+        ghi tệp(sẵn sàng, "ready");
+        in "VDB Studio: cửa sổ desktop";
+    } hoặc {
+        in "VDB Studio: " + url;
+    };
+    mở = đọc biến môi trường("VDB_STUDIO_OPENER", "");
+    nếu (mở != "") {
+        thử {
+            kết quả mở = chạy tiến trình(mở, [url], rỗng, 5000);
+            nếu (kết quả mở["mã thoát"] != 0) {
+                in "Không thể tự mở trình duyệt. Hãy mở URL ở trên.";
+            };
+        } bắt lỗi(e) {
+            in "Không thể tự mở trình duyệt. Hãy mở URL ở trên.";
+        };
+    };
+    khi (đúng) {
+        thử {
+            yêu cầu = máy chủ http yêu cầu kế tiếp(server);
+            xử lý(yêu cầu, cli, catalog, html, token, host, state);
+        } bắt lỗi(e) {
+            in "Studio: " + e;
+        };
+    };
+};

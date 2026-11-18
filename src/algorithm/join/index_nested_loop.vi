@@ -1,0 +1,31 @@
+nhập constants.*;
+nhập command.common.*;
+nhập algorithm.row.*;
+nhập algorithm.index.bplus_tree.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm công khai nối lặp index(kếHoạch, hàng, hàngPhải) {
+    a = kếHoạch[KEY_LEFT_INDEX()]; b = kếHoạch[KEY_RIGHT_INDEX()];
+    cây = kếHoạch[KEY_ITEM()]; đơn = độ dài(cột index(cây)) == 1;
+    ds = []; trống = [];
+    lặp(i = 0; i < kếHoạch[KEY_RIGHT_WIDTH()]; i++) { thêm(trống, rỗng); };
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        có = sai; v = hàng[i][a];
+        nếu (v != rỗng) {
+            ứngViên = [];
+            nếu (đơn) { ứngViên = tìm bằng index(cây, v, hàngPhải); }
+            hoặc {
+                đầu = hạng tiền tố index(cây, [v], sai); cuối = hạng tiền tố index(cây, [v], đúng);
+                ứngViên = tìm khoảng index(cây, [đầu, cuối], hàngPhải);
+            };
+            lặp(j = 0; j < độ dài(ứngViên); j++) {
+                dòng = ứngViên[j];
+                nếu (so sánh(v, TEXT_EQUAL(), dòng[b])) {
+                    thêm(ds, ghép(hàng[i], dòng)); có = đúng;
+                };
+            };
+        };
+        nếu (!có && kếHoạch[KEY_KIND()] == SQL_LEFT()) { thêm(ds, ghép(hàng[i], trống)); };
+    };
+    trả về ds;
+};

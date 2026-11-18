@@ -1,0 +1,53 @@
+nhập constants.*;
+nhập algorithm.index.bplus_tree.*;
+nhập algorithm.join.hash_join.*;
+nhập algorithm.join.nested_loop.*;
+nhập algorithm.join.index_nested_loop.*;
+nhập algorithm.aggregate.hash_aggregate.*;
+nhập algorithm.distinct.hash_distinct.*;
+nhập algorithm.sort.merge_sort.*;
+
+hàm công khai thực thi thuật toán(kếHoạch, dữLiệu) {
+    kiểu = kếHoạch[KEY_ALGORITHM()];
+
+    nếu (kiểu == ALGO_INDEX_SCAN()) {
+        trả về tìm bằng index(kếHoạch[KEY_ITEM()], kếHoạch[KEY_VALUE()], dữLiệu[KEY_ROWS()]);
+    };
+
+    nếu (kiểu == ALGO_INDEX_RANGE_SCAN()) {
+        trả về tìm khoảng index(kếHoạch[KEY_ITEM()], kếHoạch[KEY_VALUE()], dữLiệu[KEY_ROWS()]);
+    };
+
+    nếu (kiểu == ALGO_NESTED_LOOP_JOIN()) {
+        trả về nối lặp lồng(kếHoạch, dữLiệu[KEY_ROWS()], dữLiệu[KEY_RIGHT()]);
+    };
+
+    nếu (kiểu == ALGO_INDEX_NESTED_LOOP_JOIN()) {
+        trả về nối lặp index(kếHoạch, dữLiệu[KEY_ROWS()], dữLiệu[KEY_RIGHT()]);
+    };
+
+    nếu (kiểu == ALGO_HASH_JOIN()) {
+        trả về nối băm(kếHoạch, dữLiệu[KEY_ROWS()], dữLiệu[KEY_RIGHT()]);
+    };
+
+    nếu (kiểu == ALGO_HASH_AGGREGATE()) {
+        thaoTác = dữLiệu[KEY_OPERATION()];
+        nếu (thaoTác == SQL_GROUP()) {
+            trả về nhóm băm(dữLiệu[KEY_ROWS()], dữLiệu[KEY_GROUP()]);
+        };
+        nếu (thaoTác == AGG_REDUCE()) {
+            trả về tổng hợp(dữLiệu[KEY_ROWS()], dữLiệu[KEY_ITEM()]);
+        };
+        ném ERR_UNSUPPORTED_AGG_OPERATION() + thaoTác;
+    };
+
+    nếu (kiểu == ALGO_HASH_DISTINCT()) {
+        trả về phân biệt băm(dữLiệu[KEY_ROWS()]);
+    };
+
+    nếu (kiểu == ALGO_MERGE_SORT()) {
+        trả về sắp hợp nhất(dữLiệu[KEY_ROWS()], dữLiệu[KEY_ORDER()]);
+    };
+
+    ném ERR_UNSUPPORTED_ALGORITHM() + kiểu;
+};
