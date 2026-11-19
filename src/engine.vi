@@ -41,6 +41,7 @@ lớp công khai Bộ Máy VDB {
         nếu (op == SQL_CREATE_VIEW()) { trả về thực thi create view(mình, cmd); };
         nếu (op == SQL_DROP_VIEW()) { trả về thực thi drop view(mình, cmd); };
         nếu (op == SQL_SHOW_VIEWS()) { trả về thực thi show views(mình, cmd); };
+        nếu (op == SQL_ANALYZE_TABLE()) { trả về thực thi analyze(mình, cmd); };
         nếu (op == SQL_SHOW_STATISTICS()) { trả về thực thi show statistics(mình, cmd); };
         nếu (op == SQL_SHOW_TABLES()) { trả về thực thi show tables(mình, cmd); };
         nếu (op == SQL_CREATE_INDEX()) { trả về thực thi create index(mình, cmd); };

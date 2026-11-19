@@ -1,0 +1,54 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập algorithm.row.*;
+nhập algorithm.sort.merge_sort.*;
+nhập gói.văn bản.chuỗi.độ dài;
+
+// Stable key order, retaining the original row ordinal. NULL never joins.
+hàm thứ tự khóa nối(hàng, cột) {
+    ds = [];
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        v = hàng[i][cột];
+        nếu (v != rỗng) { thêm(ds, bản ghi hàng kết quả(i, [v])); };
+    };
+    trả về sắp hợp nhất(ds, [[đúng, sai]]);
+};
+
+// Match equal-key runs once and record their right-hand range for each
+// left ordinal. Emitting in original left order preserves SQL row order
+// without sorting the potentially much larger joined output.
+hàm công khai nối hợp nhất(kếHoạch, hàng, hàngPhải) {
+    a = kếHoạch[KEY_LEFT_INDEX()]; b = kếHoạch[KEY_RIGHT_INDEX()];
+    trái = thứ tự khóa nối(hàng, a); phải = thứ tự khóa nối(hàngPhải, b);
+    khoảng = [];
+    lặp(i = 0; i < độ dài(hàng); i++) { thêm(khoảng, rỗng); };
+    i = 0; j = 0;
+    khi (i < độ dài(trái) && j < độ dài(phải)) {
+        x = trái[i][KEY_SORT()][0]; y = phải[j][KEY_SORT()][0];
+        nếu (x < y) { i++; bỏ qua; };
+        nếu (y < x) { j++; bỏ qua; };
+        cuối = j + 1;
+        // V++ evaluates both operands of &&. Guard each indexed read.
+        khi (cuối < độ dài(phải)) {
+            nếu (phải[cuối][KEY_SORT()][0] != y) { thoát; };
+            cuối++;
+        };
+        khi (i < độ dài(trái)) {
+            nếu (trái[i][KEY_SORT()][0] != x) { thoát; };
+            khoảng[trái[i][KEY_ROW()]] = [j, cuối]; i++;
+        };
+        j = cuối;
+    };
+    ds = []; trống = [];
+    lặp(i = 0; i < kếHoạch[KEY_RIGHT_WIDTH()]; i++) { thêm(trống, rỗng); };
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        biên = khoảng[i];
+        nếu (biên != rỗng) {
+            lặp(j = biên[0]; j < biên[1]; j++) {
+                thêm(ds, ghép(hàng[i], hàngPhải[phải[j][KEY_ROW()]]));
+            };
+        } hoặc nếu (kếHoạch[KEY_KIND()] == SQL_LEFT()) { thêm(ds, ghép(hàng[i], trống)); };
+    };
+    trả về ds;
+};

@@ -44,6 +44,48 @@ hàm công khai chèn các index(bảng, đầu) {
     };
 };
 
+// Remove all changed keys before inserting their final values, so uniqueness
+// is checked against the final statement state rather than an intermediate row.
+hàm công khai sửa các index(bảng, thayĐổi) {
+    nếu (độ dài(thayĐổi) == 0) { trả về; };
+    ds = danh sách index(bảng); hàng = bảng[KEY_ROWS()];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        m = ds[i]; c = cột index(m); vịTrí = vị trí index(bảng, c); đổi = [];
+        lặp(j = 0; j < độ dài(thayĐổi); j++) {
+            dòng = thayĐổi[j][0];
+            cũ = khóa hàng index(thayĐổi[j][1], vịTrí);
+            mới = khóa hàng index(hàng[dòng], vịTrí);
+            khác = sai;
+            lặp(k = 0; k < độ dài(cũ); k++) { nếu (cũ[k] != mới[k]) { khác = đúng; }; };
+            nếu (khác) { thêm(đổi, [dòng, cũ, mới]); };
+        };
+        nếu (độ dài(đổi) == 0) { bỏ qua; };
+        nếu (!có rank trang(m)) {
+            ds[i] = xây cây index(m[KEY_NAME()], c, hàng, vịTrí, lấy từ điển(m, KEY_UNIQUE(), sai));
+            bỏ qua;
+        };
+        lặp(j = 0; j < độ dài(đổi); j++) { xóa khóa index(m, đổi[j][1], đổi[j][0]); };
+        lặp(j = 0; j < độ dài(đổi); j++) { chèn khóa index(m, đổi[j][2], đổi[j][0], sai); };
+        thu gọn index(m, []);
+    };
+};
+
+hàm công khai xóa các index(bảng, hàngCũ, đãXóa, ánhXạ) {
+    nếu (độ dài(đãXóa) == 0) { trả về; };
+    ds = danh sách index(bảng);
+    lặp(i = 0; i < độ dài(ds); i++) {
+        m = ds[i]; c = cột index(m); vịTrí = vị trí index(bảng, c);
+        nếu (!có rank trang(m)) {
+            ds[i] = xây cây index(m[KEY_NAME()], c, bảng[KEY_ROWS()], vịTrí, lấy từ điển(m, KEY_UNIQUE(), sai));
+            bỏ qua;
+        };
+        lặp(j = 0; j < độ dài(đãXóa); j++) {
+            dòng = đãXóa[j]; xóa khóa index(m, khóa hàng index(hàngCũ[dòng], vịTrí), dòng);
+        };
+        thu gọn index(m, ánhXạ);
+    };
+};
+
 hàm công khai phân tích create index(bộ, duyNhất) {
     tên = bộ.tên định danh(); bộ.cần(SQL_ON());
     bảng = bộ.tên định danh(); bộ.cần(TEXT_OPEN_PAREN());

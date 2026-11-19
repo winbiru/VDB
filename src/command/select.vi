@@ -1,9 +1,12 @@
+nhập optimizer.statistics.*;
 nhập constants.*;
 nhập records.*;
 nhập command.common.*;
 nhập algorithm.row.*;
 nhập algorithm.dispatch.*;
 nhập optimizer.planner.*;
+nhập optimizer.join_order.*;
+nhập optimizer.pushdown.*;
 nhập gói.văn bản.chuỗi.độ dài;
 nhập gói.lõi.chuyển kiểu.loại của;
 nhập gói.bộ sưu tập.từ điển.lấy từ điển;
@@ -124,8 +127,11 @@ hàm chạy select(máy, cmd, chỉSchema, sâu) {
         nếu (a >= n && b < n) { tạm = a; a = b; b = tạm; };
         nếu (a >= n || b < n) { ném ERR_JOIN_COLUMNS(); };
         nếu (chỉMetadata && lấy từ điển(phải, KEY_QUERY(), rỗng) != rỗng) { sốTrái = -1; };
-        kếHoạchNối = kế hoạch join(nối[KEY_KIND()], a, b - n, độ dài(cộtPhải), sốTrái, phải, cột[a][KEY_TYPE()]);
-        sốTrái = ước lượng nối(nối[KEY_KIND()], sốTrái, phải, b - n);
+        phânBố = [];
+        nếu (k == 0 && sốTrái >= 0) { phânBố = ước lượng phân bố nối(bảng, a, phải, b - n, nối[KEY_KIND()]); };
+        kếHoạchNối = kế hoạch join(nối[KEY_KIND()], a, b - n, độ dài(cộtPhải), sốTrái, phải, cột[a][KEY_TYPE()], phânBố);
+        nếu (độ dài(phânBố) > 0) { sốTrái = phânBố[1]; }
+        hoặc { sốTrái = ước lượng nối(nối[KEY_KIND()], sốTrái, phải, b - n); };
         kếHoạchNối[KEY_OUTPUT_ESTIMATE()] = rỗng;
         nếu (sốTrái >= 0) { kếHoạchNối[KEY_OUTPUT_ESTIMATE()] = sốTrái; };
         thêm(kếHoạchNốiDanhSách, kếHoạchNối);
@@ -189,19 +195,50 @@ hàm chạy select(máy, cmd, chỉSchema, sâu) {
     };
     kếHoạch = kế hoạch select();
     kếHoạch[KEY_SCAN()] = kế hoạch scan(bảng, điềuKiện, độ dài(bảngNối) > 0);
+    tấtCả = ghép([bảng], bảngNối);
+    lọcNguồn = kế hoạch đẩy lọc(tấtCả, kếHoạchNốiDanhSách, cột, điềuKiện);
+    phươngÁn = chọn thứ tự nối(tấtCả, kếHoạchNốiDanhSách, lọcNguồn);
+    đổiThứTự = độ dài(phươngÁn) > 0;
+    nếu (!đổiThứTự && độ dài(lọcNguồn) > 0) { kếHoạchNốiDanhSách = nối sau đẩy lọc(tấtCả, kếHoạchNốiDanhSách, cột, lọcNguồn); };
     nếu (cmd[KEY_OP()] == SQL_EXPLAIN()) {
-        trả về giải thích kế hoạch(cmd, bảng, bảngNối, kếHoạchNốiDanhSách, kếHoạch, gộp);
+        nếu (đổiThứTự) {
+            thứTự = phươngÁn[0]; phải = []; lọcVậtLý = [];
+            lặp(i = 0; i < độ dài(thứTự); i++) {
+                nếu (i > 0) { thêm(phải, tấtCả[thứTự[i]]); };
+                nếu (độ dài(lọcNguồn) > 0) { thêm(lọcVậtLý, lọcNguồn[thứTự[i]]); };
+            };
+            trả về giải thích kế hoạch(cmd, tấtCả[thứTự[0]], phải, phươngÁn[1], kếHoạch, gộp, điềuKiện, thứTự, lọcVậtLý, ước lượng lọc nối(tấtCả, phươngÁn[1], điềuKiện, lọcNguồn));
+        };
+        sốLọcNối = ước lượng lọc nối(tấtCả, kếHoạchNốiDanhSách, điềuKiện, lọcNguồn);
+        chínhXác = thống kê lọc nối(tấtCả, kếHoạchNốiDanhSách, cột, điềuKiện, lọcNguồn);
+        nếu (độ dài(chínhXác) > 0) {
+            kếHoạchNốiDanhSách[0][KEY_OUTPUT_ESTIMATE()] = chínhXác[0];
+            sốLọcNối = chínhXác[1];
+        };
+        trả về giải thích kế hoạch(cmd, bảng, bảngNối, kếHoạchNốiDanhSách, kếHoạch, gộp, điềuKiện, [], lọcNguồn, sốLọcNối);
+    };
+    nếu (độ dài(lọcNguồn) > 0) {
+        bảng = chạy lọc nguồn(bảng, lọcNguồn[0]); hàng = bảng[KEY_ROWS()];
+        dsNguồn = [];
+        lặp(i = 0; i < độ dài(bảngNối); i++) {
+            thêm(dsNguồn, chạy lọc nguồn(bảngNối[i], lọcNguồn[i + 1]));
+        };
+        bảngNối = dsNguồn; tấtCả = ghép([bảng], bảngNối);
     };
     nếu (kếHoạch[KEY_SCAN()][KEY_ALGORITHM()] != ALGO_TABLE_SCAN()) {
         hàng = thực thi thuật toán(kếHoạch[KEY_SCAN()], bản ghi hàng(hàng));
     };
-    lặp(k = 0; k < độ dài(bảngNối); k++) {
-        kếHoạchNối = kếHoạchNốiDanhSách[k];
-        nếu (k > 0) {
-            a = kếHoạchNối[KEY_LEFT_INDEX()];
-            kếHoạchNối = kế hoạch join(kếHoạchNối[KEY_KIND()], a, kếHoạchNối[KEY_RIGHT_INDEX()], kếHoạchNối[KEY_RIGHT_WIDTH()], độ dài(hàng), bảngNối[k], cột[a][KEY_TYPE()]);
+    nếu (đổiThứTự) { hàng = chạy thứ tự nối(tấtCả, phươngÁn, độ dài(lọcNguồn) > 0); }
+    hoặc {
+        lặp(k = 0; k < độ dài(bảngNối); k++) {
+            kếHoạchNối = kếHoạchNốiDanhSách[k];
+            nếu (k > 0 || độ dài(lọcNguồn) > 0) {
+                a = kếHoạchNối[KEY_LEFT_INDEX()];
+                phânBố = phân bố chạy nối(kếHoạchNối, độ dài(hàng), độ dài(bảngNối[k][KEY_ROWS()]));
+                kếHoạchNối = kế hoạch join(kếHoạchNối[KEY_KIND()], a, kếHoạchNối[KEY_RIGHT_INDEX()], kếHoạchNối[KEY_RIGHT_WIDTH()], độ dài(hàng), bảngNối[k], cột[a][KEY_TYPE()], phânBố);
+            };
+            hàng = thực thi thuật toán(kếHoạchNối, bản ghi dữ liệu nối(hàng, bảngNối[k][KEY_ROWS()]));
         };
-        hàng = thực thi thuật toán(kếHoạchNối, bản ghi dữ liệu nối(hàng, bảngNối[k][KEY_ROWS()]));
     };
     // Giới hạn bộ nhớ kết quả; WHERE vẫn được kiểm tra để giữ ngữ nghĩa lỗi.
     n = cmd[KEY_LIMIT()];

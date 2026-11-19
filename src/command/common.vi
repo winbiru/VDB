@@ -126,20 +126,20 @@ hàm đọc toán hạng(hàng, a) {
 };
 
 // SQL three-valued logic: -1 UNKNOWN, 0 FALSE, 1 TRUE.
-hàm so sánh ba trị(a, op, b) {
+hàm công khai so sánh ba trị(a, op, b) {
     nếu (a == rỗng || b == rỗng) { trả về -1; };
     nếu (so sánh(a, op, b)) { trả về 1; };
     trả về 0;
 };
 
-hàm và ba trị(a, b) {
+hàm công khai và ba trị(a, b) {
     nếu (a == 0 || b == 0) { trả về 0; };
     nếu (a == -1 || b == -1) { trả về -1; };
     trả về 1;
 };
 
 // Greedy wildcard matching; % matches any sequence, _ one Unicode character.
-hàm khớp mẫu(v, mẫu) {
+hàm công khai khớp mẫu(v, mẫu) {
     nếu (loại của(v) != TYPE_STRING() || loại của(mẫu) != TYPE_STRING()) { ném ERR_LIKE_TYPE(); };
     i = 0; j = 0; sao = -1; mốc = 0;
     n = độ dài(v); m = độ dài(mẫu);

@@ -1,0 +1,526 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập algorithm.sort.merge_sort.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+nhập gói.lõi.chuyển kiểu.loại của;
+
+// Per column: NULL count, non-NULL NDV, MCV [value,count],
+// residual histogram [min,max,count,NDV]. MCV keys are excluded from buckets.
+hàm công khai phân tích thống kê(bảng) {
+    hàng = bảng[KEY_ROWS()]; ds = [];
+    lặp(j = 0; j < độ dài(bảng[KEY_COLUMNS()]); j++) {
+        giáTrị = []; sốNull = 0;
+        lặp(i = 0; i < độ dài(hàng); i++) {
+            v = hàng[i][j];
+            nếu (v == rỗng) { sốNull++; }
+            hoặc { thêm(giáTrị, bản ghi hàng kết quả(v, [v])); };
+        };
+        giáTrị = sắp hợp nhất(giáTrị, [[đúng, sai]]);
+        nhóm = []; i = 0;
+        khi (i < độ dài(giáTrị)) {
+            v = giáTrị[i][KEY_ROW()]; đầu = i; i++;
+            khi (i < độ dài(giáTrị)) {
+                nếu (giáTrị[i][KEY_ROW()] != v) { thoát; };
+                i++;
+            };
+            thêm(nhóm, [v, i - đầu]);
+        };
+        ứngViên = [];
+        lặp(i = 0; i < độ dài(nhóm); i++) {
+            nếu (nhóm[i][1] > 1) { thêm(ứngViên, bản ghi hàng kết quả(i, [nhóm[i][1]])); };
+        };
+        ứngViên = sắp hợp nhất(ứngViên, [[đúng, đúng]]);
+        phổBiến = []; đãChọn = [];
+        lặp(i = 0; i < độ dài(nhóm); i++) { thêm(đãChọn, sai); };
+        lặp(i = 0; i < độ dài(ứngViên) && i < 8; i++) {
+            k = ứngViên[i][KEY_ROW()]; thêm(phổBiến, nhóm[k]); đãChọn[k] = đúng;
+        };
+        còn = độ dài(nhóm) - độ dài(phổBiến);
+        rộng = 1;
+        khi (rộng * 16 < còn) { rộng++; };
+        biên = []; nhỏ = rỗng; lớn = rỗng; số = 0; phânBiệt = 0;
+        lặp(i = 0; i < độ dài(nhóm); i++) {
+            nếu (đãChọn[i]) { bỏ qua; };
+            nếu (phânBiệt == 0) { nhỏ = nhóm[i][0]; };
+            lớn = nhóm[i][0]; số = số + nhóm[i][1]; phânBiệt++;
+            nếu (phânBiệt == rộng) {
+                thêm(biên, [nhỏ, lớn, số, phânBiệt]); số = 0; phânBiệt = 0;
+            };
+        };
+        nếu (phânBiệt > 0) { thêm(biên, [nhỏ, lớn, số, phânBiệt]); };
+        thêm(ds, [sốNull, độ dài(nhóm), phổBiến, biên]);
+    };
+    trả về ds;
+};
+
+hàm công khai hủy thống kê(bảng) {
+    nếu (lấy từ điển(bảng, KEY_JOINT_STATISTICS(), rỗng) != rỗng) { bảng[KEY_JOINT_STATISTICS()] = []; };
+    nếu (lấy từ điển(bảng, KEY_STATISTICS(), rỗng) != rỗng) { bảng[KEY_STATISTICS()] = []; };
+};
+
+hàm công khai thống kê cột(bảng, i) {
+    ds = lấy từ điển(bảng, KEY_STATISTICS(), []);
+    nếu (loại của(ds) != TYPE_LIST()) { trả về rỗng; };
+    nếu (độ dài(ds) != độ dài(bảng[KEY_COLUMNS()])) { trả về rỗng; };
+    s = ds[i];
+    nếu (loại của(s) != TYPE_LIST()) { trả về rỗng; };
+    nếu (độ dài(s) != 4) { trả về rỗng; };
+    nếu (loại của(s[0]) != TYPE_INTEGER() || loại của(s[1]) != TYPE_INTEGER() || loại của(s[2]) != TYPE_LIST() || loại của(s[3]) != TYPE_LIST()) { trả về rỗng; };
+    n = độ dài(bảng[KEY_ROWS()]);
+    nếu (s[0] < 0 || s[0] > n || s[1] < 0 || s[1] > n - s[0] || độ dài(s[2]) > 8 || độ dài(s[3]) > 16) { trả về rỗng; };
+    kiểu = bảng[KEY_COLUMNS()][i][KEY_TYPE()];
+    tổng = s[0]; phânBiệt = 0;
+    lặp(j = 0; j < độ dài(s[2]); j++) {
+        m = s[2][j];
+        nếu (loại của(m) != TYPE_LIST()) { trả về rỗng; };
+        nếu (độ dài(m) != 2) { trả về rỗng; };
+        nếu (!kiểu thống kê hợp(kiểu, m[0]) || loại của(m[1]) != TYPE_INTEGER()) { trả về rỗng; };
+        nếu (m[1] < 2 || m[1] > n - tổng) { trả về rỗng; };
+        tổng = tổng + m[1]; phânBiệt++;
+    };
+    lặp(j = 0; j < độ dài(s[3]); j++) {
+        b = s[3][j];
+        nếu (loại của(b) != TYPE_LIST()) { trả về rỗng; };
+        nếu (độ dài(b) != 4) { trả về rỗng; };
+        nếu (!kiểu thống kê hợp(kiểu, b[0]) || !kiểu thống kê hợp(kiểu, b[1]) || loại của(b[2]) != TYPE_INTEGER() || loại của(b[3]) != TYPE_INTEGER()) { trả về rỗng; };
+        nếu (b[0] > b[1] || b[3] < 1 || b[2] < b[3] || b[2] > n - tổng) { trả về rỗng; };
+        nếu ((b[3] == 1) != (b[0] == b[1])) { trả về rỗng; };
+        tổng = tổng + b[2]; phânBiệt = phânBiệt + b[3];
+    };
+    nếu (tổng != n || phânBiệt != s[1]) { trả về rỗng; };
+    trả về s;
+};
+
+hàm công khai số ước lượng bằng(s, v) {
+    lặp(i = 0; i < độ dài(s[2]); i++) {
+        nếu (s[2][i][0] == v) { trả về s[2][i][1]; };
+    };
+    lặp(i = 0; i < độ dài(s[3]); i++) {
+        b = s[3][i];
+        nếu (v >= b[0] && v <= b[1]) { trả về (b[2] + 0.0) / b[3]; };
+    };
+    trả về 0;
+};
+
+hàm công khai kiểu thống kê hợp(kiểu, v) {
+    t = loại của(v);
+    nếu (kiểu == SQL_TEXT() || kiểu == SQL_VARCHAR()) { trả về t == TYPE_STRING(); };
+    trả về t == TYPE_INTEGER() || t == TYPE_REAL() || t == TYPE_BOOLEAN();
+};
+
+// Normalize supported leaves to [operator, column index, literal values].
+// BETWEEN is an AND of two comparisons, including NULL bounds.
+hàm chuẩn điều kiện(bảng, d) {
+    op = d[0];
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        a = chuẩn điều kiện(bảng, d[1]); b = chuẩn điều kiện(bảng, d[2]);
+        nếu (a == rỗng || b == rỗng) { trả về rỗng; };
+        trả về [op, a, b];
+    };
+    nếu (op == SQL_NOT()) {
+        a = chuẩn điều kiện(bảng, d[1]);
+        nếu (a == rỗng) { trả về rỗng; };
+        trả về [op, a];
+    };
+    nếu (op == SQL_BETWEEN()) {
+        trả về chuẩn điều kiện(bảng, [SQL_AND(), [TEXT_GREATER_EQUAL(), d[1], d[2]], [TEXT_LESS_EQUAL(), d[1], d[3]]]);
+    };
+    a = d[1]; ds = [];
+    nếu (op == SQL_IN()) { ds = d[2]; }
+    hoặc nếu (op != SQL_IS() && op != SQL_IS_NOT()) {
+        b = d[2];
+        nếu (a[0] == OPERAND_LITERAL() && op != SQL_LIKE()) {
+            tạm = a; a = b; b = tạm;
+            nếu (op == TEXT_LESS()) { op = TEXT_GREATER(); }
+            hoặc nếu (op == TEXT_LESS_EQUAL()) { op = TEXT_GREATER_EQUAL(); }
+            hoặc nếu (op == TEXT_GREATER()) { op = TEXT_LESS(); }
+            hoặc nếu (op == TEXT_GREATER_EQUAL()) { op = TEXT_LESS_EQUAL(); };
+        };
+        ds = [b];
+    };
+    nếu (a[0] != OPERAND_COLUMN()) { trả về rỗng; };
+    kiểu = bảng[KEY_COLUMNS()][a[1]][KEY_TYPE()];
+    nếu (op == SQL_LIKE() && kiểu != SQL_TEXT() && kiểu != SQL_VARCHAR()) { trả về rỗng; };
+    giáTrị = [];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        nếu (ds[i][0] != OPERAND_LITERAL()) { trả về rỗng; };
+        v = ds[i][1];
+        nếu (v != rỗng && !kiểu thống kê hợp(kiểu, v)) { trả về rỗng; };
+        thêm(giáTrị, v);
+    };
+    trả về [op, a[1], giáTrị];
+};
+
+// -1 denotes a subtree referring to more than one column.
+hàm cột điều kiện(d) {
+    op = d[0];
+    nếu (op == SQL_NOT()) { trả về cột điều kiện(d[1]); };
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        a = cột điều kiện(d[1]); b = cột điều kiện(d[2]);
+        nếu (a == b) { trả về a; };
+        trả về -1;
+    };
+    trả về d[1];
+};
+
+// Collect comparison boundaries; LIKE is evaluated on known keys only.
+hàm gom biên điều kiện(d, ds) {
+    op = d[0];
+    nếu (op == SQL_NOT()) { gom biên điều kiện(d[1], ds); trả về rỗng; };
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        gom biên điều kiện(d[1], ds); gom biên điều kiện(d[2], ds); trả về rỗng;
+    };
+    nếu (op != SQL_LIKE()) {
+        lặp(i = 0; i < độ dài(d[2]); i++) {
+            v = d[2][i]; nếu (v != rỗng) { thêm(ds, bản ghi hàng kết quả(v, [v])); };
+        };
+    };
+};
+
+// For an open interval, v is its lower boundary. No comparison literal
+// lies inside the interval, so all keys have the same comparison outcome.
+hàm so sánh khoảng(v, op, b, khoảng) {
+    nếu (v == rỗng || b == rỗng) { trả về -1; };
+    nếu (khoảng && v == b) {
+        nếu (op == TEXT_GREATER() || op == TEXT_GREATER_EQUAL() || op == TEXT_NOT_EQUAL() || op == TEXT_NOT_EQUAL_SQL()) { trả về 1; };
+        trả về 0;
+    };
+    trả về so sánh ba trị(v, op, b);
+};
+
+hàm trị phân bố(d, v, khoảng) {
+    op = d[0];
+    nếu (op == SQL_NOT()) {
+        a = trị phân bố(d[1], v, khoảng);
+        nếu (a == rỗng || a == -1) { trả về a; };
+        trả về 1 - a;
+    };
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        a = trị phân bố(d[1], v, khoảng); b = trị phân bố(d[2], v, khoảng);
+        nếu (a == rỗng || b == rỗng) { trả về rỗng; };
+        nếu (op == SQL_AND()) { trả về và ba trị(a, b); };
+        nếu (a == 1 || b == 1) { trả về 1; };
+        nếu (a == -1 || b == -1) { trả về -1; };
+        trả về 0;
+    };
+    nếu (op == SQL_IS()) { nếu (v == rỗng) { trả về 1; }; trả về 0; };
+    nếu (op == SQL_IS_NOT()) { nếu (v == rỗng) { trả về 0; }; trả về 1; };
+    nếu (op == SQL_IN()) {
+        kq = 0;
+        lặp(i = 0; i < độ dài(d[2]); i++) {
+            a = so sánh khoảng(v, TEXT_EQUAL(), d[2][i], khoảng);
+            nếu (a == 1) { trả về 1; };
+            nếu (a == -1) { kq = -1; };
+        };
+        trả về kq;
+    };
+    b = d[2][0];
+    nếu (op == SQL_LIKE()) {
+        nếu (v == rỗng || b == rỗng) { trả về -1; };
+        nếu (khoảng) { trả về rỗng; };
+        trả về khớp mẫu(v, b);
+    };
+    trả về so sánh khoảng(v, op, b, khoảng);
+};
+
+// Count TRUE, FALSE and UNKNOWN separately. An unavailable estimate
+// propagates through the expression instead of inventing a selectivity.
+hàm cộng trị(kq, d, v, khoảng, số) {
+    nếu (số <= 0) { trả về đúng; };
+    a = trị phân bố(d, v, khoảng);
+    nếu (a == rỗng) { trả về sai; };
+    i = 2; nếu (a == 1) { i = 0; } hoặc nếu (a == 0) { i = 1; };
+    kq[i] = kq[i] + số;
+    trả về đúng;
+};
+
+// Endpoints are known keys. Interior literal keys use the average
+// frequency, capped by remaining mass; other keys occupy open intervals.
+hàm cộng nhóm(kq, d, s, b, biên) {
+    nếu (b[0] == b[1]) { trả về cộng trị(kq, d, b[0], sai, b[2]); };
+    tb = (b[2] + 0.0) / b[3];
+    nếu (!cộng trị(kq, d, b[0], sai, tb)) { trả về sai; };
+    nếu (!cộng trị(kq, d, b[1], sai, tb)) { trả về sai; };
+    còn = b[2] - 2 * tb;
+    nếu (còn <= 0) { trả về đúng; };
+    nếu (trị phân bố(d, b[0], đúng) == rỗng) { trả về sai; };
+    ds = [b[0]]; sốĐiểm = 0;
+    lặp(i = 0; i < độ dài(biên); i++) {
+        v = biên[i][KEY_ROW()];
+        nếu (v <= ds[độ dài(ds) - 1] || v >= b[1]) { bỏ qua; };
+        thêm(ds, v);
+        nếu (!chứa mcv(s, v)) { sốĐiểm++; };
+    };
+    thêm(ds, b[1]);
+    mỗiĐiểm = tb;
+    nếu (sốĐiểm > 0) {
+        nếu (mỗiĐiểm * sốĐiểm > còn) { mỗiĐiểm = còn / sốĐiểm; };
+    };
+    mỗiKhoảng = (còn - mỗiĐiểm * sốĐiểm) / (độ dài(ds) - 1);
+    lặp(i = 0; i < độ dài(ds) - 1; i++) {
+        nếu (i > 0 && !chứa mcv(s, ds[i])) {
+            nếu (!cộng trị(kq, d, ds[i], sai, mỗiĐiểm)) { trả về sai; };
+        };
+        nếu (!cộng trị(kq, d, ds[i], đúng, mỗiKhoảng)) { trả về sai; };
+    };
+    trả về đúng;
+};
+
+hàm ước lượng ba trị(bảng, d) {
+    c = cột điều kiện(d); n = độ dài(bảng[KEY_ROWS()]);
+    nếu (c >= 0) {
+        s = thống kê cột(bảng, c);
+        nếu (s == rỗng) { trả về rỗng; };
+        kq = [0, 0, 0];
+        nếu (!cộng trị(kq, d, rỗng, sai, s[0])) { trả về rỗng; };
+        biên = []; gom biên điều kiện(d, biên); biên = sắp hợp nhất(biên, [[đúng, sai]]);
+        ds = nhóm thống kê(s);
+        lặp(i = 0; i < độ dài(ds); i++) {
+            nếu (!cộng nhóm(kq, d, s, ds[i], biên)) { trả về rỗng; };
+        };
+        trả về kq;
+    };
+    op = d[0]; a = ước lượng ba trị(bảng, d[1]);
+    nếu (a == rỗng) { trả về rỗng; };
+    nếu (op == SQL_NOT()) { trả về [a[1], a[0], a[2]]; };
+    b = ước lượng ba trị(bảng, d[2]);
+    nếu (b == rỗng) { trả về rỗng; };
+    nếu (n == 0) { trả về [0, 0, 0]; };
+    // Independence assumption for subtrees referring to different columns.
+    t = (a[0] + 0.0) * b[0] / n; f = a[1] + b[1] - (a[1] + 0.0) * b[1] / n;
+    nếu (op == SQL_OR()) { t = a[0] + b[0] - (a[0] + 0.0) * b[0] / n; f = (a[1] + 0.0) * b[1] / n; };
+    nếu (t < 0) { t = 0; }; nếu (t > n) { t = n; };
+    nếu (f < 0) { f = 0; }; nếu (f > n - t) { f = n - t; };
+    trả về [t, f, n - t - f];
+};
+
+hàm công khai ước lượng lọc(bảng, d, ứngViên) {
+    nếu (độ dài(d) == 0) { trả về rỗng; };
+    chuẩn = chuẩn điều kiện(bảng, d);
+    nếu (chuẩn == rỗng) { trả về rỗng; };
+    kq = ước lượng ba trị(bảng, chuẩn);
+    nếu (kq == rỗng) { trả về rỗng; };
+    số = kq[0]; nếu (số < 0) { số = 0; };
+    nếu (số > ứngViên) { số = ứngViên; };
+    trả về số;
+};
+
+hàm nhóm thống kê(s) {
+    ds = [];
+    lặp(i = 0; i < độ dài(s[2]); i++) {
+        m = s[2][i]; thêm(ds, [m[0], m[0], m[1], 1]);
+    };
+    lặp(i = 0; i < độ dài(s[3]); i++) { thêm(ds, s[3][i]); };
+    trả về ds;
+};
+
+hàm chứa mcv(s, v) {
+    lặp(i = 0; i < độ dài(s[2]); i++) {
+        nếu (s[2][i][0] == v) { trả về đúng; };
+    };
+    trả về sai;
+};
+
+// Estimate common distinct keys between two disjoint distribution groups.
+// Singleton intersections are exact unless the other group spans many keys.
+hàm khóa chung(a, b, s, t) {
+    nếu (a[1] < b[0] || b[1] < a[0]) { trả về 0; };
+    nếu (a[3] == 1 && b[3] > 1 && chứa mcv(t, a[0])) { trả về 0; };
+    nếu (b[3] == 1 && a[3] > 1 && chứa mcv(s, b[0])) { trả về 0; };
+    số = a[3]; nếu (b[3] < số) { số = b[3]; };
+    nếu (a[3] > 1 && b[3] > 1) {
+        nếu (!(a[0] >= b[0] && a[1] <= b[1]) && !(b[0] >= a[0] && b[1] <= a[1])) { số = số * 0.5; };
+    };
+    trả về số;
+};
+
+hàm công khai ước lượng phân bố nối(trái, a, phải, b, kiểu) {
+    s = thống kê cột(trái, a); t = thống kê cột(phải, b);
+    nếu (s == rỗng || t == rỗng) { trả về []; };
+    kiểuA = trái[KEY_COLUMNS()][a][KEY_TYPE()]; kiểuB = phải[KEY_COLUMNS()][b][KEY_TYPE()];
+    chữA = kiểuA == SQL_TEXT() || kiểuA == SQL_VARCHAR();
+    chữB = kiểuB == SQL_TEXT() || kiểuB == SQL_VARCHAR();
+    nếu (chữA != chữB) { trả về []; };
+    ds = nhóm thống kê(s); dt = nhóm thống kê(t);
+    khớp = 0.0; khôngKhớp = s[0] + 0.0;
+    lặp(i = 0; i < độ dài(ds); i++) {
+        x = ds[i]; chung = 0.0; tb = (x[2] + 0.0) / x[3];
+        lặp(j = 0; j < độ dài(dt); j++) {
+            y = dt[j]; số = khóa chung(x, y, s, t);
+            chung = chung + số;
+            khớp = khớp + số * tb * ((y[2] + 0.0) / y[3]);
+        };
+        nếu (chung > x[3]) { chung = x[3]; };
+        khôngKhớp = khôngKhớp + (x[3] - chung) * tb;
+    };
+    đầuRa = khớp;
+    nếu (kiểu == SQL_LEFT()) { đầuRa = đầuRa + khôngKhớp; };
+    nếu (đầuRa > 1000000000000.0) { đầuRa = 1000000000000.0; };
+    trả về [khớp, đầuRa];
+};
+
+// Exact joint counts for bounded low-NDV pairs, including NULL.
+hàm công khai phân tích thống kê cặp(bảng, ds) {
+    kq = []; hàng = bảng[KEY_ROWS()];
+    lặp(a = 0; a < độ dài(ds) && a < 8; a++) {
+        nếu (ds[a][1] > 8) { bỏ qua; };
+        lặp(b = a + 1; b < độ dài(ds) && b < 8; b++) {
+            nếu (ds[b][1] > 8) { bỏ qua; };
+            nhóm = []; đủ = đúng;
+            lặp(i = 0; i < độ dài(hàng); i++) {
+                x = hàng[i][a]; y = hàng[i][b]; vị = -1;
+                lặp(j = 0; j < độ dài(nhóm); j++) {
+                    nếu (nhóm[j][0] == x && nhóm[j][1] == y) { vị = j; thoát; };
+                };
+                nếu (vị >= 0) { nhóm[vị][2] = nhóm[vị][2] + 1; }
+                hoặc nếu (độ dài(nhóm) < 64) { thêm(nhóm, [x, y, 1]); }
+                hoặc { đủ = sai; thoát; };
+            };
+            nếu (đủ) { thêm(kq, [a, b, nhóm]); };
+        };
+    };
+    trả về kq;
+};
+
+hàm tần số cặp(s, v) {
+    nếu (v == rỗng) { trả về s[0]; };
+    trả về số ước lượng bằng(s, v);
+};
+
+// Check the joint counts against both exact marginals before using them.
+hàm hợp thống kê cặp(nhóm, s, t, kiểuA, kiểuB, n) {
+    nếu (loại của(nhóm) != TYPE_LIST()) { trả về sai; };
+    nếu (độ dài(nhóm) > 64) { trả về sai; };
+    tổng = 0;
+    lặp(i = 0; i < độ dài(nhóm); i++) {
+        g = nhóm[i];
+        nếu (loại của(g) != TYPE_LIST()) { trả về sai; };
+        nếu (độ dài(g) != 3) { trả về sai; };
+        nếu (g[0] != rỗng && !kiểu thống kê hợp(kiểuA, g[0])) { trả về sai; };
+        nếu (g[1] != rỗng && !kiểu thống kê hợp(kiểuB, g[1])) { trả về sai; };
+        nếu (loại của(g[2]) != TYPE_INTEGER()) { trả về sai; };
+        nếu (g[2] < 1 || g[2] > n - tổng) { trả về sai; };
+        lặp(j = 0; j < i; j++) {
+            nếu (nhóm[j][0] == g[0] && nhóm[j][1] == g[1]) { trả về sai; };
+        };
+        tổng = tổng + g[2];
+    };
+    nếu (tổng != n) { trả về sai; };
+    lặp(i = 0; i < độ dài(nhóm); i++) {
+        g = nhóm[i]; a = 0; b = 0;
+        lặp(j = 0; j < độ dài(nhóm); j++) {
+            nếu (nhóm[j][0] == g[0]) { a = a + nhóm[j][2]; };
+            nếu (nhóm[j][1] == g[1]) { b = b + nhóm[j][2]; };
+        };
+        nếu (a != tần số cặp(s, g[0]) || b != tần số cặp(t, g[1])) { trả về sai; };
+    };
+    trả về đúng;
+};
+
+hàm thống kê cặp(bảng, a, b) {
+    nếu (a >= b || a < 0 || b >= 8 || b >= độ dài(bảng[KEY_COLUMNS()])) { trả về rỗng; };
+    s = thống kê cột(bảng, a); t = thống kê cột(bảng, b);
+    nếu (s == rỗng || t == rỗng) { trả về rỗng; };
+    nếu (s[1] > 8 || t[1] > 8) { trả về rỗng; };
+    lặp(i = 0; i < độ dài(s[3]); i++) { nếu (s[3][i][3] != 1) { trả về rỗng; }; };
+    lặp(i = 0; i < độ dài(t[3]); i++) { nếu (t[3][i][3] != 1) { trả về rỗng; }; };
+    ds = lấy từ điển(bảng, KEY_JOINT_STATISTICS(), []);
+    nếu (loại của(ds) != TYPE_LIST()) { trả về rỗng; };
+    nếu (độ dài(ds) > 28) { trả về rỗng; };
+    nhóm = rỗng;
+    lặp(i = 0; i < độ dài(ds); i++) {
+        g = ds[i];
+        nếu (loại của(g) != TYPE_LIST()) { trả về rỗng; };
+        nếu (độ dài(g) != 3) { trả về rỗng; };
+        nếu (g[0] == a && g[1] == b) {
+            nếu (nhóm != rỗng) { trả về rỗng; };
+            nếu (loại của(g[2]) != TYPE_LIST()) { trả về rỗng; };
+            nhóm = g[2];
+        };
+    };
+    nếu (nhóm == rỗng) { trả về rỗng; };
+    nếu (!hợp thống kê cặp(nhóm, s, t, bảng[KEY_COLUMNS()][a][KEY_TYPE()], bảng[KEY_COLUMNS()][b][KEY_TYPE()], độ dài(bảng[KEY_ROWS()]))) { trả về rỗng; };
+    trả về nhóm;
+};
+
+// Return exact retained join-key counts where a supported predicate uses
+// one other column. An empty list denotes zero matching non-NULL keys.
+hàm phân bố sau lọc(bảng, khóa, d) {
+    nếu (độ dài(d) == 0) { trả về rỗng; };
+    chuẩn = chuẩn điều kiện(bảng, d);
+    nếu (chuẩn == rỗng) { trả về rỗng; };
+    c = cột điều kiện(chuẩn);
+    nếu (c < 0 || c == khóa) { trả về rỗng; };
+    a = khóa; b = c; vịKhóa = 0; vịLọc = 1;
+    nếu (c < khóa) { a = c; b = khóa; vịKhóa = 1; vịLọc = 0; };
+    nhóm = thống kê cặp(bảng, a, b);
+    nếu (nhóm == rỗng) { trả về rỗng; };
+    ds = [];
+    lặp(i = 0; i < độ dài(nhóm); i++) {
+        g = nhóm[i];
+        nếu (g[vịKhóa] == rỗng) { bỏ qua; };
+        v = trị phân bố(chuẩn, g[vịLọc], sai);
+        nếu (v == rỗng) { trả về rỗng; };
+        nếu (v == 1) { thêm(ds, [g[vịKhóa], g[2]]); };
+    };
+    trả về ds;
+};
+
+// Estimate one physical edge using conditioned frequencies when available.
+hàm công khai ước lượng cạnh lọc(trái, a, phải, b, lọcA, lọcB, sốA, sốB) {
+    d = ước lượng phân bố nối(trái, a, phải, b, SQL_INNER());
+    nếu (độ dài(d) == 0) { trả về []; };
+    n = độ dài(trái[KEY_ROWS()]); m = độ dài(phải[KEY_ROWS()]);
+    nếu (n == 0 || m == 0 || sốA == 0 || sốB == 0) { trả về [0.0, 0.0]; };
+    x = phân bố sau lọc(trái, a, lọcA); y = phân bố sau lọc(phải, b, lọcB);
+    số = 0.0; tích = (sốA + 0.0) * sốB;
+    nếu (x != rỗng && y != rỗng) {
+        lặp(i = 0; i < độ dài(x); i++) {
+            lặp(j = 0; j < độ dài(y); j++) {
+                nếu (x[i][0] == y[j][0]) { số = số + (x[i][1] + 0.0) * y[j][1]; };
+            };
+        };
+    } hoặc nếu (x != rỗng || y != rỗng) {
+        t = thống kê cột(phải, b); tỷ = sốB / (m + 0.0);
+        nếu (x == rỗng) { x = y; t = thống kê cột(trái, a); tỷ = sốA / (n + 0.0); };
+        lặp(i = 0; i < độ dài(x); i++) {
+            số = số + x[i][1] * số ước lượng bằng(t, x[i][0]) * tỷ;
+        };
+    } hoặc {
+        số = d[0] * (sốA / (n + 0.0)) * (sốB / (m + 0.0));
+    };
+    nếu (số > tích) { số = tích; };
+    nếu (số > 1000000000000.0) { số = 1000000000000.0; };
+    trả về [số, số];
+};
+
+// Weighted representative rows, containing only the requested columns.
+// All groups must be exact; a histogram spanning multiple keys is insufficient.
+hàm công khai hàng thống kê(bảng, a, b) {
+    rộng = độ dài(bảng[KEY_COLUMNS()]); nhóm = [];
+    nếu (a == b) {
+        s = thống kê cột(bảng, a);
+        nếu (s == rỗng) { trả về rỗng; };
+        ds = nhóm thống kê(s);
+        lặp(i = 0; i < độ dài(ds); i++) {
+            g = ds[i]; nếu (g[3] != 1) { trả về rỗng; };
+            thêm(nhóm, [g[0], g[0], g[2]]);
+        };
+        nếu (s[0] > 0) { thêm(nhóm, [rỗng, rỗng, s[0]]); };
+    } hoặc {
+        nếu (a < b) { nhóm = thống kê cặp(bảng, a, b); }
+        hoặc { nhóm = thống kê cặp(bảng, b, a); };
+        nếu (nhóm == rỗng) { trả về rỗng; };
+    };
+    ds = [];
+    lặp(i = 0; i < độ dài(nhóm); i++) {
+        g = nhóm[i]; dòng = [];
+        lặp(j = 0; j < rộng; j++) { thêm(dòng, rỗng); };
+        nếu (a <= b) { dòng[a] = g[0]; dòng[b] = g[1]; }
+        hoặc { dòng[a] = g[1]; dòng[b] = g[0]; };
+        thêm(ds, [dòng, g[2]]);
+    };
+    trả về ds;
+};

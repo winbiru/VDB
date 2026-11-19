@@ -456,6 +456,8 @@ vm.runInContext(`(async () => {
   assert.equal(contextTopic('select * from sp;',2).title,'SELECT');
   assert.equal(contextTopic('SELECT * FROM SP WHERE ID = 1;',19).title,'WHERE');
   assert.equal(contextTopic('CREATE TABLE SP (ID INT);',2).title,'CREATE TABLE');
+  assert.equal(contextTopic('ANALYZE TABLE SP;',2).title,'ANALYZE TABLE');
+  assert.equal(contextTopic('ANALYZE TABLE SP;',9).title,'ANALYZE TABLE');
   assert.equal(contextTopic('CREATE DATABASE KHO;',2).title,'CREATE DATABASE / USE');
   assert.equal(contextTopic('CREATE INDEX IX ON SP (ID);',2).title,'CREATE INDEX');
   assert.equal(contextTopic('CREATE UNIQUE INDEX IX ON SP (ID);',9).title,'CREATE INDEX');

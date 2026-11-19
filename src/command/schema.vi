@@ -1,3 +1,4 @@
+nhập optimizer.statistics.*;
 nhập constants.*;
 nhập records.*;
 nhập command.common.*;
@@ -165,4 +166,18 @@ hàm công khai thực thi show statistics(máy, cmd) {
         thêm(kq, [cột[j][KEY_NAME()], n, bytes, sốNull, n - sốNull, độ dài(phânBiệt), nhỏ, lớn]);
     };
     trả về kết quả([LABEL_COLUMN(), LABEL_ROWS(), LABEL_JSON_BYTES(), LABEL_NULL_COUNT(), LABEL_NON_NULL_COUNT(), LABEL_DISTINCT_COUNT(), SQL_MIN(), SQL_MAX()], kq);
+};
+
+hàm công khai thực thi analyze(máy, cmd) {
+    bảng = tìm bảng(máy, cmd[KEY_NAME()]);
+    ds = phân tích thống kê(bảng);
+    bảng[KEY_STATISTICS()] = ds;
+    bảng[KEY_JOINT_STATISTICS()] = phân tích thống kê cặp(bảng, ds);
+    máy.dirty = đúng;
+    kq = [];
+    lặp(i = 0; i < độ dài(ds); i++) {
+        s = ds[i];
+        thêm(kq, [bảng[KEY_COLUMNS()][i][KEY_NAME()], s[0], s[1], s[2], s[3]]);
+    };
+    trả về kết quả([LABEL_COLUMN(), LABEL_NULL_COUNT(), LABEL_DISTINCT_COUNT(), LABEL_MCV(), LABEL_HISTOGRAM()], kq);
 };

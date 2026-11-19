@@ -1,6 +1,7 @@
 nhập constants.*;
 nhập algorithm.index.bplus_tree.*;
 nhập algorithm.join.hash_join.*;
+nhập algorithm.join.merge_join.*;
 nhập algorithm.join.nested_loop.*;
 nhập algorithm.join.index_nested_loop.*;
 nhập algorithm.aggregate.hash_aggregate.*;
@@ -24,6 +25,10 @@ hàm công khai thực thi thuật toán(kếHoạch, dữLiệu) {
 
     nếu (kiểu == ALGO_INDEX_NESTED_LOOP_JOIN()) {
         trả về nối lặp index(kếHoạch, dữLiệu[KEY_ROWS()], dữLiệu[KEY_RIGHT()]);
+    };
+
+    nếu (kiểu == ALGO_MERGE_JOIN()) {
+        trả về nối hợp nhất(kếHoạch, dữLiệu[KEY_ROWS()], dữLiệu[KEY_RIGHT()]);
     };
 
     nếu (kiểu == ALGO_HASH_JOIN()) {

@@ -1,3 +1,4 @@
+nhập optimizer.statistics.*;
 nhập constants.*;
 nhập command.common.*;
 nhập command.index.*;
@@ -66,6 +67,7 @@ hàm kiểm catalog bảng(bảng) {
         kiểm cờ(lấy từ điển(ds[i], KEY_UNIQUE(), sai));
     };
     cập nhật index(bảng);
+    hủy thống kê(bảng);
     fks = danh sách khóa ngoại(bảng); kiểm tên riêng(fks);
     lặp(i = 0; i < độ dài(fks); i++) {
         fk = fks[i]; kiểm tên(fk[KEY_REFERENCED_TABLE()]);

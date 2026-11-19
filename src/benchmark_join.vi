@@ -1,0 +1,45 @@
+// Standalone development executable. Time the production JOIN dispatcher
+// with identical inputs, excluding fixture loading, index build and JSON I/O.
+nhập constants.*;
+nhập records.*;
+nhập algorithm.dispatch.*;
+nhập algorithm.index.bplus_tree.*;
+nhập optimizer.planner.*;
+nhập gói.dữ liệu.json.json.json tạo;
+nhập gói.dữ liệu.json.json.json phân tích;
+nhập gói.nhập xuất.tệp.đọc tệp;
+nhập gói.hệ thống.môi trường.đọc biến môi trường;
+nhập gói.thời gian.đơn điệu.thời gian đơn điệu mili giây;
+nhập gói.văn bản.chuỗi.độ dài;
+
+hàm chính() {
+    mẫu = json phân tích(đọc tệp(đọc biến môi trường(ENV_VDB_DATA(), TEXT_EMPTY())));
+    trái = mẫu[0]; phải = mẫu[1]; kiểu = mẫu[2]; khóa = mẫu[3];
+    khớp = mẫu[4]; lượt = mẫu[5];
+    dữLiệu = bản ghi dữ liệu nối(trái, phải);
+    cây = xây cây index(KEY_ITEM(), [KEY_VALUE()], phải, [1], sai);
+    bảng = bản ghi bảng(KEY_RIGHT(), [bản ghi cột nguồn(KEY_ROW(), KEY_ROW(), SQL_INT()),
+        bản ghi cột nguồn(KEY_VALUE(), KEY_VALUE(), khóa)], phải);
+    bảng[KEY_INDEXES()] = [cây];
+    thuậtToán = [ALGO_NESTED_LOOP_JOIN(), ALGO_HASH_JOIN(), ALGO_MERGE_JOIN(), ALGO_INDEX_NESTED_LOOP_JOIN()];
+    chuẩn = rỗng; kếtQuả = [];
+    lặp(i = 0; lượt > 0 && i < độ dài(thuậtToán); i++) {
+        p = bản ghi kế hoạch nối(thuậtToán[i], kiểu, 1, 1, 2);
+        p[KEY_ITEM()] = cây;
+        // Warm up before collecting samples and validate every result.
+        hàng = thực thi thuật toán(p, dữLiệu);
+        nếu (i == 0) { chuẩn = json tạo(hàng); };
+        nếu (json tạo(hàng) != chuẩn) { ném ERR_UNSUPPORTED_ALGORITHM() + thuậtToán[i]; };
+        thờiGian = [];
+        lặp(j = 0; j < lượt; j++) {
+            mốc = thời gian đơn điệu mili giây();
+            hàng = thực thi thuật toán(p, dữLiệu);
+            thêm(thờiGian, thời gian đơn điệu mili giây() - mốc);
+            nếu (json tạo(hàng) != chuẩn) { ném ERR_UNSUPPORTED_ALGORITHM() + thuậtToán[i]; };
+        };
+        thêm(kếtQuả, [thuậtToán[i], thờiGian]);
+    };
+    khôngIndex = kế hoạch join theo kích thước(kiểu, 1, 1, 2, độ dài(trái), bảng, khóa, [khớp, khớp], độ dài(phải), sai);
+    cóIndex = kế hoạch join theo kích thước(kiểu, 1, 1, 2, độ dài(trái), bảng, khóa, [khớp, khớp], độ dài(phải), đúng);
+    in json tạo([kếtQuả, khôngIndex[KEY_ALGORITHM()], cóIndex[KEY_ALGORITHM()], cây[KEY_HEIGHT()], chuẩn]);
+};

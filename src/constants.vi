@@ -117,6 +117,7 @@ hàm công khai SQL_IS_NOT() { trả về "IS NOT"; };
 
 // Thuật toán vật lý
 hàm công khai ALGO_HASH_JOIN() { trả về "HASH_JOIN"; };
+hàm công khai ALGO_MERGE_JOIN() { trả về "MERGE_JOIN"; };
 hàm công khai ALGO_HASH_AGGREGATE() { trả về "HASH_AGGREGATE"; };
 hàm công khai ALGO_HASH_DISTINCT() { trả về "HASH_DISTINCT"; };
 hàm công khai ALGO_MERGE_SORT() { trả về "MERGE_SORT"; };
@@ -243,6 +244,7 @@ hàm công khai SQL_TO() { trả về "TO"; };
 hàm công khai SQL_DROP_DATABASE() { trả về "DROP_DATABASE"; };
 hàm công khai SQL_ALTER_TABLE() { trả về "ALTER_TABLE"; };
 hàm công khai ALGO_TABLE_SCAN() { trả về "TABLE_SCAN"; };
+hàm công khai ALGO_SOURCE_FILTER() { trả về "SOURCE_FILTER"; };
 hàm công khai ALGO_FILTER() { trả về "FILTER"; };
 hàm công khai ALGO_PROJECT() { trả về "PROJECT"; };
 hàm công khai ALGO_HAVING_FILTER() { trả về "HAVING_FILTER"; };
@@ -270,6 +272,9 @@ hàm công khai KEY_CARDINALITY() { trả về "cardinality"; };
 hàm công khai KEY_COUNT() { trả về "count"; };
 hàm công khai KEY_ESTIMATE() { trả về "estimate"; };
 hàm công khai KEY_OUTPUT_ESTIMATE() { trả về "output_estimate"; };
+hàm công khai KEY_COST() { trả về "cost"; };
+hàm công khai KEY_MATCH_DENSITY() { trả về "match_density"; };
+hàm công khai ALGO_RESTORE_JOIN_ORDER() { trả về "RESTORE_JOIN_ORDER"; };
 hàm công khai KEY_SCAN() { trả về "scan"; };
 hàm công khai ALGO_INDEX_SCAN() { trả về "INDEX_SCAN"; };
 hàm công khai ALGO_NESTED_LOOP_JOIN() { trả về "NESTED_LOOP_JOIN"; };
@@ -338,3 +343,10 @@ hàm công khai ERR_INVALID_CATALOG() { trả về "Catalog không hợp lệ"; 
 hàm công khai ENV_VDB_CHECK_CATALOG() { trả về "VDB_CHECK_CATALOG"; };
 
 hàm công khai TYPE_DICTIONARY() { trả về "từ điển"; };
+
+hàm công khai SQL_ANALYZE() { trả về "ANALYZE"; };
+hàm công khai SQL_ANALYZE_TABLE() { trả về "ANALYZE TABLE"; };
+hàm công khai KEY_JOINT_STATISTICS() { trả về "optimizer_joint_statistics"; };
+hàm công khai KEY_STATISTICS() { trả về "optimizer_statistics"; };
+hàm công khai LABEL_MCV() { trả về "MOST_COMMON"; };
+hàm công khai LABEL_HISTOGRAM() { trả về "HISTOGRAM"; };

@@ -713,7 +713,7 @@ function renderTree(){
   if(!root.childElementCount){const p=document.createElement('div');p.className='empty';p.textContent='Không có schema';root.append(p);}
   renderInfo(c);
 }
-const syntax=/--[^\n]*|'(?:''|[^'])*'|\b(?:SELECT|DISTINCT|FROM|WHERE|AND|OR|IS|NOT|IN|BETWEEN|LIKE|NULL|TRUE|FALSE|JOIN|INNER|LEFT|OUTER|ON|AS|GROUP|HAVING|ORDER|BY|ASC|DESC|LIMIT|OFFSET|COUNT|SUM|AVG|MIN|MAX|CREATE|DATABASE|TABLE|PRIMARY|KEY|UNIQUE|INT|INTEGER|REAL|TEXT|VARCHAR|BOOLEAN|INSERT|INTO|VALUES|UPDATE|SET|DELETE|DROP|SHOW|DATABASES|TABLES|DESCRIBE|USE|BEGIN|TRANSACTION|COMMIT|ROLLBACK|EXPLAIN|ALTER|ADD|COLUMN|RENAME|TO|INDEX|INDEXES|FOREIGN|KEYS|REFERENCES|CONSTRAINT|VIEW|VIEWS|STATISTICS)\b|\b\d+(?:\.\d+)?\b/gi;
+const syntax=/--[^\n]*|'(?:''|[^'])*'|\b(?:SELECT|DISTINCT|FROM|WHERE|AND|OR|IS|NOT|IN|BETWEEN|LIKE|NULL|TRUE|FALSE|JOIN|INNER|LEFT|OUTER|ON|AS|GROUP|HAVING|ORDER|BY|ASC|DESC|LIMIT|OFFSET|COUNT|SUM|AVG|MIN|MAX|CREATE|DATABASE|TABLE|PRIMARY|KEY|UNIQUE|INT|INTEGER|REAL|TEXT|VARCHAR|BOOLEAN|INSERT|INTO|VALUES|UPDATE|SET|DELETE|DROP|SHOW|DATABASES|TABLES|DESCRIBE|USE|BEGIN|TRANSACTION|COMMIT|ROLLBACK|EXPLAIN|ALTER|ADD|COLUMN|RENAME|TO|INDEX|INDEXES|FOREIGN|KEYS|REFERENCES|CONSTRAINT|VIEW|VIEWS|STATISTICS|ANALYZE)\b|\b\d+(?:\.\d+)?\b/gi;
 function paintEditor(){
   const sql=editor.value;let result='',last=0;
   for(const m of sql.matchAll(syntax)){result+=escapeHtml(sql.slice(last,m.index));let type=m[0].startsWith('--')?'comment':m[0].startsWith("'")?'str':/^\d/.test(m[0])?'num':'kw';result+='<span class="'+type+'">'+escapeHtml(m[0])+'</span>';last=m.index+m[0].length;}
@@ -1279,7 +1279,7 @@ function openModel(){
 $('toolModel').onclick=openModel;$('modelDb').onchange=renderModel;
 $('closeModel').onclick=()=>{$('modelDialog').close();modelTarget=null;updateActions();};
 $('modelDialog').addEventListener('close',()=>{modelTarget=null;updateActions();});
-function help(about=false){$('helpContent').textContent=about?'Vietnam Database · V++ SQL engine · Catalog cục bộ.':'SQL hỗ trợ: SHOW DATABASES, SHOW TABLES, SHOW VIEWS, DESCRIBE, CREATE DATABASE/TABLE/VIEW, DROP VIEW, SELECT, INSERT, UPDATE, DELETE, DROP TABLE/DATABASE, ALTER TABLE, CREATE/DROP/SHOW INDEX, SHOW STATISTICS, EXPLAIN SELECT và BEGIN/COMMIT/ROLLBACK trong một batch. Truy vấn hỗ trợ DISTINCT, INNER/LEFT JOIN (ON bằng nhau), GROUP BY, COUNT/SUM/AVG/MIN/MAX, HAVING theo cột kết quả hoặc bí danh, ORDER BY, LIMIT/OFFSET. Điều kiện hỗ trợ AND/OR/NOT, IN, BETWEEN, LIKE và IS NULL.';$('helpDialog').showModal();}
+function help(about=false){$('helpContent').textContent=about?'Vietnam Database · V++ SQL engine · Catalog cục bộ.':'SQL hỗ trợ: SHOW DATABASES, SHOW TABLES, SHOW VIEWS, DESCRIBE, CREATE DATABASE/TABLE/VIEW, DROP VIEW, SELECT, INSERT, UPDATE, DELETE, DROP TABLE/DATABASE, ALTER TABLE, CREATE/DROP/SHOW INDEX, SHOW STATISTICS, ANALYZE TABLE, EXPLAIN SELECT và BEGIN/COMMIT/ROLLBACK trong một batch. Truy vấn hỗ trợ DISTINCT, INNER/LEFT JOIN (ON bằng nhau), GROUP BY, COUNT/SUM/AVG/MIN/MAX, HAVING theo cột kết quả hoặc bí danh, ORDER BY, LIMIT/OFFSET. Điều kiện hỗ trợ AND/OR/NOT, IN, BETWEEN, LIKE và IS NULL.';$('helpDialog').showModal();}
 $('closeHelp').onclick=()=>$('helpDialog').close();
 const actions=[
   ['home',()=>showHome(),()=>initialized],
@@ -1373,7 +1373,7 @@ async function initialize(){
 
 // Tokenize only the dialect supported by the VDB lexer. Keep comments and
 // literals intact so formatting and row limits never rewrite their contents.
-const sqlKeywords='SELECT DISTINCT FROM WHERE AND OR IS NOT IN BETWEEN LIKE NULL TRUE FALSE JOIN INNER LEFT OUTER ON AS GROUP HAVING ORDER BY ASC DESC LIMIT OFFSET COUNT SUM AVG MIN MAX CREATE DATABASE TABLE PRIMARY KEY UNIQUE INT INTEGER REAL TEXT VARCHAR BOOLEAN INSERT INTO VALUES UPDATE SET DELETE DROP SHOW DATABASES TABLES DESCRIBE USE BEGIN COMMIT ROLLBACK TRANSACTION EXPLAIN ALTER ADD COLUMN RENAME TO INDEX INDEXES FOREIGN KEYS REFERENCES CONSTRAINT VIEW VIEWS STATISTICS'.split(' ');
+const sqlKeywords='SELECT DISTINCT FROM WHERE AND OR IS NOT IN BETWEEN LIKE NULL TRUE FALSE JOIN INNER LEFT OUTER ON AS GROUP HAVING ORDER BY ASC DESC LIMIT OFFSET COUNT SUM AVG MIN MAX CREATE DATABASE TABLE PRIMARY KEY UNIQUE INT INTEGER REAL TEXT VARCHAR BOOLEAN INSERT INTO VALUES UPDATE SET DELETE DROP SHOW DATABASES TABLES DESCRIBE USE BEGIN COMMIT ROLLBACK TRANSACTION EXPLAIN ALTER ADD COLUMN RENAME TO INDEX INDEXES FOREIGN KEYS REFERENCES CONSTRAINT VIEW VIEWS STATISTICS ANALYZE'.split(' ');
 function sqlTokens(sql){
   return Array.from(sql.matchAll(/--[^\n]*|'(?:''|[^'])*(?:'|$)|[A-Za-z_][A-Za-z_0-9]*|-?\d+(?:\.\d+)?|<=|>=|<>|!=|[^\s]/g),m=>({text:m[0],index:m.index}));
 }
@@ -1679,7 +1679,7 @@ const builtInSnippets=[
 const helpTopics=[
   ['SELECT DISTINCT FROM AS','SELECT','Đọc dữ liệu, chọn cột hoặc *, dùng AS đặt bí danh và DISTINCT loại kết quả trùng.', 'SELECT DISTINCT name AS ten FROM san_pham;'],
   ['WHERE AND OR NOT IS NULL IN BETWEEN LIKE TRUE FALSE','WHERE','Lọc hàng bằng điều kiện, logic ba trị NULL, NOT/AND/OR, IN, BETWEEN, LIKE và IS NULL. Dùng dấu nháy đơn cho chuỗi.',"SELECT * FROM san_pham WHERE id BETWEEN 1 AND 10 AND name IS NOT NULL;"],
-  ['JOIN INNER LEFT OUTER ON','JOIN','Hỗ trợ INNER JOIN và LEFT [OUTER] JOIN với điều kiện bằng nhau giữa hai cột. Planner chọn HASH_JOIN, NESTED_LOOP_JOIN hoặc INDEX_NESTED_LOOP_JOIN theo số hàng ước lượng; khi chạy các JOIN tiếp theo dùng số hàng trung gian thực tế.', 'SELECT a.id, b.name FROM san_pham AS a LEFT JOIN danh_muc AS b ON a.id = b.id;'],
+  ['JOIN INNER LEFT OUTER ON','JOIN','Hỗ trợ INNER JOIN và LEFT [OUTER] JOIN với điều kiện bằng nhau giữa hai cột. Planner chọn HASH_JOIN, NESTED_LOOP_JOIN, INDEX_NESTED_LOOP_JOIN hoặc MERGE_JOIN theo chi phí ước lượng. Merge join được xét khi hai nguồn đủ lớn, có thống kê phân bố và khóa tương thích. Khi chạy các JOIN tiếp theo, planner dùng số hàng trung gian thực tế. Với 3–8 bảng vật lý đã ANALYZE chỉ dùng INNER JOIN, planner có thể đổi thứ tự nối theo chi phí rồi khôi phục thứ tự kết quả.', 'SELECT a.id, b.name FROM san_pham AS a LEFT JOIN danh_muc AS b ON a.id = b.id;'],
   ['GROUP BY COUNT SUM AVG MIN MAX HAVING','GROUP BY / HAVING','Nhóm theo một hoặc nhiều cột. COUNT, SUM, AVG, MIN, MAX; HAVING tham chiếu nhãn hoặc bí danh kết quả.', 'SELECT name, COUNT(*) AS total FROM san_pham GROUP BY name HAVING total > 1;'],
   ['ORDER ASC DESC LIMIT OFFSET','ORDER BY / LIMIT','Sắp xếp theo nhiều cột ASC/DESC, giới hạn hàng bằng LIMIT và bỏ qua hàng bằng OFFSET.', 'SELECT * FROM san_pham ORDER BY id DESC LIMIT 10 OFFSET 0;'],
   ['CREATE TABLE PRIMARY KEY UNIQUE INT INTEGER REAL TEXT VARCHAR BOOLEAN','CREATE TABLE','Kiểu INT/INTEGER 32 bit, REAL, TEXT, VARCHAR(n), BOOLEAN. Ràng buộc PRIMARY KEY một cột, NOT NULL, UNIQUE. Tên định danh ASCII.',builtInSnippets[4].sql],
@@ -1687,12 +1687,13 @@ const helpTopics=[
   ['SHOW DATABASES TABLES','SHOW','Liệt kê database hoặc bảng của database đang chọn.', 'SHOW DATABASES;\nSHOW TABLES;'],
   ['VIEW VIEWS','VIEW','View chỉ đọc lưu định nghĩa SELECT, dữ liệu được đọc lại khi truy vấn. Hỗ trợ CREATE VIEW, DROP VIEW, SHOW VIEWS và DESCRIBE. Dùng AS để đặt tên cột tính toán.', 'CREATE VIEW v_products AS SELECT * FROM san_pham;'],
   ['DESCRIBE DESC','DESCRIBE','Xem tên, kiểu và ràng buộc của các cột.', 'DESCRIBE san_pham;'],
-  ['EXPLAIN','EXPLAIN SELECT','Hiển thị kế hoạch vật lý, thuật toán scan/JOIN được chọn và số hàng nguồn hoặc ứng viên chỉ mục. Không chạy các toán tử truy vấn.', 'EXPLAIN SELECT * FROM san_pham WHERE id = 1;'],
+  ['EXPLAIN','EXPLAIN SELECT','Hiển thị kế hoạch vật lý, thuật toán scan/JOIN được chọn và số hàng nguồn, ứng viên chỉ mục hoặc số hàng JOIN ước lượng. SOURCE_FILTER báo bộ lọc trước JOIN theo bí danh nguồn. FILTER báo số hàng sau WHERE khi đủ thống kê, kể cả INNER JOIN hai bảng có thống kê cặp phù hợp. RESTORE_JOIN_ORDER báo kế hoạch có đổi thứ tự INNER JOIN, kể cả khi kết hợp lọc nguồn. Không chạy các toán tử truy vấn.', 'EXPLAIN SELECT * FROM san_pham WHERE id = 1;'],
   ['ALTER ADD COLUMN RENAME TO','ALTER TABLE','Thêm, xóa, đổi tên cột hoặc đổi tên bảng. Cột mới nhận NULL; NOT NULL cần bảng rỗng.', 'ALTER TABLE san_pham ADD COLUMN note TEXT;'],
   ['INDEX INDEXES','CREATE INDEX','Tạo chỉ mục B+ tree một hoặc nhiều cột INT, INTEGER, TEXT hoặc VARCHAR. CREATE UNIQUE INDEX bảo đảm khóa đầy đủ không trùng khi mọi thành phần khác NULL. Tối ưu tiền tố liên tiếp, điều kiện AND, so sánh khoảng và BETWEEN khi chi phí phù hợp.', 'CREATE INDEX ix_name ON san_pham (name);'],
   ['DROP_INDEX','DROP INDEX','Xóa chỉ mục theo tên trên bảng.', 'DROP INDEX ix_name ON san_pham;'],
   ['SHOW_INDEX','SHOW INDEX','Xem tên chỉ mục, cột, số khóa, số giá trị phân biệt, chiều cao cây và ràng buộc UNIQUE.', 'SHOW INDEX FROM san_pham;'],
   ['FOREIGN KEYS REFERENCES CONSTRAINT','FOREIGN KEY','Khóa ngoại một hoặc nhiều cột trong cùng database. Kiểm tra ngay sau mỗi câu lệnh; khóa đích phải là PRIMARY KEY hoặc UNIQUE. Thành phần NULL được phép. Xóa hoặc sửa hàng cha có tham chiếu bị từ chối. Có thể ADD CONSTRAINT và DROP FOREIGN KEY qua ALTER TABLE.', 'ALTER TABLE san_pham ADD CONSTRAINT fk_self FOREIGN KEY (id) REFERENCES san_pham (id);'],
+  ['ANALYZE','ANALYZE TABLE','Lưu thống kê phân bố từng cột để ước lượng FILTER/SOURCE_FILTER (AND/OR/NOT, IN, BETWEEN, IS NULL và LIKE khi biết đủ khóa) và JOIN. Ước lượng WHERE giữ logic ba giá trị SQL; nhiều cột dùng giả định độc lập. Thống kê cặp ít giá trị phân biệt giúp dự báo khóa JOIN sau lọc trên một cột khác. Chạy lại sau khi thay đổi dữ liệu.','ANALYZE TABLE san_pham;'],
   ['STATISTICS','SHOW STATISTICS','Thống kê chính xác số hàng, byte JSON, NULL, giá trị phân biệt và min/max từng cột bảng.','SHOW STATISTICS FROM san_pham;'],
   ['SHOW_FOREIGN_KEYS','SHOW FOREIGN KEYS','Xem tên khóa ngoại, các cột nguồn, bảng và các cột đích.', 'SHOW FOREIGN KEYS FROM san_pham;'],
   ['DROP_DATABASE','DROP DATABASE','Xóa database và toàn bộ bảng. DEFAULT được bảo vệ. Kiểm tra tên trước khi chạy.', 'DROP DATABASE kho;'],
@@ -1725,6 +1726,7 @@ function contextTopic(sql,start,end=start){
   if(first==='CREATE'&&['CREATE','TABLE','DATABASE','INDEX','UNIQUE','NOT','NULL','VIEW'].includes(word))return command;
   if(first==='DROP'&&['DROP','TABLE','DATABASE','INDEX','VIEW'].includes(word))return command;
   if(first==='ALTER'&&['ALTER','TABLE','ADD','DROP','COLUMN','RENAME','TO'].includes(word))return command;
+  if(first==='ANALYZE'&&['ANALYZE','TABLE'].includes(word))return command;
   if(first==='DELETE'&&word==='FROM')return command;
   if(word==='BY'){
     const previous=tokens[index-1]?.text.toUpperCase();

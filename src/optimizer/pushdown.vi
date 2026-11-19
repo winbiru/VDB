@@ -1,0 +1,267 @@
+nhập constants.*;
+nhập records.*;
+nhập command.common.*;
+nhập optimizer.planner.*;
+nhập optimizer.statistics.*;
+nhập algorithm.dispatch.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.lõi.chuyển kiểu.loại của;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+// Chỉ đẩy WHERE khi toàn bộ biểu thức không thể phát sinh lỗi kiểu.
+hàm họ toán hạng(cột, a) {
+    nếu (a[0] == OPERAND_COLUMN()) {
+        kiểu = cột[a[1]][KEY_TYPE()];
+        nếu (kiểu == SQL_TEXT() || kiểu == SQL_VARCHAR()) { trả về 2; };
+        nếu (kiểu == SQL_INT() || kiểu == SQL_INTEGER() || kiểu == SQL_REAL()) { trả về 1; };
+        nếu (kiểu == SQL_BOOLEAN()) { trả về 3; };
+        trả về -1;
+    };
+    v = a[1];
+    nếu (v == rỗng) { trả về 0; };
+    kiểu = loại của(v);
+    nếu (kiểu == TYPE_STRING()) { trả về 2; };
+    nếu (kiểu == TYPE_INTEGER() || kiểu == TYPE_REAL()) { trả về 1; };
+    nếu (kiểu == TYPE_BOOLEAN()) { trả về 3; };
+    trả về -1;
+};
+
+hàm hợp họ(a, b) {
+    nếu (a < 0 || b < 0) { trả về sai; };
+    trả về a == 0 || b == 0 || a == b;
+};
+
+hàm an toàn đẩy lọc(cột, d) {
+    op = d[0];
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        trả về an toàn đẩy lọc(cột, d[1]) && an toàn đẩy lọc(cột, d[2]);
+    };
+    nếu (op == SQL_NOT()) { trả về an toàn đẩy lọc(cột, d[1]); };
+    nếu (op == SQL_IS() || op == SQL_IS_NOT()) { trả về đúng; };
+    a = họ toán hạng(cột, d[1]);
+    nếu (op == SQL_IN()) {
+        lặp(i = 0; i < độ dài(d[2]); i++) {
+            nếu (!hợp họ(a, họ toán hạng(cột, d[2][i]))) { trả về sai; };
+        };
+        trả về đúng;
+    };
+    b = họ toán hạng(cột, d[2]);
+    nếu (op == SQL_LIKE()) { trả về (a == 0 || a == 2) && (b == 0 || b == 2); };
+    nếu (!hợp họ(a, b)) { trả về sai; };
+    nếu (op == SQL_BETWEEN()) { trả về hợp họ(a, họ toán hạng(cột, d[3])); };
+    trả về đúng;
+};
+
+// Biểu thức nguồn có cùng cấu trúc AST, với chỉ số cột cục bộ.
+hàm toán hạng nguồn(a, đầu, cuối) {
+    nếu (a[0] == OPERAND_LITERAL()) { trả về a; };
+    nếu (a[1] < đầu || a[1] >= cuối) { trả về rỗng; };
+    trả về [OPERAND_COLUMN(), a[1] - đầu];
+};
+
+hàm điều kiện nguồn(d, đầu, cuối) {
+    op = d[0];
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        a = điều kiện nguồn(d[1], đầu, cuối);
+        b = điều kiện nguồn(d[2], đầu, cuối);
+        nếu (a == rỗng || b == rỗng) { trả về rỗng; };
+        trả về [op, a, b];
+    };
+    nếu (op == SQL_NOT()) {
+        a = điều kiện nguồn(d[1], đầu, cuối);
+        nếu (a == rỗng) { trả về rỗng; };
+        trả về [op, a];
+    };
+    a = toán hạng nguồn(d[1], đầu, cuối);
+    nếu (a == rỗng) { trả về rỗng; };
+    nếu (op == SQL_IS() || op == SQL_IS_NOT()) { trả về [op, a]; };
+    nếu (op == SQL_IN()) {
+        ds = [];
+        lặp(i = 0; i < độ dài(d[2]); i++) {
+            b = toán hạng nguồn(d[2][i], đầu, cuối);
+            nếu (b == rỗng) { trả về rỗng; };
+            thêm(ds, b);
+        };
+        trả về [op, a, ds];
+    };
+    b = toán hạng nguồn(d[2], đầu, cuối);
+    nếu (b == rỗng) { trả về rỗng; };
+    nếu (op == SQL_BETWEEN()) {
+        c = toán hạng nguồn(d[3], đầu, cuối);
+        nếu (c == rỗng) { trả về rỗng; };
+        trả về [op, a, b, c];
+    };
+    trả về [op, a, b];
+};
+
+hàm gom lọc nguồn(d, đầu, cuối, ds) {
+    nếu (d[0] == SQL_AND()) {
+        gom lọc nguồn(d[1], đầu, cuối, ds);
+        gom lọc nguồn(d[2], đầu, cuối, ds);
+    } hoặc {
+        a = điều kiện nguồn(d, đầu, cuối);
+        // Bỏ điều kiện chỉ có literal; giữ nguyên trong WHERE cuối.
+        nếu (a != rỗng && điều kiện nguồn(d, 0, 0) == rỗng) { thêm(ds, a); };
+    };
+};
+
+hàm công khai kế hoạch đẩy lọc(bảng, nối, cột, d) {
+    nếu (độ dài(nối) == 0 || độ dài(d) == 0) { trả về []; };
+    nếu (!an toàn đẩy lọc(cột, d)) { trả về []; };
+    lặp(i = 0; i < độ dài(nối); i++) {
+        nếu (nối[i][KEY_KIND()] != SQL_INNER()) { trả về []; };
+    };
+    ds = []; đầu = 0; có = sai;
+    lặp(i = 0; i < độ dài(bảng); i++) {
+        nguồn = bảng[i];
+        nếu (lấy từ điển(nguồn, KEY_QUERY(), rỗng) != rỗng) { trả về []; };
+        cuối = đầu + độ dài(nguồn[KEY_COLUMNS()]);
+        mục = []; gom lọc nguồn(d, đầu, cuối, mục);
+        lọc = [];
+        lặp(j = 0; j < độ dài(mục); j++) {
+            nếu (j == 0) { lọc = mục[j]; }
+            hoặc { lọc = [SQL_AND(), lọc, mục[j]]; };
+        };
+        scan = kế hoạch scan(nguồn, lọc, sai);
+        số = scan[KEY_ESTIMATE()];
+        nếu (độ dài(lọc) > 0) {
+            có = đúng; số = ước lượng lọc(nguồn, lọc, số);
+        };
+        thêm(ds, [lọc, scan, số]); đầu = cuối;
+    };
+    nếu (!có) { trả về []; };
+    trả về ds;
+};
+
+hàm công khai chạy lọc nguồn(bảng, p) {
+    nếu (độ dài(p[0]) == 0) { trả về bảng; };
+    hàng = bảng[KEY_ROWS()];
+    nếu (p[1][KEY_ALGORITHM()] != ALGO_TABLE_SCAN()) {
+        hàng = thực thi thuật toán(p[1], bản ghi hàng(hàng));
+    };
+    ds = [];
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        nếu (khớp(hàng[i], p[0])) { thêm(ds, hàng[i]); };
+    };
+    // Vị trí hàng đã thay đổi; index và thống kê gốc không còn áp dụng.
+    trả về bản ghi bảng(bảng[KEY_NAME()], bảng[KEY_COLUMNS()], ds);
+};
+
+hàm số nguồn(p) {
+    nếu (p[2] != rỗng) { trả về p[2]; };
+    trả về p[1][KEY_ESTIMATE()];
+};
+
+hàm công khai nối sau đẩy lọc(bảng, nối, cột, lọc) {
+    ds = []; sốTrái = số nguồn(lọc[0]);
+    đầu = [0]; tổng = độ dài(bảng[0][KEY_COLUMNS()]);
+    lặp(i = 0; i < độ dài(nối); i++) {
+        p = nối[i]; phải = bảng[i + 1]; a = p[KEY_LEFT_INDEX()]; b = p[KEY_RIGHT_INDEX()];
+        sốPhải = số nguồn(lọc[i + 1]); gốc = độ dài(phải[KEY_ROWS()]);
+        phânBố = [];
+        cha = độ dài(đầu) - 1;
+        khi (a < đầu[cha]) { cha--; };
+        sốCha = số nguồn(lọc[cha]);
+        d = ước lượng cạnh lọc(bảng[cha], a - đầu[cha], phải, b, lọc[cha][0], lọc[i + 1][0], sốCha, sốPhải);
+        nếu (độ dài(d) > 0) {
+            số = 0.0;
+            nếu (sốCha > 0) { số = sốTrái * (d[0] / (sốCha + 0.0)); };
+            nếu (số > 1000000000000.0) { số = 1000000000000.0; };
+            phânBố = [số, số];
+        };
+        thêm(đầu, tổng); tổng = tổng + độ dài(phải[KEY_COLUMNS()]);
+        k = kế hoạch join theo kích thước(SQL_INNER(), a, b, p[KEY_RIGHT_WIDTH()], sốTrái, phải, cột[a][KEY_TYPE()], phânBố, sốPhải, độ dài(lọc[i + 1][0]) == 0);
+        số = 0.0;
+        nếu (gốc > 0) {
+            số = ước lượng nối(SQL_INNER(), sốTrái, phải, b) * (sốPhải / (gốc + 0.0));
+        };
+        nếu (độ dài(phânBố) > 0) { số = phânBố[1]; };
+        tích = (sốTrái + 0.0) * sốPhải;
+        nếu (số > tích) { số = tích; };
+        nếu (số > 1000000000000.0) { số = 1000000000000.0; };
+        k[KEY_OUTPUT_ESTIMATE()] = số;
+        thêm(ds, k); sốTrái = số;
+    };
+    trả về ds;
+};
+
+// Mark every referenced column, including operands of IN and BETWEEN.
+hàm đánh dấu toán hạng(a, dùng) {
+    nếu (a[0] == OPERAND_COLUMN()) { dùng[a[1]] = đúng; };
+};
+
+hàm đánh dấu điều kiện(d, dùng) {
+    op = d[0];
+    nếu (op == SQL_AND() || op == SQL_OR()) {
+        đánh dấu điều kiện(d[1], dùng); đánh dấu điều kiện(d[2], dùng); trả về rỗng;
+    };
+    nếu (op == SQL_NOT()) { đánh dấu điều kiện(d[1], dùng); trả về rỗng; };
+    đánh dấu toán hạng(d[1], dùng);
+    nếu (op == SQL_IS() || op == SQL_IS_NOT()) { trả về rỗng; };
+    nếu (op == SQL_IN()) {
+        lặp(i = 0; i < độ dài(d[2]); i++) { đánh dấu toán hạng(d[2][i], dùng); };
+        trả về rỗng;
+    };
+    đánh dấu toán hạng(d[2], dùng);
+    nếu (op == SQL_BETWEEN()) { đánh dấu toán hạng(d[3], dùng); };
+};
+
+// Exact counts for two physical INNER sources when each needs at most
+// the join key and one additional column. At most 64 x 64 weighted groups.
+hàm công khai thống kê lọc nối(bảng, nối, cột, d, lọc) {
+    nếu (độ dài(nối) != 1 || độ dài(d) == 0) { trả về []; };
+    p = nối[0]; nếu (p[KEY_KIND()] != SQL_INNER()) { trả về []; };
+    nếu (!an toàn đẩy lọc(cột, d)) { trả về []; };
+    lặp(i = 0; i < 2; i++) {
+        nếu (lấy từ điển(bảng[i], KEY_QUERY(), rỗng) != rỗng) { trả về []; };
+    };
+    a = p[KEY_LEFT_INDEX()]; b = p[KEY_RIGHT_INDEX()]; n = độ dài(bảng[0][KEY_COLUMNS()]);
+    nếu (!hợp họ(họ toán hạng(cột, [OPERAND_COLUMN(), a]), họ toán hạng(cột, [OPERAND_COLUMN(), n + b]))) { trả về []; };
+    dùng = [];
+    lặp(i = 0; i < độ dài(cột); i++) { thêm(dùng, sai); };
+    đánh dấu điều kiện(d, dùng);
+    x = a; y = b;
+    lặp(i = 0; i < n; i++) {
+        nếu (dùng[i] && i != a) { nếu (x != a) { trả về []; }; x = i; };
+    };
+    lặp(i = n; i < độ dài(cột); i++) {
+        nếu (dùng[i] && i != n + b) { nếu (y != b) { trả về []; }; y = i - n; };
+    };
+    trái = hàng thống kê(bảng[0], a, x); phải = hàng thống kê(bảng[1], b, y);
+    nếu (trái == rỗng || phải == rỗng) { trả về []; };
+    lọcA = []; lọcB = [];
+    nếu (độ dài(lọc) > 0) { lọcA = lọc[0][0]; lọcB = lọc[1][0]; };
+    tổng = 0.0; đạt = 0.0;
+    lặp(i = 0; i < độ dài(trái); i++) {
+        u = trái[i][0]; nếu (u[a] == rỗng || !khớp(u, lọcA)) { bỏ qua; };
+        lặp(j = 0; j < độ dài(phải); j++) {
+            v = phải[j][0]; nếu (!so sánh(u[a], TEXT_EQUAL(), v[b]) || !khớp(v, lọcB)) { bỏ qua; };
+            số = (trái[i][1] + 0.0) * phải[j][1]; tổng = tổng + số;
+            nếu (khớp(ghép(u, v), d)) { đạt = đạt + số; };
+        };
+    };
+    nếu (tổng > 1000000000000.0) { tổng = 1000000000000.0; };
+    nếu (đạt > tổng) { đạt = tổng; };
+    trả về [tổng, đạt];
+};
+
+// Every top-level conjunct must already be enforced by a source filter.
+hàm đã lọc hết(d, bảng) {
+    nếu (d[0] == SQL_AND()) { trả về đã lọc hết(d[1], bảng) && đã lọc hết(d[2], bảng); };
+    đầu = 0;
+    lặp(i = 0; i < độ dài(bảng); i++) {
+        cuối = đầu + độ dài(bảng[i][KEY_COLUMNS()]);
+        nếu (điều kiện nguồn(d, đầu, cuối) != rỗng && điều kiện nguồn(d, 0, 0) == rỗng) { trả về đúng; };
+        đầu = cuối;
+    };
+    trả về sai;
+};
+
+hàm công khai ước lượng lọc nối(bảng, nối, d, lọc) {
+    nếu (độ dài(nối) == 0 || độ dài(d) == 0 || độ dài(lọc) == 0) { trả về rỗng; };
+    lặp(i = 0; i < độ dài(lọc); i++) {
+        nếu (độ dài(lọc[i][0]) > 0 && lọc[i][2] == rỗng) { trả về rỗng; };
+    };
+    nếu (!đã lọc hết(d, bảng)) { trả về rỗng; };
+    trả về nối[độ dài(nối) - 1][KEY_OUTPUT_ESTIMATE()];
+};

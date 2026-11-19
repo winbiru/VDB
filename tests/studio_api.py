@@ -148,6 +148,14 @@ def main():
             assert plan['columns'] == ['STEP', 'OPERATOR', 'OBJECT', 'ROWS']
             assert any(row[1] == 'TABLE_SCAN' for row in plan['rows'])
             assert first.read_bytes() == before
+            analyzed = query(first, 'ANALYZE TABLE sp;')['results'][0]
+            assert analyzed['columns'] == ['COLUMN', 'NULL_COUNT', 'DISTINCT_COUNT', 'MOST_COMMON', 'HISTOGRAM']
+            assert analyzed['rows'] == [['ID', 0, 1, [], [[10, 10, 1, 1]]],
+                                        ['LABEL', 0, 1, [], [['Cà phê', 'Cà phê', 1, 1]]]]
+            analyzed_bytes = first.read_bytes()
+            plan = query(first, 'EXPLAIN SELECT * FROM sp WHERE id = 10;')['results'][0]
+            assert any(row[1] == 'FILTER' and row[3] == 1 for row in plan['rows'])
+            assert first.read_bytes() == analyzed_bytes
             query(first, 'ALTER TABLE sp RENAME COLUMN label TO name;')
             assert query(first, 'SHOW INDEX FROM sp;')['results'][0]['rows'][0][1] == 'NAME'
             query(first, 'ALTER TABLE sp DROP COLUMN name;', expected=400)

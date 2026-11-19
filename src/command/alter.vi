@@ -1,3 +1,4 @@
+nhập optimizer.statistics.*;
 nhập constants.*;
 nhập records.*;
 nhập command.common.*;
@@ -95,6 +96,7 @@ hàm công khai thực thi alter(máy, cmd) {
         lặp(i = 0; i < độ dài(fks); i++) { thêm khóa ngoại(bảng, fks[i]); };
     };
     cập nhật index(bảng);
+    nếu (đúng) { hủy thống kê(bảng); };
     máy.dirty = đúng;
     trả về thay đổi(0);
 };

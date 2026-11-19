@@ -285,7 +285,9 @@ Engine hiện hỗ trợ catalog cục bộ, CREATE DATABASE/TABLE, DROP TABLE, 
 - [x] Chỉ mục nhiều cột và index-assisted JOIN (giai đoạn 6.6).
 - [x] Ước lượng cardinality trung gian, EXPLAIN cho nhiều JOIN và chọn lại thuật toán theo số hàng thực tế khi chạy.
 - [x] INSERT cập nhật B+ tree theo nút logic, tách nút, duy trì rank và thống kê tiền tố.
-- [ ] UPDATE/DELETE theo trang, thống kê nâng cao và tối ưu thứ tự JOIN.
+- [x] UPDATE/DELETE B+ tree theo nút logic, cập nhật khóa và thống kê tiền tố, thu gọn cây, ánh xạ vị trí hàng.
+- [x] Thống kê nâng cao theo cột, ANALYZE TABLE, MCV/histogram, ước lượng FILTER và JOIN đầu tiên.
+- [x] Tối ưu thứ tự INNER JOIN theo chi phí cho 3–8 lần tham chiếu bảng vật lý đã ANALYZE (giai đoạn 6.17).
 - [x] ALTER TABLE ADD/DROP/RENAME COLUMN, RENAME TO; DROP DATABASE (bảo vệ DEFAULT), hỗ trợ rollback.
 - [x] Foreign keys đơn/nhiều cột, kiểm tra tham chiếu khi DML/DDL, SHOW FOREIGN KEYS.
 - [x] Views chỉ đọc, lưu AST SELECT và metadata, kiểm tra phụ thuộc, hỗ trợ truy vấn lồng và EXPLAIN.
@@ -331,7 +333,7 @@ Mỗi tính năng UI phụ thuộc phải có kiểm thử engine trước khi n
 - [x] Giao biên khóa cho các điều kiện AND, tiền tố bằng liên tiếp và khoảng ở cột kế tiếp; WHERE luôn được kiểm tra lại. OR/NOT không tạo biên trực tiếp.
 - [x] INDEX_NESTED_LOOP_JOIN cho INNER/LEFT equijoin ở JOIN đầu tiên; planner so sánh chi phí hash, nested loop và index dựa trên chiều cao cây và cardinality tiền tố. EXPLAIN hiển thị INDEX_LOOKUP.
 - [x] Kiểm thử 18/11/2026: build lại engine, make test PASS (264 hàm hằng), parity với quét bảng trên 321 hàng, khóa NULL, Unicode, khoảng mâu thuẫn, tiền tố, OR/NOT, JOIN, DML/ALTER/rollback, catalog cũ. make test-studio-state PASS; Studio server và macOS app đã có bản build.
-- [ ] Cập nhật cây theo từng trang, thống kê phân bố nâng cao, ước lượng cardinality trung gian và tối ưu thứ tự JOIN.
+- [ ] Cập nhật cây theo trang vật lý; hoàn thiện thống kê phân bố, ước lượng cardinality trung gian và tối ưu thứ tự JOIN nâng cao (các phần ban đầu đã triển khai ở 6.14–6.18).
 
 Checklist chính vẫn **67/82 (81.7%)** vì mục P2 tổng hợp còn mở. Mô hình chi phí vẫn là heuristic; HTTP Studio và nghiệm thu WKWebView còn chờ kiểm thử.
 
@@ -387,10 +389,126 @@ Checklist chính vẫn **67/82 (81.7%)** vì mục P2 tổng hợp còn mở. M�
 - [x] INSERT vào cây rỗng hoặc cây có dữ liệu cập nhật đường dẫn từ gốc đến lá, giữ tối đa 16 khóa/con mỗi nút, tách nút lá/nút trong và tạo gốc mới khi cần. Khóa trùng được chèn theo thứ tự vị trí hàng; liên kết lá và khóa cực đại của nhánh được duy trì.
 - [x] Số khóa cây con cho phép tìm rank trên các lá kích thước khác nhau; range scan giữ thứ tự vật lý. Thống kê cardinality từng tiền tố và ràng buộc UNIQUE được cập nhật khi INSERT; catalog cũ được đọc bằng rank dạng bulk load và tự chuyển đổi khi INSERT.
 - [x] Kiểm thử 18/11/2026: `make all`, `make test` (307 hàm hằng), kiểm thử riêng 400 hàng với hai index đơn/nhiều cột, nút trong và lá, NULL, Unicode, khóa trùng, kiểm tra bất biến JSON, so sánh full scan, UNIQUE và rollback. `make test-studio-state`, `make studio-macos`, launcher `--check`, `plutil -lint`: PASS. Catalog chính giữ nguyên SHA-256 d97df2bca7c55410a3a9a3ade19a60b05628a1d5808f24d899d0376fd0fba40e.
-- [ ] UPDATE/DELETE vẫn bulk rebuild, do vị trí vật lý của hàng có thể đổi; ALTER và restore cũng dựng lại cây. Lưu trữ vẫn là catalog JSON ghi toàn bộ; trang vật lý, buffer pool, WAL/MVCC, thống kê phân bố nâng cao và tối ưu thứ tự JOIN còn mở.
+- Tại thời điểm 6.14, UPDATE/DELETE còn bulk rebuild; hai thao tác đã được triển khai theo nút logic ở 6.15. ALTER và restore vẫn dựng lại cây. Lưu trữ vẫn là catalog JSON ghi toàn bộ; trang vật lý, buffer pool, WAL/MVCC, thống kê phân bố nâng cao và tối ưu thứ tự JOIN còn mở.
 
 Checklist chính giữ **80/92 (87.0%)**; mục engine bổ sung không thuộc bộ đếm UI. HTTP Studio/WKWebView chưa được nghiệm thu do giới hạn bind loopback đã ghi nhận.
 
+
+### Giai đoạn 6 — Phần 6.15 (UPDATE/DELETE B+ tree theo nút logic)
+
+- [x] UPDATE giữ nguyên chỉ mục có khóa không đổi; xóa toàn bộ khóa cũ bị thay đổi trước khi chèn khóa mới theo rank, giữ thứ tự vị trí hàng với khóa trùng, duy trì cardinality tiền tố và kiểm tra UNIQUE trên trạng thái cuối câu lệnh.
+- [x] DELETE xóa khóa theo rank, cập nhật liên kết lá, khóa cực đại và số khóa cây con; loại bỏ nhánh rỗng, thu gọn gốc, thu hồi nút tách khỏi cây và ánh xạ lại vị trí hàng còn lại. Cây rỗng có một nút lá gốc. Catalog cũ tự chuyển đổi khi thao tác ghi ảnh hưởng chỉ mục.
+- [x] Kiểm thử 19/11/2026: build engine, kiểm thử tích hợp (400 hàng, index đơn/nhiều cột, NULL, Unicode, khóa trùng, UNIQUE, rollback, bất biến cây, so sánh full scan, xóa 350 hàng rồi xóa hết và chèn lại, tương thích catalog cũ với từng thao tác INSERT/UPDATE/DELETE đầu tiên), kiểm tra 307 hàm hằng, Studio state, build macOS, launcher `--check` và `plutil -lint`: PASS. Catalog chính giữ nguyên SHA-256 d97df2bca7c55410a3a9a3ade19a60b05628a1d5808f24d899d0376fd0fba40e.
+- [ ] Phân phối lại/gộp nút theo ngưỡng lấp đầy tối thiểu, định danh hàng ổn định, lưu trữ trang vật lý, buffer pool, WAL/MVCC, thống kê phân bố và tối ưu thứ tự JOIN. Catalog vẫn nạp và ghi toàn bộ; DELETE phải ánh xạ lại vị trí hàng, thu gọn cây phải duyệt mảng nút. ALTER và restore vẫn dựng lại index. Chưa đo hiệu năng để xác nhận mức cải thiện.
+
+Checklist chính giữ **80/92 (87.0%)**. HTTP Studio chưa chạy được vì sandbox từ chối bind loopback (`PermissionError: [Errno 1] Operation not permitted`); nghiệm thu WKWebView/Finder còn mở.
+
+### Giai đoạn 6 — Phần 6.16 (thống kê phân bố nâng cao)
+
+- [x] ANALYZE TABLE lưu số NULL, distinct, tối đa 8 MCV và 16 bucket histogram theo cột; SHOW STATISTICS giữ giao diện thống kê tức thời.
+- [x] EXPLAIN ước lượng FILTER đơn bảng và cardinality INNER/LEFT JOIN đầu tiên; planner dùng phân bố khóa khi tính chi phí index nested-loop JOIN. Metadata sai cấu trúc hoặc sai tổng số hàng được bỏ qua để quay về ước lượng cũ.
+- [x] INSERT, UPDATE/DELETE ảnh hưởng hàng và ALTER làm mất hiệu lực thống kê; rollback khôi phục metadata, backup giữ nguyên nguồn và restore hủy thống kê.
+- [x] Kiểm thử 19/11/2026: build engine, `make test` (312 hàm hằng và toàn bộ SQL integration), MCV/histogram giới hạn, dữ liệu lệch, NULL, Unicode, INT/REAL, BOOLEAN, EXPLAIN, JOIN, metadata lỗi, persistence và rollback; `make test-studio-state`: PASS.
+- [x] Ước lượng điều kiện phức hợp đơn bảng trong phạm vi 6.18.
+- [ ] Phân bố qua JOIN trung gian và thống kê tương quan nhiều cột. Hiệu chỉnh chi phí theo benchmark đã triển khai ở 6.24. Tối ưu thứ tự JOIN phạm vi ban đầu đã triển khai ở 6.17.
+- [ ] Kiểm thử HTTP Studio đã bổ sung ANALYZE nhưng bị chặn ở bind loopback; yêu cầu chạy ngoài sandbox bị xét duyệt từ chối do hết hạn mức.
+
+Checklist chính giữ **80/92 (87.0%)** vì các mục engine bổ sung được theo dõi riêng. Histogram và chi phí vẫn dùng heuristic; bộ nhớ thu thập phụ thuộc số hàng.
+
+### Giai đoạn 6 — Phần 6.17 (tối ưu thứ tự JOIN)
+
+- [x] Lập đồ thị nối từ cột đã bind; thử kế hoạch left-deep tham lam từ từng bảng gốc cho 3–8 lần tham chiếu bảng vật lý với INNER equijoin và thống kê hợp lệ trên mọi cạnh.
+- [x] So sánh chi phí toán tử, cardinality trung gian và khôi phục thứ tự với kế hoạch theo SQL; chọn đổi thứ tự khi chi phí ước lượng giảm. Chọn lại thuật toán các JOIN sau theo số hàng thực tế.
+- [x] Gắn số thứ tự hàng nguồn, khôi phục cột theo SQL và sắp xếp theo thứ tự hàng nguồn trước WHERE, projection, tổng hợp, DISTINCT, ORDER BY và LIMIT/OFFSET. EXPLAIN hiển thị thứ tự vật lý và RESTORE_JOIN_ORDER.
+- [x] Giữ kế hoạch theo SQL với LEFT JOIN, view, thiếu/thống kê lỗi, ngoài giới hạn số bảng hoặc không có lợi ích chi phí.
+- [x] Kiểm thử 19/11/2026: build engine, `make test` (314 hàm hằng và SQL integration), so sánh toàn bộ JSON trước/sau ANALYZE với star/chain/self-join, NULL, khóa trùng, Unicode, INT/REAL, index lookup, LIMIT/OFFSET, ORDER BY, DISTINCT, GROUP BY, WHERE, kết quả rỗng và fallback; kiểm tra thêm biên 4/8/9 lần tham chiếu và metadata lỗi trên catalog tạm. `make test-studio-state`, build macOS, launcher `--check`, `plutil -lint` và `git diff --check`: PASS.
+- [x] Merge Join (phần 6.23).
+- [ ] Tối ưu tổng quát cho đồ thị nối phức tạp, tương quan khóa, kế hoạch bushy và quản lý bộ nhớ/spill. Hiệu chỉnh chi phí toán tử đã triển khai ở 6.24.
+- [ ] HTTP Studio và nghiệm thu WKWebView/Finder còn mở (lỗi bind loopback và từ chối xét duyệt ngoài sandbox ở 6.16).
+
+Checklist chính giữ **80/92 (87.0%)**. Catalog chính giữ nguyên SHA-256 d97df2bca7c55410a3a9a3ade19a60b05628a1d5808f24d899d0376fd0fba40e.
+
+### Giai đoạn 6 — Phần 6.18 (ước lượng điều kiện phức hợp)
+
+- [x] Chuẩn hóa biểu thức WHERE đã bind trên bảng vật lý thành các điều kiện cột/literal. Theo dõi riêng TRUE, FALSE và UNKNOWN; NOT, AND, OR và BETWEEN (kể cả biên NULL) tuân theo logic ba giá trị SQL.
+- [x] Đánh giá biểu thức cùng cột trên MCV, NULL và singleton; chia bucket nhiều khóa theo điểm biên/literal và khoảng mở, giới hạn tần suất theo tổng số hàng và loại MCV khỏi phần dư. IN xử lý literal trùng, INT/REAL tương đương và NULL; NOT IN có NULL không nhận hàng TRUE.
+- [x] Ước lượng LIKE trên khóa đã biết dùng cùng hàm khớp Unicode với SELECT. Trả NULL khi còn khóa nội bộ chưa biết, kiểu không hợp lệ, biểu thức cột-với-cột hoặc metadata thiếu/sai. Nhiều cột dùng giả định độc lập giữa nhánh; số TRUE cuối giới hạn theo ứng viên scan. EXPLAIN chỉ đọc metadata và không thay đổi thực thi SELECT.
+- [x] Kiểm thử 19/11/2026: `make test` (314 hàm hằng và toàn bộ SQL integration), 27 ca biểu thức trên thống kê mẫu, 13 ca histogram/index, LIKE Unicode và fallback trên bucket nhiều khóa, catalog lỗi và thống kê mất hiệu lực, so sánh kết quả SELECT và bất biến catalog tạm; `make test-studio-state`: PASS.
+- [ ] Thống kê tương quan nhiều cột, giảm sai số khi các nhánh phức hợp dùng chung cột, LIKE trên bucket có khóa chưa biết, ước lượng FILTER dư qua JOIN/view. Phân bổ trong histogram và giả định độc lập vẫn là heuristic, chưa có benchmark hiệu chỉnh.
+
+Checklist chính giữ **80/92 (87.0%)**. Các mục engine được theo dõi riêng.
+
+### Giai đoạn 6 — Phần 6.19 (Predicate Pushdown)
+
+- [x] Tách các nhánh AND bắt buộc của WHERE chỉ tham chiếu một nguồn vật lý trong chuỗi INNER JOIN; ánh xạ AST về chỉ số cột cục bộ, hỗ trợ OR/NOT nội nguồn, IN, BETWEEN, IS NULL và LIKE an toàn kiểu.
+- [x] Quét nguồn theo kế hoạch scan/index sẵn có, lọc trước JOIN và giữ thứ tự hàng. Nguồn tạm đã lọc bỏ index và thống kê gốc; các nguồn chưa lọc giữ index lookup. WHERE cuối vẫn kiểm tra toàn bộ điều kiện.
+- [x] EXPLAIN hiển thị SOURCE_FILTER theo bí danh, ước lượng từ ANALYZE hoặc NULL. Mô hình JOIN dùng số hàng nguồn ước lượng, hoặc số ứng viên scan khi chưa biết; thực thi chọn lại thuật toán JOIN theo kích thước thực tế.
+- [x] Giữ đường thực thi cũ cho LEFT JOIN, view, WHERE có nguy cơ lỗi kiểu và biểu thức OR liên nguồn không có nhánh AND cục bộ. Không đẩy điều kiện chỉ có literal. Giữ thứ tự SQL khi có pushdown.
+- [x] Kiểm thử 19/11/2026: build engine, `make test` (315 hàm hằng và toàn bộ SQL integration), đối chiếu kết quả có/không pushdown, bí danh/self-join, NULL, khóa trùng, index scan hai phía, GROUP BY, DISTINCT, ORDER BY, LIMIT/OFFSET, lỗi LIKE và fallback, EXPLAIN trước/sau ANALYZE, catalog bất biến; `make test-studio-state`: PASS.
+- [ ] Thống kê tương quan tổng quát; mở rộng an toàn sang LEFT JOIN/view. Bộ lọc dư và hiệu chỉnh chi phí đã triển khai ở 6.22 và 6.24.
+
+Checklist chính giữ **80/92 (87.0%)**. Catalog chính giữ nguyên SHA-256 d97df2bca7c55410a3a9a3ade19a60b05628a1d5808f24d899d0376fd0fba40e.
+
+### Giai đoạn 6 — Phần 6.20 (kết hợp Predicate Pushdown và Join Reordering)
+
+- [x] Dùng cardinality sau lọc của từng nguồn để so sánh kế hoạch left-deep theo SQL và các phương án tham lam từ từng gốc (3–8 nguồn vật lý INNER JOIN). Ước lượng số cặp khớp trên mỗi cạnh theo thống kê gốc nhân tỷ lệ giữ hàng ở hai nguồn.
+- [x] Tính chi phí JOIN và khôi phục thứ tự theo cardinality đã lọc. Không dùng index lookup trên nguồn tạm đã lọc; vẫn cho phép trên nguồn chưa lọc. Chọn lại thuật toán kể cả JOIN đầu tiên theo kích thước thực tế khi có pushdown.
+- [x] EXPLAIN thể hiện SOURCE_FILTER đúng bí danh và thứ tự vật lý, cùng RESTORE_JOIN_ORDER trước FILTER cuối. Thực thi khôi phục bố cục cột và thứ tự tương đối của hàng nguồn; WHERE cuối giữ nguyên.
+- [x] Khi ước lượng nguồn chưa biết hoặc thiếu thống kê cạnh nối, giữ pushdown theo thứ tự SQL. Các giới hạn LEFT JOIN, view và biểu thức có nguy cơ lỗi kiểu giữ nguyên.
+- [x] Kiểm thử 19/11/2026: build V++ engine, `make test` (315 hàm hằng và SQL integration), 10 truy vấn đối chiếu JSON trước/sau ANALYZE và 6 kế hoạch EXPLAIN; star/chain/self-join, khóa trùng/NULL, nguồn rỗng sau lọc, index lookup nguồn chưa lọc, loại index lookup nguồn đã lọc, DISTINCT/GROUP BY/ORDER BY/LIMIT/OFFSET, ước lượng thiếu và fallback lỗi kiểu. PASS.
+- [x] Ước lượng tương quan giữa bộ lọc một cột và khóa nối bằng thống kê cặp (phần 6.21).
+- [x] Cardinality bộ lọc dư và Merge Join (phần 6.22–6.23).
+- [ ] Kế hoạch bushy. Hiệu chỉnh chi phí bằng benchmark đã triển khai ở 6.24.
+
+Checklist chính giữ **80/92 (87.0%)**. Các mục engine được theo dõi riêng.
+
+### Giai đoạn 6 — Phần 6.21 (thống kê tương quan và cardinality trung gian)
+
+- [x] ANALYZE lưu tần suất chính xác của tối đa 28 cặp trong 8 cột đầu tiên, mỗi cột tối đa 8 giá trị không NULL phân biệt và mỗi cặp tối đa 64 tổ hợp kể cả NULL. Giữ cấu trúc kết quả ANALYZE; metadata tùy chọn tương thích catalog cũ.
+- [x] Kiểm tra cấu trúc, số hàng, kiểu dữ liệu, tổ hợp trùng và tần suất biên của cặp. INSERT/UPDATE/DELETE/ALTER và restore làm mất hiệu lực; rollback khôi phục thống kê.
+- [x] Ước lượng phân bố khóa INNER JOIN sau lọc trên một cột khác với logic ba giá trị. Dùng tích tần suất khớp khi cả hai nguồn có phân bố điều kiện; kết hợp phân bố biên và tỷ lệ giữ hàng nếu chỉ có một nguồn. Fallback mô hình độc lập khi thiếu thống kê phù hợp.
+- [x] Dùng ước lượng cạnh đã lọc cho cả đổi thứ tự JOIN lẫn chuỗi JOIN theo thứ tự SQL. Cardinality trung gian dựa vào suất khớp trung bình của nguồn cha và số hàng trung gian ước lượng.
+- [x] Kiểm thử 19/11/2026: build engine, 316 hàm hằng, toàn bộ SQL integration và kiểm thử thống kê cặp với phân bố lệch, hai phía lọc, NULL, OR/NOT/IN, self-join, chuỗi ba nguồn, metadata thiếu/hỏng, invalidation, rollback và restore. Studio state, build macOS, launcher --check, plist và diff check PASS. Catalog chính giữ nguyên SHA-256.
+- [x] Cardinality FILTER sau INNER JOIN trong phạm vi thống kê cặp (phần 6.22).
+- [ ] Mô hình tương quan tổng quát nhiều cột/nhiều cạnh. Hiệu chỉnh chi phí đã triển khai ở 6.24. HTTP Studio/WKWebView vẫn chờ nghiệm thu.
+
+Checklist chính giữ **80/92 (87.0%)**; các mục engine bổ sung được theo dõi riêng.
+
+### Giai đoạn 6 — Phần 6.22 (cardinality FILTER sau JOIN)
+
+- [x] EXPLAIN tính số hàng JOIN sau lọc nguồn và FILTER cuối với hai nguồn bảng vật lý INNER equijoin, mỗi nguồn tối đa khóa nối và một cột WHERE khác, dựa trên thống kê đơn khóa hoặc cặp có tần suất chính xác.
+- [x] Đánh giá nhóm có trọng số theo logic ba giá trị của SQL, gồm NULL, AND/OR/NOT, IN, BETWEEN và điều kiện so sánh liên nguồn. Tối đa 64 × 64 nhóm và 10^12 hàng ước lượng; chỉ đọc metadata.
+- [x] FILTER nhận số hàng ước lượng của JOIN cuối nếu mọi điều kiện WHERE đã được đẩy xuống nguồn và đủ ước lượng nguồn, kể cả kế hoạch đổi thứ tự JOIN. Trả NULL khi không đủ thống kê cho điều kiện dư; giữ nguyên thuật toán thực thi SELECT.
+- [x] Kiểm thử 19/11/2026: build engine, 316 hàm hằng, toàn bộ SQL integration, thống kê cặp và residual statistics; so sánh cardinality với COUNT thực tế, self-join, đảo thứ tự hai nguồn, nguồn rỗng, LEFT JOIN, chuỗi ba nguồn, metadata thiếu, invalidation DML và catalog bất biến. Studio state, bundle macOS, launcher --check, plist và diff check PASS; catalog chính giữ nguyên SHA-256.
+- [x] Merge Join (phần 6.23).
+- [ ] Mở rộng thống kê cho nhiều cột/nhiều cạnh JOIN. Hiệu chỉnh chi phí đã triển khai ở 6.24. Nghiệm thu HTTP Studio/WKWebView còn chờ.
+
+Checklist chính giữ **80/92 (87.0%)**; các mục engine bổ sung được theo dõi riêng.
+
+### Giai đoạn 6 — Phần 6.23 (Merge Join)
+
+- [x] Bổ sung MERGE_JOIN bằng V++, hỗ trợ INNER/LEFT equijoin trên khóa số tương thích và TEXT/VARCHAR.
+- [x] Sắp xếp ổn định khóa khác NULL cùng vị trí hàng nguồn, ghép nhóm khóa bằng nhau và phát kết quả theo thứ tự vật lý trái/phải. Giữ khóa trùng, NULL padding và LIMIT/OFFSET.
+- [x] Planner so sánh bốn thuật toán JOIN, xét merge join khi hai nguồn có ít nhất 64 hàng ước lượng, có thống kê phân bố và kiểu khóa tương thích.
+- [x] Tích hợp EXPLAIN, predicate pushdown và chọn lại thuật toán theo số hàng thực tế.
+- [x] Sửa lỗi truy cập vượt biên do V++ đánh giá cả hai vế `&&`; kiểm tra giới hạn trước khi truy cập danh sách.
+- [x] Kiểm thử 19/11/2026: build engine, 318 hàm hằng, toàn bộ SQL integration, Studio state, bundle macOS, launcher `--check` và plist PASS. Kiểm thử Merge Join mở rộng PASS với JOIN ba nguồn, GROUP BY, DISTINCT và ORDER BY ổn định. Catalog chính giữ nguyên SHA-256.
+- [x] Hiệu chỉnh mô hình chi phí bằng benchmark (phần 6.24).
+- [ ] Mở rộng thống kê nhiều cột/nhiều cạnh, kế hoạch bushy và quản lý bộ nhớ/spill.
+
+Checklist chính giữ **80/92 (87.0%)**; các mục engine bổ sung được theo dõi riêng.
+
+### Giai đoạn 6 — Phần 6.24 (Benchmark JOIN và hiệu chỉnh chi phí)
+
+- [x] Benchmark V++ qua dispatcher thật cho bốn thuật toán JOIN, tách thời gian nạp fixture, xây index và JSON I/O; kiểm tra mọi kết quả theo thứ tự vật lý và oracle Python độc lập.
+- [x] 33 workload hiệu chỉnh (5 mẫu/workload) và 10 workload holdout khác kích thước/seed (3 mẫu/workload), gồm dữ liệu unique, duplicate, skew, NULL, disjoint, INT/TEXT, INNER/LEFT.
+- [x] Hiệu chỉnh chi phí build/probe hash, nested loop, merge sort, số cặp khớp và chiều cao index. Giữ fallback cũ khi thiếu thống kê; giữ mật độ khớp cho mọi thuật toán khi lập kế hoạch lại theo kích thước thực tế.
+- [x] Đối chiếu planner trên cùng số đo macOS ARM64: nhanh nhất 32/33 ở cả hai nhóm không/có index (trước 30/33 và 31/33); tỷ lệ chậm nhất so với thuật toán nhanh nhất giảm từ 3,532× và 1,204× xuống 1,003×. Holdout: 8/10 và 9/10, tỷ lệ chậm nhất 1,036× và 1,019×.
+- [x] Kiểm tra lại pushdown với HASH_JOIN và MERGE_JOIN theo chi phí mới; fixture dùng 80 hoặc 88 hàng sau lọc, kết quả và thứ tự hàng vẫn được kiểm tra.
+- [x] Kiểm thử 19/11/2026: 318 hàm hằng, toàn bộ SQL integration (joint/residual statistics, merge join), Studio state, bundle macOS, launcher `--check` và plist PASS. Catalog chính giữ nguyên SHA-256.
+- [ ] Mở rộng benchmark cho dữ liệu lớn, khóa REAL/BOOLEAN, index nhiều cột, độ chính xác thống kê, chi phí I/O và SQL end-to-end; tiếp tục thống kê tổng quát, kế hoạch bushy và memory budget/spill.
+
+Checklist chính giữ **80/92 (87.0%)**. Các số đo trên phản ánh lựa chọn toán tử với số cặp khớp chính xác, không phải tốc độ toàn truy vấn; hệ số compound index và khôi phục thứ tự vẫn là heuristic. HTTP Studio/WKWebView và Finder còn chờ nghiệm thu.
 
 ## Distribution — CI/CD, cài đặt và nâng cấp
 

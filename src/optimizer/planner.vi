@@ -1,3 +1,4 @@
+nhập optimizer.statistics.*;
 nhập constants.*;
 nhập records.*;
 nhập gói.văn bản.chuỗi.độ dài;
@@ -114,34 +115,92 @@ hàm cùng kiểu index(a, b) {
     trả về sai;
 };
 
-hàm công khai kế hoạch join(kiểu, trái, phải, rộng, sốTrái, bảngPhải, kiểuTrái) {
-    sốPhải = độ dài(bảngPhải[KEY_ROWS()]);
+// Only order-compatible keys can use merge join. Mixed text/numeric and
+// BOOLEAN retain the existing equality algorithms.
+hàm cùng kiểu hợp nhất(a, b) {
+    nếu (cùng kiểu index(a, b)) { trả về đúng; };
+    sốA = a == SQL_INT() || a == SQL_INTEGER() || a == SQL_REAL();
+    sốB = b == SQL_INT() || b == SQL_INTEGER() || b == SQL_REAL();
+    trả về sốA && sốB;
+};
+
+hàm giá sắp nối(n) {
+    rộng = 1.0; lượt = 0;
+    khi (rộng < n) { rộng = rộng * 2; lượt++; };
+    trả về n * lượt;
+};
+
+hàm công khai kế hoạch join(kiểu, trái, phải, rộng, sốTrái, bảngPhải, kiểuTrái, phânBố) {
+    trả về kế hoạch join theo kích thước(kiểu, trái, phải, rộng, sốTrái, bảngPhải, kiểuTrái, phânBố, độ dài(bảngPhải[KEY_ROWS()]), đúng);
+};
+
+hàm công khai kế hoạch join theo kích thước(kiểu, trái, phải, rộng, sốTrái, bảngPhải, kiểuTrái, phânBố, sốPhải, dùngIndex) {
     tốt = bản ghi kế hoạch nối(ALGO_HASH_JOIN(), kiểu, trái, phải, rộng);
     nếu (sốTrái < 0) { trả về tốt; };
     chiPhí = sốTrái + sốPhải + 17;
+    c = bảngPhải[KEY_COLUMNS()][phải];
+    giáHợp = -1.0;
+    cóPhânBố = độ dài(phânBố) > 0;
     giáLặp = (sốTrái + 0.0) * sốPhải;
+    // Benchmark units approximate one nested-loop key comparison. The
+    // shared cost of materializing matching rows is handled by join order.
+    nếu (cóPhânBố) {
+        chiPhí = 5 * sốTrái + 7 * sốPhải + 40 + phânBố[0];
+        giáLặp = giáLặp + 0.5 * phânBố[0];
+    };
+    // Large duplicate runs repeat equality checks in hash buckets. The
+    // merge pass compares each run once; output materialization is common.
+    nếu (sốTrái >= 64 && sốPhải >= 64 && cóPhânBố && cùng kiểu hợp nhất(kiểuTrái, c[KEY_TYPE()])) {
+        giáHợp = 4 * (sốTrái + sốPhải) + 2.5 * (giá sắp nối(sốTrái) + giá sắp nối(sốPhải)) + 40;
+    };
     nếu (giáLặp <= chiPhí) {
         tốt = bản ghi kế hoạch nối(ALGO_NESTED_LOOP_JOIN(), kiểu, trái, phải, rộng);
         chiPhí = giáLặp;
     };
-    c = bảngPhải[KEY_COLUMNS()][phải];
-    nếu (!cùng kiểu index(kiểuTrái, c[KEY_TYPE()])) { trả về tốt; };
-    ds = danh sách index(bảngPhải);
+    nếu (giáHợp >= 0 && giáHợp < chiPhí) {
+        tốt = bản ghi kế hoạch nối(ALGO_MERGE_JOIN(), kiểu, trái, phải, rộng);
+        chiPhí = giáHợp;
+    };
+    tốt[KEY_COST()] = chiPhí;
+    ds = [];
+    nếu (dùngIndex && cùng kiểu index(kiểuTrái, c[KEY_TYPE()])) { ds = danh sách index(bảngPhải); };
     lặp(i = 0; i < độ dài(ds); i++) {
         m = ds[i]; cột = cột index(m);
         nếu (cột[0] != c[KEY_NAME()]) { bỏ qua; };
         thốngKê = lấy từ điển(m, KEY_PREFIX_CARDINALITY(), [m[KEY_CARDINALITY()]]);
         nếu (thốngKê[0] == 0) { bỏ qua; };
         khớpTB = (m[KEY_COUNT()] + 0.0) / thốngKê[0];
+        nếu (độ dài(phânBố) > 0 && sốTrái > 0) { khớpTB = phânBố[0] / sốTrái; };
         giá = sốTrái * (m[KEY_HEIGHT()] + khớpTB);
-        nếu (độ dài(cột) > 1) { giá = sốTrái * (2 * m[KEY_HEIGHT()] + 2 * khớpTB); };
+        nếu (cóPhânBố) {
+            giá = sốTrái * (3 * m[KEY_HEIGHT()] + 1) + 2 * phânBố[0] + 10;
+        };
+        nếu (độ dài(cột) > 1) { giá = 2 * giá; };
         nếu (giá < chiPhí) {
             tốt = bản ghi kế hoạch nối(ALGO_INDEX_NESTED_LOOP_JOIN(), kiểu, trái, phải, rộng);
             tốt[KEY_ITEM()] = m; tốt[KEY_ESTIMATE()] = khớpTB;
             chiPhí = giá;
+            tốt[KEY_COST()] = chiPhí;
+        };
+    };
+    nếu (cóPhânBố) {
+        // Keep the existing join-order row/restoration cost scale: a
+        // materialized row costs roughly six key comparisons in the fixture.
+        tốt[KEY_COST()] = chiPhí / 6.0;
+        nếu (sốTrái > 0 && sốPhải > 0) {
+            tốt[KEY_MATCH_DENSITY()] = phânBố[0] / ((sốTrái + 0.0) * sốPhải);
         };
     };
     trả về tốt;
+};
+
+// Retain the estimated matching fraction when any plan is replanned
+// against actual input sizes after filtering or an intermediate JOIN.
+hàm công khai phân bố chạy nối(p, sốTrái, sốPhải) {
+    mậtĐộ = lấy từ điển(p, KEY_MATCH_DENSITY(), rỗng);
+    nếu (mậtĐộ == rỗng) { trả về []; };
+    khớp = mậtĐộ * sốTrái * sốPhải;
+    trả về [khớp, khớp];
 };
 
 // Ước lượng trung gian từ metadata, không đọc hàng hay thực thi JOIN.
@@ -176,24 +235,58 @@ hàm thêm bước(ds, op, tên, sốHàng) {
     thêm(ds, [độ dài(ds) + 1, op, tên, sốHàng]);
 };
 
-hàm công khai giải thích kế hoạch(cmd, bảng, bảngNối, nối, kếHoạch, gộp) {
+hàm thêm scan nguồn(ds, bảng, p, bíDanh) {
+    scan = p[1];
+    nếu (scan[KEY_ALGORITHM()] == ALGO_TABLE_SCAN()) {
+        thêm bước(ds, ALGO_TABLE_SCAN(), bảng[KEY_NAME()], scan[KEY_ESTIMATE()]);
+    } hoặc {
+        thêm bước(ds, scan[KEY_ALGORITHM()], scan[KEY_ITEM()][KEY_NAME()], scan[KEY_ESTIMATE()]);
+    };
+    thêm bước(ds, ALGO_SOURCE_FILTER(), bíDanh, p[2]);
+};
+
+hàm bí danh nguồn(cmd, vịTrí) {
+    nếu (vịTrí == 0) { trả về cmd[KEY_ALIAS()]; };
+    trả về cmd[KEY_JOINS()][vịTrí - 1][KEY_ALIAS()];
+};
+
+hàm công khai giải thích kế hoạch(cmd, bảng, bảngNối, nối, kếHoạch, gộp, điềuKiện, thứTự, lọcNguồn, sốLọcNối) {
     ds = [];
     scan = kếHoạch[KEY_SCAN()];
-    nếu (lấy từ điển(bảng, KEY_QUERY(), rỗng) != rỗng) { thêm bước(ds, ALGO_VIEW_SCAN(), bảng[KEY_NAME()], rỗng); }
+    đổiThứTự = độ dài(thứTự) > 0;
+    nguồn = 0;
+    nếu (đổiThứTự) { nguồn = thứTự[0]; };
+    cóLọc = sai;
+    nếu (độ dài(lọcNguồn) > 0) { cóLọc = độ dài(lọcNguồn[0][0]) > 0; };
+    nếu (cóLọc) {
+        thêm scan nguồn(ds, bảng, lọcNguồn[0], bí danh nguồn(cmd, nguồn));
+    } hoặc nếu (lấy từ điển(bảng, KEY_QUERY(), rỗng) != rỗng) { thêm bước(ds, ALGO_VIEW_SCAN(), bảng[KEY_NAME()], rỗng); }
     hoặc nếu (scan[KEY_ALGORITHM()] != ALGO_TABLE_SCAN()) {
         thêm bước(ds, scan[KEY_ALGORITHM()], scan[KEY_ITEM()][KEY_NAME()], scan[KEY_ESTIMATE()]);
     } hoặc {
         thêm bước(ds, ALGO_TABLE_SCAN(), bảng[KEY_NAME()], độ dài(bảng[KEY_ROWS()]));
     };
     lặp(i = 0; i < độ dài(nối); i++) {
-        phải = bảngNối[i];
-        nếu (nối[i][KEY_ALGORITHM()] == ALGO_INDEX_NESTED_LOOP_JOIN()) {
+        phải = bảngNối[i]; nguồn = i + 1;
+        nếu (đổiThứTự) { nguồn = thứTự[i + 1]; };
+        cóLọc = sai;
+        nếu (độ dài(lọcNguồn) > 0) { cóLọc = độ dài(lọcNguồn[i + 1][0]) > 0; };
+        nếu (cóLọc) {
+            thêm scan nguồn(ds, phải, lọcNguồn[i + 1], bí danh nguồn(cmd, nguồn));
+        } hoặc nếu (nối[i][KEY_ALGORITHM()] == ALGO_INDEX_NESTED_LOOP_JOIN()) {
             thêm bước(ds, ALGO_INDEX_LOOKUP(), nối[i][KEY_ITEM()][KEY_NAME()], nối[i][KEY_ESTIMATE()]);
         } hoặc nếu (lấy từ điển(phải, KEY_QUERY(), rỗng) != rỗng) { thêm bước(ds, ALGO_VIEW_SCAN(), phải[KEY_NAME()], rỗng); }
         hoặc { thêm bước(ds, ALGO_TABLE_SCAN(), phải[KEY_NAME()], độ dài(phải[KEY_ROWS()])); };
         thêm bước(ds, nối[i][KEY_ALGORITHM()], nối[i][KEY_KIND()], nối[i][KEY_OUTPUT_ESTIMATE()]);
     };
-    nếu (độ dài(cmd[KEY_WHERE()]) > 0) { thêm bước(ds, ALGO_FILTER(), TEXT_EMPTY(), rỗng); };
+    nếu (đổiThứTự) { thêm bước(ds, ALGO_RESTORE_JOIN_ORDER(), TEXT_EMPTY(), nối[độ dài(nối) - 1][KEY_OUTPUT_ESTIMATE()]); };
+    nếu (độ dài(cmd[KEY_WHERE()]) > 0) {
+        sốLọc = sốLọcNối;
+        nếu (độ dài(nối) == 0 && lấy từ điển(bảng, KEY_QUERY(), rỗng) == rỗng) {
+            sốLọc = ước lượng lọc(bảng, điềuKiện, scan[KEY_ESTIMATE()]);
+        };
+        thêm bước(ds, ALGO_FILTER(), TEXT_EMPTY(), sốLọc);
+    };
     nếu (gộp) { thêm bước(ds, kếHoạch[KEY_AGGREGATE()][KEY_ALGORITHM()], TEXT_EMPTY(), rỗng); };
     thêm bước(ds, ALGO_PROJECT(), TEXT_EMPTY(), rỗng);
     nếu (độ dài(cmd[KEY_HAVING()]) > 0) { thêm bước(ds, ALGO_HAVING_FILTER(), TEXT_EMPTY(), rỗng); };

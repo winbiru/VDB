@@ -161,6 +161,7 @@ lớp công khai Phân Tích SQL {
     hàm công khai câu lệnh() {
         nếu (mình.nhận(SQL_CREATE())) { trả về phân tích create(mình); };
         nếu (mình.nhận(SQL_USE())) { trả về phân tích use(mình); };
+        nếu (mình.nhận(SQL_ANALYZE())) { mình.cần(SQL_TABLE()); trả về bản ghi lệnh có tên(SQL_ANALYZE_TABLE(), mình.tên định danh()); };
         nếu (mình.nhận(SQL_SHOW())) { trả về phân tích show(mình); };
         nếu (mình.nhận(SQL_DESCRIBE()) || mình.nhận(SQL_DESC())) { trả về phân tích describe(mình); };
         nếu (mình.nhận(SQL_DROP())) { trả về phân tích drop(mình); };

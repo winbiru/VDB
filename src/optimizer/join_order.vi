@@ -1,0 +1,141 @@
+nhập constants.*;
+nhập records.*;
+nhập algorithm.row.*;
+nhập algorithm.dispatch.*;
+nhập optimizer.statistics.*;
+nhập optimizer.planner.*;
+nhập gói.văn bản.chuỗi.độ dài;
+nhập gói.bộ sưu tập.từ điển.lấy từ điển;
+
+// Each edge connects a previously bound table to a newly bound table.
+// [parent, child, parent column, child column, estimated matching pairs].
+hàm cạnh nối(bảng, nối, kíchThước, lọcNguồn) {
+    đầu = [0]; tổng = độ dài(bảng[0][KEY_COLUMNS()]);
+    ds = [];
+    lặp(i = 0; i < độ dài(nối); i++) {
+        p = nối[i];
+        nếu (p[KEY_KIND()] != SQL_INNER()) { trả về []; };
+        a = p[KEY_LEFT_INDEX()]; cha = độ dài(đầu) - 1;
+        khi (a < đầu[cha]) { cha--; };
+        trái = a - đầu[cha]; phải = p[KEY_RIGHT_INDEX()];
+        lọcA = []; lọcB = [];
+        nếu (độ dài(lọcNguồn) > 0) { lọcA = lọcNguồn[cha][0]; lọcB = lọcNguồn[i + 1][0]; };
+        phânBố = ước lượng cạnh lọc(bảng[cha], trái, bảng[i + 1], phải, lọcA, lọcB, kíchThước[cha], kíchThước[i + 1]);
+        nếu (độ dài(phânBố) == 0) { trả về []; };
+        số = phânBố[0];
+        thêm(ds, [cha, i + 1, trái, phải, số]);
+        thêm(đầu, tổng); tổng = tổng + độ dài(bảng[i + 1][KEY_COLUMNS()]);
+    };
+    trả về ds;
+};
+
+// A greedy connected left-deep plan from one starting relation.
+// Offsets include a physical-row ordinal appended to each input row.
+hàm phương án nối(bảng, cạnh, gốc, thamLam, kíchThước, dùngIndex) {
+    n = độ dài(bảng); vị = []; thứTự = [gốc]; kếHoạch = []; tỷLệ = []; kiểuKhóa = [];
+    lặp(i = 0; i < n; i++) { thêm(vị, -1); };
+    vị[gốc] = 0; rộng = độ dài(bảng[gốc][KEY_COLUMNS()]) + 1;
+    số = kíchThước[gốc] + 0.0; chiPhí = số;
+    lặp(k = 1; k < n; k++) {
+        tốt = rỗng; giáTốt = 0.0; đích = -1; suấtTốt = 0.0; kiểuTốt = rỗng;
+        lặp(i = 0; i < độ dài(cạnh); i++) {
+            e = cạnh[i]; a = e[0]; b = e[1]; x = e[2]; y = e[3];
+            nếu (vị[a] < 0 && vị[b] >= 0) { a = e[1]; b = e[0]; x = e[3]; y = e[2]; };
+            nếu (vị[a] < 0 || vị[b] >= 0) { bỏ qua; };
+            nếu (!thamLam && b != k) { bỏ qua; };
+            nguồn = kíchThước[a]; sốPhải = kíchThước[b];
+            suất = 0.0;
+            nếu (nguồn > 0) { suất = e[4] / nguồn; };
+            nếu (suất > sốPhải) { suất = sốPhải + 0.0; };
+            ra = số * suất;
+            nếu (ra > 1000000000000.0) { ra = 1000000000000.0; };
+            kiểu = bảng[a][KEY_COLUMNS()][x][KEY_TYPE()];
+            p = kế hoạch join theo kích thước(SQL_INNER(), vị[a] + x, y, độ dài(bảng[b][KEY_COLUMNS()]) + 1, số, bảng[b], kiểu, [ra, ra], sốPhải, dùngIndex[b]);
+            p[KEY_OUTPUT_ESTIMATE()] = ra;
+            giá = p[KEY_COST()] + ra;
+            nếu (đích < 0 || giá < giáTốt) {
+                tốt = p; giáTốt = giá; đích = b; suấtTốt = suất; kiểuTốt = kiểu;
+            };
+        };
+        nếu (đích < 0) { trả về []; };
+        thêm(thứTự, đích); thêm(kếHoạch, tốt); thêm(tỷLệ, suấtTốt); thêm(kiểuKhóa, kiểuTốt);
+        vị[đích] = rộng; rộng = rộng + độ dài(bảng[đích][KEY_COLUMNS()]) + 1;
+        số = tốt[KEY_OUTPUT_ESTIMATE()]; chiPhí = chiPhí + giáTốt;
+    };
+    trả về [thứTự, kếHoạch, chiPhí, tỷLệ, kiểuKhóa, vị];
+};
+
+// Compare the original order with one greedy candidate per root. Require
+// valid distribution statistics for every edge and account for restoring order.
+hàm công khai chọn thứ tự nối(bảng, nối, lọcNguồn) {
+    n = độ dài(bảng);
+    nếu (n < 3 || n > 8) { trả về []; };
+    tổng = 0.0; kíchThước = []; dùngIndex = [];
+    lặp(i = 0; i < n; i++) {
+        nếu (lấy từ điển(bảng[i], KEY_QUERY(), rỗng) != rỗng) { trả về []; };
+        số = độ dài(bảng[i][KEY_ROWS()]); indexĐược = đúng;
+        nếu (độ dài(lọcNguồn) > 0) {
+            p = lọcNguồn[i];
+            nếu (độ dài(p[0]) > 0) {
+                // Không dùng ước lượng thiếu để chọn đổi thứ tự.
+                nếu (p[2] == rỗng) { trả về []; };
+                số = p[2]; indexĐược = sai;
+            };
+        };
+        thêm(kíchThước, số); thêm(dùngIndex, indexĐược);
+        tổng = tổng + số;
+    };
+    cạnh = cạnh nối(bảng, nối, kíchThước, lọcNguồn);
+    nếu (độ dài(cạnh) != n - 1) { trả về []; };
+    gốc = phương án nối(bảng, cạnh, 0, sai, kíchThước, dùngIndex);
+    nếu (độ dài(gốc) == 0) { trả về []; };
+    giáTốt = gốc[2]; tốt = [];
+    lặp(i = 0; i < n; i++) {
+        p = phương án nối(bảng, cạnh, i, đúng, kíchThước, dùngIndex);
+        nếu (độ dài(p) == 0) { bỏ qua; };
+        khác = sai;
+        lặp(j = 0; j < n; j++) { nếu (p[0][j] != j) { khác = đúng; }; };
+        nếu (!khác) { bỏ qua; };
+        ra = p[1][n - 2][KEY_OUTPUT_ESTIMATE()]; lượt = 0; rộng = 1.0;
+        khi (rộng < ra) { rộng = rộng * 2; lượt++; };
+        giá = p[2] + tổng + ra * (lượt + 1);
+        nếu (giá < giáTốt) { tốt = p; giáTốt = giá; };
+    };
+    trả về tốt;
+};
+
+hàm đánh số hàng(hàng) {
+    ds = [];
+    lặp(i = 0; i < độ dài(hàng); i++) { thêm(ds, ghép(hàng[i], [i])); };
+    trả về ds;
+};
+
+// Reconstruct SQL column layout and original lexicographic row order,
+// including duplicates, so LIMIT, stable sorting and aggregates retain behavior.
+hàm công khai chạy thứ tự nối(bảng, phươngÁn, cóLọc) {
+    thứTự = phươngÁn[0]; kếHoạch = phươngÁn[1]; vị = phươngÁn[5];
+    hàng = đánh số hàng(bảng[thứTự[0]][KEY_ROWS()]);
+    lặp(i = 0; i < độ dài(kếHoạch); i++) {
+        p = kếHoạch[i]; phải = bảng[thứTự[i + 1]];
+        nếu (i > 0 || cóLọc) {
+            khớp = độ dài(hàng) * phươngÁn[3][i];
+            p = kế hoạch join(SQL_INNER(), p[KEY_LEFT_INDEX()], p[KEY_RIGHT_INDEX()], p[KEY_RIGHT_WIDTH()], độ dài(hàng), phải, phươngÁn[4][i], [khớp, khớp]);
+        };
+        hàng = thực thi thuật toán(p, bản ghi dữ liệu nối(hàng, đánh số hàng(phải[KEY_ROWS()])));
+    };
+    ds = []; sắp = []; n = độ dài(bảng);
+    lặp(i = 0; i < n; i++) { thêm(sắp, [đúng, sai]); };
+    lặp(i = 0; i < độ dài(hàng); i++) {
+        dòng = []; khóa = [];
+        lặp(j = 0; j < n; j++) {
+            rộng = độ dài(bảng[j][KEY_COLUMNS()]);
+            lặp(k = 0; k < rộng; k++) { thêm(dòng, hàng[i][vị[j] + k]); };
+            thêm(khóa, hàng[i][vị[j] + rộng]);
+        };
+        thêm(ds, bản ghi hàng kết quả(dòng, khóa));
+    };
+    ds = thực thi thuật toán(bản ghi thuật toán(ALGO_MERGE_SORT()), bản ghi dữ liệu sắp xếp(ds, sắp));
+    kq = [];
+    lặp(i = 0; i < độ dài(ds); i++) { thêm(kq, ds[i][KEY_ROW()]); };
+    trả về kq;
+};

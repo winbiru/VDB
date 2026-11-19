@@ -41,6 +41,14 @@ test-constants:
 test: test-constants all
 	./tests/test.sh
 
+.PHONY: benchmark-joins
+build/vdb-benchmark-join: $(SOURCES)
+	mkdir -p build
+	"$(VPP)" build src/benchmark_join.vi -o "$@"
+
+benchmark-joins: build/vdb-benchmark-join
+	python3 tests/benchmark_joins.py "$<"
+
 .PHONY: test-studio test-studio-state
 test-studio: all build/vdb-studio
 	python3 tests/studio_api.py

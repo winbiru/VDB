@@ -1,3 +1,4 @@
+nhập optimizer.statistics.*;
 nhập constants.*;
 nhập records.*;
 nhập command.common.*;
@@ -15,13 +16,15 @@ hàm công khai thực thi delete(máy, cmd) {
     cột = bảng[KEY_COLUMNS()];
     hàng = bảng[KEY_ROWS()];
     điềuKiện = biên dịch điều kiện(cột, cmd[KEY_WHERE()]);
-    ds = [];
+    ds = []; đãXóa = []; ánhXạ = [];
     n = 0;
     lặp(i = 0; i < độ dài(hàng); i++) {
-        nếu (khớp(hàng[i], điềuKiện)) { n++; } hoặc { thêm(ds, hàng[i]); };
+        nếu (khớp(hàng[i], điềuKiện)) { n++; thêm(đãXóa, i); thêm(ánhXạ, -1); }
+        hoặc { thêm(ánhXạ, độ dài(ds)); thêm(ds, hàng[i]); };
     };
     bảng[KEY_ROWS()] = ds;
-    cập nhật index(bảng);
+    xóa các index(bảng, hàng, đãXóa, ánhXạ);
+    nếu (n > 0) { hủy thống kê(bảng); };
     máy.dirty = đúng;
     trả về thay đổi(n);
 };
